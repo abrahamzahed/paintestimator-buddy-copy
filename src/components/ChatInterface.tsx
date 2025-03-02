@@ -164,7 +164,7 @@ const ChatInterface = ({ isOpen, onClose }: ChatInterfaceProps) => {
     setCurrentEstimate(estimate);
     setShowEstimateCalculator(false);
     
-    const estimateMessage = {
+    const estimateMessage: Message = {
       id: uuidv4(),
       role: "bot",
       content: `
