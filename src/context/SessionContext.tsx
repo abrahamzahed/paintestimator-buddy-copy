@@ -57,11 +57,15 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
         if (error.code === 'PGRST116') {
           console.log("No profile found, creating new profile");
           const userData = user?.user_metadata;
+          
+          // Log the actual user metadata to see what we're working with
+          console.log("User metadata:", userData);
+          
           const { data: newProfile, error: createError } = await supabase
             .from("profiles")
             .insert([{
               id: userId,
-              name: userData?.name || null,
+              name: userData?.name || user?.email?.split('@')[0] || null,
               phone: userData?.phone || null,
               role: "customer"
             }])
@@ -69,25 +73,43 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
             
           if (createError) {
             console.error("Error creating profile:", createError);
+            toast({
+              title: "Profile creation failed",
+              description: "We couldn't create your profile. Please try refreshing the page.",
+              variant: "destructive",
+            });
             throw createError;
           }
           
-          console.log("New profile created:", newProfile?.[0]);
+          console.log("New profile created successfully:", newProfile?.[0]);
           setProfile(newProfile?.[0] as Profile);
           return;
         }
+        
+        toast({
+          title: "Error loading profile",
+          description: "Please try refreshing the page or contact support.",
+          variant: "destructive",
+        });
         throw error;
       }
 
       console.log("Profile fetched successfully:", data);
+      
+      // Verify that the profile data looks correct
+      if (!data || !data.id) {
+        console.error("Profile data is incomplete:", data);
+        toast({
+          title: "Profile data issue",
+          description: "Your profile information appears to be incomplete. Please contact support.",
+          variant: "destructive",
+        });
+      }
+      
       setProfile(data as Profile);
     } catch (error) {
-      console.error("Error fetching/creating profile:", error);
-      toast({
-        title: "Error with user profile",
-        description: "Please try again or contact support",
-        variant: "destructive",
-      });
+      console.error("Error in fetchProfile function:", error);
+      setIsLoading(false);
     } finally {
       setIsLoading(false);
     }
@@ -137,10 +159,20 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
   }, []);
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    toast({
-      title: "Signed out successfully",
-    });
+    try {
+      await supabase.auth.signOut();
+      setProfile(null);
+      toast({
+        title: "Signed out successfully",
+      });
+    } catch (error) {
+      console.error("Error signing out:", error);
+      toast({
+        title: "Error signing out",
+        description: "Please try again",
+        variant: "destructive",
+      });
+    }
   };
 
   const isAdmin = profile?.role === "admin";
