@@ -4,9 +4,10 @@ import { X } from "lucide-react";
 
 interface ChatHeaderProps {
   onClose: () => void;
+  showCloseButton?: boolean;
 }
 
-const ChatHeader = ({ onClose }: ChatHeaderProps) => {
+const ChatHeader = ({ onClose, showCloseButton = true }: ChatHeaderProps) => {
   return (
     <div className="flex items-center justify-between p-4 border-b">
       <div className="flex items-center">
@@ -21,14 +22,16 @@ const ChatHeader = ({ onClose }: ChatHeaderProps) => {
           </div>
         </div>
       </div>
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={onClose}
-        aria-label="Close chat"
-      >
-        <X className="h-4 w-4" />
-      </Button>
+      {showCloseButton && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onClose}
+          aria-label="Close chat"
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      )}
     </div>
   );
 };

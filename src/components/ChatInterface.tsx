@@ -1,9 +1,10 @@
+
 import { useState } from "react";
 import { Message, EstimateResult } from "../types";
 import { v4 as uuidv4 } from "uuid";
 import { formatCurrency } from "../utils/estimateUtils";
 
-// Import new components
+// Import components
 import ChatHeader from "./chat/ChatHeader";
 import MessageList from "./chat/MessageList";
 import ChatInput from "./chat/ChatInput";
@@ -12,11 +13,18 @@ import ChatToggleButton from "./chat/ChatToggleButton";
 import EstimateSection from "./chat/EstimateSection";
 
 interface ChatInterfaceProps {
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen?: boolean;
+  onClose?: () => void;
+  isEmbedded?: boolean;
+  onRequestEstimate?: () => void;
 }
 
-const ChatInterface = ({ isOpen, onClose }: ChatInterfaceProps) => {
+const ChatInterface = ({ 
+  isOpen = true, 
+  onClose = () => {}, 
+  isEmbedded = false,
+  onRequestEstimate = () => {}
+}: ChatInterfaceProps) => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
@@ -67,7 +75,12 @@ const ChatInterface = ({ isOpen, onClose }: ChatInterfaceProps) => {
             "I'd be happy to help with an estimate! Let's use our calculator to get you an accurate quote based on your specific needs.",
           timestamp: new Date(),
         };
-        setShowEstimateCalculator(true);
+        
+        if (isEmbedded && onRequestEstimate) {
+          onRequestEstimate();
+        } else {
+          setShowEstimateCalculator(true);
+        }
       } else if (
         lowerCaseMessage.includes("hello") ||
         lowerCaseMessage.includes("hi") ||
@@ -92,7 +105,12 @@ const ChatInterface = ({ isOpen, onClose }: ChatInterfaceProps) => {
             "Great! Let's use our estimate calculator to get you an accurate quote.",
           timestamp: new Date(),
         };
-        setShowEstimateCalculator(true);
+        
+        if (isEmbedded && onRequestEstimate) {
+          onRequestEstimate();
+        } else {
+          setShowEstimateCalculator(true);
+        }
       } else if (
         lowerCaseMessage.includes("paint type") ||
         lowerCaseMessage.includes("quality") ||
@@ -144,6 +162,11 @@ const ChatInterface = ({ isOpen, onClose }: ChatInterfaceProps) => {
   };
 
   const handleStartEstimate = () => {
+    if (isEmbedded && onRequestEstimate) {
+      onRequestEstimate();
+      return;
+    }
+    
     setShowEstimateCalculator(true);
     setMessages([
       ...messages,
@@ -228,6 +251,22 @@ const ChatInterface = ({ isOpen, onClose }: ChatInterfaceProps) => {
     setMessages((prevMessages) => [...prevMessages, estimateMessage]);
   };
 
+  // If this is embedded in the page, use a different layout
+  if (isEmbedded) {
+    return (
+      <div className="bg-background border rounded-xl overflow-hidden shadow-sm">
+        <ChatHeader onClose={() => {}} showCloseButton={false} />
+        <MessageList messages={messages} isTyping={isTyping} height="300px" />
+        <QuickActions 
+          onStartEstimate={handleStartEstimate}
+          onQuickQuestion={handleSendMessage}
+        />
+        <ChatInput onSendMessage={handleSendMessage} />
+      </div>
+    );
+  }
+
+  // Original floating chat interface
   return (
     <div
       className={`fixed bottom-0 right-0 z-50 transition-all duration-500 ease-in-out transform ${

@@ -6,9 +6,10 @@ import ChatMessage from "./ChatMessage";
 interface MessageListProps {
   messages: Message[];
   isTyping: boolean;
+  height?: string;
 }
 
-const MessageList = ({ messages, isTyping }: MessageListProps) => {
+const MessageList = ({ messages, isTyping, height = "350px" }: MessageListProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -18,7 +19,7 @@ const MessageList = ({ messages, isTyping }: MessageListProps) => {
   }, [messages, isTyping]);
 
   return (
-    <div className="h-[350px] md:h-[400px] overflow-y-auto p-4">
+    <div className={`overflow-y-auto p-4`} style={{ height }}>
       {messages.map((message) => (
         <ChatMessage key={message.id} message={message} />
       ))}
