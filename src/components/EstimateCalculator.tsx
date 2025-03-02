@@ -66,32 +66,34 @@ const EstimateCalculator = ({ onEstimateComplete }: EstimateCalculatorProps) => 
   };
 
   return (
-    <div className="glass rounded-xl p-6 shadow-lg animate-scale-in">
+    <div className="glass rounded-xl p-6 shadow-lg animate-scale-in relative">
       <ProgressIndicator totalSteps={TOTAL_STEPS} currentStep={step} />
 
-      <FormStep title="What room are you painting?" isActive={step === 1}>
-        <StepRoomType roomDetails={roomDetails} updateRoomDetails={updateRoomDetails} />
-      </FormStep>
+      <div className="min-h-[300px] relative">
+        <FormStep title="What room are you painting?" isActive={step === 1}>
+          <StepRoomType roomDetails={roomDetails} updateRoomDetails={updateRoomDetails} />
+        </FormStep>
 
-      <FormStep title="Room dimensions" isActive={step === 2}>
-        <StepRoomDimensions roomDetails={roomDetails} updateRoomDetails={updateRoomDetails} />
-      </FormStep>
+        <FormStep title="Room dimensions" isActive={step === 2}>
+          <StepRoomDimensions roomDetails={roomDetails} updateRoomDetails={updateRoomDetails} />
+        </FormStep>
 
-      <FormStep title="Wall condition" isActive={step === 3}>
-        <StepWallCondition roomDetails={roomDetails} updateRoomDetails={updateRoomDetails} />
-      </FormStep>
+        <FormStep title="Wall condition" isActive={step === 3}>
+          <StepWallCondition roomDetails={roomDetails} updateRoomDetails={updateRoomDetails} />
+        </FormStep>
 
-      <FormStep title="Paint quality" isActive={step === 4}>
-        <StepPaintQuality roomDetails={roomDetails} updateRoomDetails={updateRoomDetails} />
-      </FormStep>
+        <FormStep title="Paint quality" isActive={step === 4}>
+          <StepPaintQuality roomDetails={roomDetails} updateRoomDetails={updateRoomDetails} />
+        </FormStep>
 
-      <FormStep title="Additional Options" isActive={step === 5}>
-        <StepAdditionalOptions roomDetails={roomDetails} updateRoomDetails={updateRoomDetails} />
-      </FormStep>
+        <FormStep title="Additional Options" isActive={step === 5}>
+          <StepAdditionalOptions roomDetails={roomDetails} updateRoomDetails={updateRoomDetails} />
+        </FormStep>
 
-      <FormStep title="Discounts" isActive={step === 6}>
-        <StepDiscounts roomDetails={roomDetails} updateRoomDetails={updateRoomDetails} />
-      </FormStep>
+        <FormStep title="Discounts" isActive={step === 6}>
+          <StepDiscounts roomDetails={roomDetails} updateRoomDetails={updateRoomDetails} />
+        </FormStep>
+      </div>
 
       <div className="flex justify-between mt-8">
         <Button

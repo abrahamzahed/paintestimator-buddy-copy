@@ -1,4 +1,3 @@
-
 import { ReactNode } from 'react';
 
 interface FormStepProps {
@@ -8,10 +7,14 @@ interface FormStepProps {
 }
 
 const FormStep = ({ title, children, isActive }: FormStepProps) => {
-  if (!isActive) return null;
-  
   return (
-    <div className="space-y-6 animate-fade-up">
+    <div 
+      className={`space-y-6 transition-all duration-300 ${
+        isActive 
+          ? "opacity-100 animate-fade-up" 
+          : "opacity-0 absolute pointer-events-none h-0 overflow-hidden"
+      }`}
+    >
       <h3 className="text-xl font-semibold">{title}</h3>
       {children}
     </div>
