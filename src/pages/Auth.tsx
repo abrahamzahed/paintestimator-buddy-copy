@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../App";
@@ -39,6 +38,7 @@ export default function Auth() {
             name,
             phone,
           },
+          emailRedirectTo: `${window.location.origin}/dashboard`,
         },
       });
 
@@ -46,19 +46,36 @@ export default function Auth() {
         throw error;
       }
 
-      toast({
-        title: "Account created successfully!",
-        description: "Please check your email for verification.",
-      });
+      // Even with auto-confirm enabled, manually create a profile if needed
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .upsert([
+          {
+            id: data.user?.id,
+            name,
+            phone,
+            role: 'customer',
+          }
+        ], { onConflict: 'id' });
 
-      // If auto-confirm is disabled in Supabase, inform the user to check email
-      if (!data.session) {
+      if (profileError) {
+        console.error("Error creating profile:", profileError);
+        // Don't throw here as sign up was successful
+      }
+
+      if (data.session) {
+        // If auto-confirm is enabled, session will be available immediately
         toast({
-          title: "Check your email",
-          description: "We've sent a confirmation link to your email.",
+          title: "Account created successfully",
+          description: "You are now signed in.",
         });
-      } else {
         navigate("/dashboard");
+      } else {
+        // This should rarely happen with auto-confirm enabled
+        toast({
+          title: "Account created",
+          description: "Please check your email for confirmation.",
+        });
       }
     } catch (error: any) {
       toast({
@@ -66,6 +83,7 @@ export default function Auth() {
         description: error.message,
         variant: "destructive",
       });
+      console.error("Signup error:", error);
     } finally {
       setIsSubmitting(false);
     }

@@ -19,6 +19,7 @@ type SessionContextType = {
   signOut: () => Promise<void>;
   isAdmin: boolean;
   isStaff: boolean;
+  refreshProfile: () => Promise<void>;
 };
 
 const SessionContext = createContext<SessionContextType>({
@@ -29,6 +30,7 @@ const SessionContext = createContext<SessionContextType>({
   signOut: async () => {},
   isAdmin: false,
   isStaff: false,
+  refreshProfile: async () => {},
 });
 
 export const useSession = () => useContext(SessionContext);
@@ -39,6 +41,58 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+
+  const fetchProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
+        .single();
+
+      if (error) {
+        console.error("Error fetching profile:", error);
+        // If no profile exists, create one
+        if (error.code === 'PGRST116') {
+          const userData = user?.user_metadata;
+          const { data: newProfile, error: createError } = await supabase
+            .from("profiles")
+            .insert([{
+              id: userId,
+              name: userData?.name || null,
+              phone: userData?.phone || null,
+              role: "customer"
+            }])
+            .select();
+            
+          if (createError) {
+            throw createError;
+          }
+          
+          setProfile(newProfile?.[0] as Profile);
+          return;
+        }
+        throw error;
+      }
+
+      setProfile(data as Profile);
+    } catch (error) {
+      console.error("Error fetching/creating profile:", error);
+      toast({
+        title: "Error with user profile",
+        description: "Please try again or contact support",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const refreshProfile = async () => {
+    if (user?.id) {
+      await fetchProfile(user.id);
+    }
+  };
 
   useEffect(() => {
     // Get initial session
@@ -55,6 +109,7 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log("Auth state changed:", event, session?.user?.id);
         setSession(session);
         setUser(session?.user ?? null);
         
@@ -71,31 +126,6 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
       subscription.unsubscribe();
     };
   }, []);
-
-  const fetchProfile = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", userId)
-        .single();
-
-      if (error) {
-        throw error;
-      }
-
-      setProfile(data as Profile);
-    } catch (error) {
-      console.error("Error fetching profile:", error);
-      toast({
-        title: "Error fetching profile",
-        description: "Please try again or contact support",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const signOut = async () => {
     await supabase.auth.signOut();
@@ -117,6 +147,7 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
         signOut,
         isAdmin,
         isStaff,
+        refreshProfile,
       }}
     >
       {children}
