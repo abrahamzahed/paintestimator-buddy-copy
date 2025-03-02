@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Message, EstimateResult } from "../types";
 import { v4 as uuidv4 } from "uuid";
@@ -118,6 +117,17 @@ const ChatInterface = ({ isOpen, onClose }: ChatInterfaceProps) => {
             "The time required depends on the size of the room and condition of the walls. For an average bedroom, we typically complete the job in 1-2 days. For a more accurate timeframe, I'd be happy to provide an estimate.",
           timestamp: new Date(),
         };
+      } else if (
+        lowerCaseMessage.includes("pricing") ||
+        lowerCaseMessage.includes("prices")
+      ) {
+        botResponse = {
+          id: uuidv4(),
+          role: "bot",
+          content:
+            "Our pricing varies based on room type and size. For example, a standard bedroom starts at $400, while a living room starts at $600. Additional services like ceiling painting (+40%), baseboards (+25% brushed, +50% sprayed), and more affect the final price. Would you like a personalized estimate?",
+          timestamp: new Date(),
+        };
       } else {
         botResponse = {
           id: uuidv4(),
@@ -157,17 +167,58 @@ const ChatInterface = ({ isOpen, onClose }: ChatInterfaceProps) => {
     setCurrentEstimate(estimate);
     setShowEstimateCalculator(false);
     
+    const additionalCostsItems: string[] = [];
+    if (estimate.additionalCosts.ceiling) {
+      additionalCostsItems.push(`Ceiling: ${formatCurrency(estimate.additionalCosts.ceiling)}`);
+    }
+    if (estimate.additionalCosts.baseboards) {
+      additionalCostsItems.push(`Baseboards: ${formatCurrency(estimate.additionalCosts.baseboards)}`);
+    }
+    if (estimate.additionalCosts.crownMolding) {
+      additionalCostsItems.push(`Crown Molding: ${formatCurrency(estimate.additionalCosts.crownMolding)}`);
+    }
+    if (estimate.additionalCosts.highCeiling) {
+      additionalCostsItems.push(`High Ceiling: ${formatCurrency(estimate.additionalCosts.highCeiling)}`);
+    }
+    if (estimate.additionalCosts.closet) {
+      additionalCostsItems.push(`Closet: ${formatCurrency(estimate.additionalCosts.closet)}`);
+    }
+    if (estimate.additionalCosts.doors) {
+      additionalCostsItems.push(`Doors: ${formatCurrency(estimate.additionalCosts.doors)}`);
+    }
+    if (estimate.additionalCosts.windows) {
+      additionalCostsItems.push(`Windows: ${formatCurrency(estimate.additionalCosts.windows)}`);
+    }
+    
+    const discountItems: string[] = [];
+    if (estimate.discounts.emptyHouse) {
+      discountItems.push(`Empty House: -${formatCurrency(estimate.discounts.emptyHouse)}`);
+    }
+    if (estimate.discounts.noFloorCovering) {
+      discountItems.push(`No Floor Covering: -${formatCurrency(estimate.discounts.noFloorCovering)}`);
+    }
+    if (estimate.discounts.volumeDiscount) {
+      discountItems.push(`Volume Discount: -${formatCurrency(estimate.discounts.volumeDiscount)}`);
+    }
+    
     const estimateMessage: Message = {
       id: uuidv4(),
       role: "bot",
       content: `
-        Based on the information you provided, here's your estimate:
+        Based on the information you provided, here's your detailed estimate:
         
-        - Total Cost: ${formatCurrency(estimate.totalCost)}
-        - Labor: ${formatCurrency(estimate.laborCost)}
+        **Base Room Price:** ${formatCurrency(estimate.roomPrice)}
+        ${additionalCostsItems.length > 0 ? '**Additional Costs:**\n' + additionalCostsItems.join('\n') : ''}
+        ${discountItems.length > 0 ? '**Discounts:**\n' + discountItems.join('\n') : ''}
+        
+        **Summary:**
         - Materials: ${formatCurrency(estimate.materialCost)}
+        - Labor: ${formatCurrency(estimate.laborCost)}
+        - Total Cost: ${formatCurrency(estimate.totalCost)}
         - Estimated Time: ${estimate.timeEstimate.toFixed(1)} hours
         - Paint Required: ${estimate.paintCans} gallons
+        
+        This is an estimate based on the information provided. For a final quote, we recommend scheduling an in-home consultation.
         
         Would you like to schedule a consultation or get more information?
       `,
