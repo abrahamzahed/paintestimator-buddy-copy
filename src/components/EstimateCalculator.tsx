@@ -1,8 +1,8 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { RoomDetails, EstimateResult } from "../types";
-import { calculateEstimate } from "../utils/estimateUtils";
+import { calculateEstimate, formatCurrency } from "../utils/estimateUtils";
 import ProgressIndicator from "./estimator/ProgressIndicator";
 import FormStep from "./estimator/FormStep";
 import StepRoomType from "./estimator/StepRoomType";
@@ -19,6 +19,7 @@ interface EstimateCalculatorProps {
 const EstimateCalculator = ({ onEstimateComplete }: EstimateCalculatorProps) => {
   const [step, setStep] = useState(1);
   const TOTAL_STEPS = 6;
+  const [currentEstimate, setCurrentEstimate] = useState<EstimateResult | null>(null);
   
   const [roomDetails, setRoomDetails] = useState<RoomDetails>({
     roomType: "bedroom",
@@ -40,12 +41,23 @@ const EstimateCalculator = ({ onEstimateComplete }: EstimateCalculatorProps) => 
     windowsCount: 0
   });
 
+  // Update the estimate whenever room details change
+  useEffect(() => {
+    try {
+      const estimate = calculateEstimate(roomDetails);
+      setCurrentEstimate(estimate);
+    } catch (error) {
+      console.error("Error calculating estimate:", error);
+    }
+  }, [roomDetails]);
+
   const handleNextStep = () => {
     if (step < TOTAL_STEPS) {
       setStep(step + 1);
     } else {
-      const estimate = calculateEstimate(roomDetails);
-      onEstimateComplete(estimate);
+      if (currentEstimate) {
+        onEstimateComplete(currentEstimate);
+      }
     }
   };
 
@@ -93,6 +105,22 @@ const EstimateCalculator = ({ onEstimateComplete }: EstimateCalculatorProps) => 
         <FormStep title="Discounts" isActive={step === 6}>
           <StepDiscounts roomDetails={roomDetails} updateRoomDetails={updateRoomDetails} />
         </FormStep>
+      </div>
+
+      {/* Running Total Display */}
+      <div className="mt-4 p-3 bg-foreground/5 rounded-lg">
+        <div className="flex justify-between items-center">
+          <span className="font-medium">Current Estimate:</span>
+          <span className="text-xl font-bold text-paint">
+            {currentEstimate ? formatCurrency(currentEstimate.totalCost) : '$0.00'}
+          </span>
+        </div>
+        {currentEstimate && (
+          <div className="mt-2 text-sm text-muted-foreground grid grid-cols-2 gap-2">
+            <div>Labor: {formatCurrency(currentEstimate.laborCost)}</div>
+            <div>Materials: {formatCurrency(currentEstimate.materialCost)}</div>
+          </div>
+        )}
       </div>
 
       <div className="flex justify-between mt-8">
