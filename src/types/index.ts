@@ -1,38 +1,18 @@
 
 export interface Message {
   id: string;
-  role: 'user' | 'bot';
+  role: "bot" | "user";
   content: string;
   timestamp: Date;
 }
 
-export interface RoomDetails {
-  roomType: string;
-  roomSize: 'small' | 'average' | 'large';
-  wallsCount: number;
-  wallHeight: number;
-  wallWidth: number;
-  condition: 'good' | 'average' | 'poor';
-  paintType: 'standard' | 'premium' | 'luxury';
-  includeCeiling: boolean;
-  includeBaseboards: boolean;
-  baseboardsMethod: 'brush' | 'spray';
-  includeCrownMolding: boolean;
-  hasHighCeiling: boolean;
-  includeCloset: boolean;
-  isEmptyHouse: boolean;
-  needFloorCovering: boolean;
-  doorsCount: number;
-  windowsCount: number;
-}
-
 export interface EstimateResult {
-  totalCost: number;
+  roomPrice: number;
   laborCost: number;
   materialCost: number;
-  timeEstimate: number; // in hours
+  totalCost: number;
+  timeEstimate: number;
   paintCans: number;
-  roomPrice: number;
   additionalCosts: {
     ceiling?: number;
     baseboards?: number;
@@ -47,4 +27,88 @@ export interface EstimateResult {
     noFloorCovering?: number;
     volumeDiscount?: number;
   };
+}
+
+export interface RoomDetails {
+  roomType: string;
+  roomSize: string;
+  wallsCount: number;
+  wallHeight: number;
+  wallWidth: number;
+  condition: string;
+  paintType: string;
+  includeCeiling: boolean;
+  includeBaseboards: boolean;
+  baseboardsMethod: string;
+  includeCrownMolding: boolean;
+  hasHighCeiling: boolean;
+  includeCloset: boolean;
+  isEmptyHouse: boolean;
+  needFloorCovering: boolean;
+  doorsCount: number;
+  windowsCount: number;
+}
+
+export interface Lead {
+  id?: string;
+  user_id?: string;
+  name: string;
+  email: string;
+  phone?: string;
+  address?: string;
+  service_type: string;
+  description?: string;
+  room_count?: number;
+  square_footage?: number;
+  status?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface PricingRule {
+  id?: string;
+  service_type: string;
+  room_type?: string;
+  base_price: number;
+  cost_per_sqft: number;
+  labor_cost_per_hour: number;
+  material_cost_per_gallon: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface Estimate {
+  id?: string;
+  lead_id: string;
+  details: Record<string, any>;
+  labor_cost: number;
+  material_cost: number;
+  total_cost: number;
+  estimated_hours: number;
+  estimated_paint_gallons: number;
+  status?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface Invoice {
+  id?: string;
+  estimate_id: string;
+  stripe_payment_id?: string;
+  payment_link?: string;
+  amount: number;
+  status?: string;
+  due_date?: string;
+  paid_at?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface Profile {
+  id: string;
+  role: "admin" | "staff" | "customer";
+  name?: string;
+  phone?: string;
+  created_at?: string;
+  updated_at?: string;
 }
