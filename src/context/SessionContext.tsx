@@ -44,6 +44,7 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
 
   const fetchProfile = async (userId: string) => {
     try {
+      console.log("Fetching profile for user:", userId);
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
@@ -54,6 +55,7 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
         console.error("Error fetching profile:", error);
         // If no profile exists, create one
         if (error.code === 'PGRST116') {
+          console.log("No profile found, creating new profile");
           const userData = user?.user_metadata;
           const { data: newProfile, error: createError } = await supabase
             .from("profiles")
@@ -66,15 +68,18 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
             .select();
             
           if (createError) {
+            console.error("Error creating profile:", createError);
             throw createError;
           }
           
+          console.log("New profile created:", newProfile?.[0]);
           setProfile(newProfile?.[0] as Profile);
           return;
         }
         throw error;
       }
 
+      console.log("Profile fetched successfully:", data);
       setProfile(data as Profile);
     } catch (error) {
       console.error("Error fetching/creating profile:", error);
@@ -90,13 +95,17 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
 
   const refreshProfile = async () => {
     if (user?.id) {
+      console.log("Refreshing profile for user:", user.id);
       await fetchProfile(user.id);
+    } else {
+      console.log("Cannot refresh profile: No user ID available");
     }
   };
 
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("Initial session check:", session?.user?.id);
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {

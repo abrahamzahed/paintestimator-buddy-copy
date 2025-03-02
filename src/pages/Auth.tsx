@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../App";
@@ -11,7 +12,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 
 export default function Auth() {
   const navigate = useNavigate();
-  const { session, isLoading } = useSession();
+  const { session, isLoading, refreshProfile } = useSession();
   const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -46,21 +47,33 @@ export default function Auth() {
         throw error;
       }
 
-      // Even with auto-confirm enabled, manually create a profile if needed
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .upsert([
-          {
-            id: data.user?.id,
-            name,
-            phone,
-            role: 'customer',
-          }
-        ], { onConflict: 'id' });
+      console.log("Signup successful:", data);
 
-      if (profileError) {
-        console.error("Error creating profile:", profileError);
-        // Don't throw here as sign up was successful
+      // Manually create a profile if needed
+      if (data.user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .upsert([
+            {
+              id: data.user.id,
+              name,
+              phone,
+              role: 'customer',
+            }
+          ], { onConflict: 'id' });
+
+        if (profileError) {
+          console.error("Error creating profile:", profileError);
+          toast({
+            title: "Error creating profile",
+            description: profileError.message,
+            variant: "destructive",
+          });
+        } else {
+          console.log("Profile created successfully");
+          // Refresh the profile in the session context
+          await refreshProfile();
+        }
       }
 
       if (data.session) {
