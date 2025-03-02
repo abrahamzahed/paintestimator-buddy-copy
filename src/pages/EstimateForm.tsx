@@ -62,7 +62,7 @@ export default function EstimateForm() {
     
     try {
       // First create the lead
-      const { data: leadData, error: leadError } = await supabase
+      const { data: createdLead, error: leadError } = await supabase
         .from("leads")
         .insert([{
           user_id: user?.id,
@@ -81,12 +81,12 @@ export default function EstimateForm() {
 
       if (leadError) throw leadError;
       
-      if (estimateResult) {
+      if (estimateResult && createdLead) {
         // Create estimate record
         const { error: estimateError } = await supabase
           .from("estimates")
           .insert([{
-            lead_id: leadData.id,
+            lead_id: createdLead.id,
             details: {
               roomType: "bedroom", // This would come from the estimator
               roomSize: "medium",

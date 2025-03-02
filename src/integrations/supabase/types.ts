@@ -9,7 +9,214 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      estimates: {
+        Row: {
+          created_at: string | null
+          details: Json
+          estimated_hours: number
+          estimated_paint_gallons: number
+          id: string
+          labor_cost: number
+          lead_id: string
+          material_cost: number
+          status: string | null
+          total_cost: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          details: Json
+          estimated_hours?: number
+          estimated_paint_gallons?: number
+          id?: string
+          labor_cost?: number
+          lead_id: string
+          material_cost?: number
+          status?: string | null
+          total_cost?: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          details?: Json
+          estimated_hours?: number
+          estimated_paint_gallons?: number
+          id?: string
+          labor_cost?: number
+          lead_id?: string
+          material_cost?: number
+          status?: string | null
+          total_cost?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estimates_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          amount: number
+          created_at: string | null
+          due_date: string | null
+          estimate_id: string
+          id: string
+          paid_at: string | null
+          payment_link: string | null
+          status: string | null
+          stripe_payment_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          due_date?: string | null
+          estimate_id: string
+          id?: string
+          paid_at?: string | null
+          payment_link?: string | null
+          status?: string | null
+          stripe_payment_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          due_date?: string | null
+          estimate_id?: string
+          id?: string
+          paid_at?: string | null
+          payment_link?: string | null
+          status?: string | null
+          stripe_payment_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_estimate_id_fkey"
+            columns: ["estimate_id"]
+            isOneToOne: false
+            referencedRelation: "estimates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leads: {
+        Row: {
+          address: string | null
+          created_at: string | null
+          description: string | null
+          email: string
+          id: string
+          name: string
+          phone: string | null
+          room_count: number | null
+          service_type: string
+          square_footage: number | null
+          status: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string | null
+          description?: string | null
+          email: string
+          id?: string
+          name: string
+          phone?: string | null
+          room_count?: number | null
+          service_type: string
+          square_footage?: number | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string | null
+          description?: string | null
+          email?: string
+          id?: string
+          name?: string
+          phone?: string | null
+          room_count?: number | null
+          service_type?: string
+          square_footage?: number | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      pricing_rules: {
+        Row: {
+          base_price: number
+          cost_per_sqft: number
+          created_at: string | null
+          id: string
+          labor_cost_per_hour: number
+          material_cost_per_gallon: number
+          room_type: string | null
+          service_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          base_price?: number
+          cost_per_sqft?: number
+          created_at?: string | null
+          id?: string
+          labor_cost_per_hour?: number
+          material_cost_per_gallon?: number
+          room_type?: string | null
+          service_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          base_price?: number
+          cost_per_sqft?: number
+          created_at?: string | null
+          id?: string
+          labor_cost_per_hour?: number
+          material_cost_per_gallon?: number
+          room_type?: string | null
+          service_type?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string | null
+          phone: string | null
+          role: Database["public"]["Enums"]["user_role"] | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id: string
+          name?: string | null
+          phone?: string | null
+          role?: Database["public"]["Enums"]["user_role"] | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string | null
+          phone?: string | null
+          role?: Database["public"]["Enums"]["user_role"] | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -18,7 +225,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      user_role: "admin" | "staff" | "customer"
     }
     CompositeTypes: {
       [_ in never]: never
