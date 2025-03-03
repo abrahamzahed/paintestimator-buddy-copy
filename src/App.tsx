@@ -1,6 +1,6 @@
+
 import { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { createClient } from "@supabase/supabase-js";
 import { SessionContextProvider, useSession } from "@/context/SessionContext";
 import { Toaster } from "@/components/ui/toaster";
 import Index from "@/pages/Index";
@@ -12,10 +12,7 @@ import EstimateForm from "@/pages/EstimateForm";
 import EstimateDetail from "@/pages/EstimateDetail";
 import NotFound from "@/pages/NotFound";
 import { Profile } from "./types";
-
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-export const supabase = createClient(supabaseUrl, supabaseKey);
+import { supabase } from "@/integrations/supabase/client";
 
 function App() {
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -24,15 +21,18 @@ function App() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const user = supabase.auth.getSession();
+        const { data } = await supabase.auth.getSession();
+        const user = data.session?.user;
+        
         if (!user) {
+          setLoading(false);
           return;
         }
 
         const { data: profileData, error } = await supabase
           .from("profiles")
           .select("*")
-          .eq("id", (await user).data.session?.user.id)
+          .eq("id", user.id)
           .single();
 
         if (error) {
