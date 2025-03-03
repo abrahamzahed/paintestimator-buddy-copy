@@ -76,24 +76,14 @@ export default function Dashboard() {
           if (projectsError) throw projectsError;
           setProjects(projectsData || []);
 
-          // Fetch leads
-          const { data: leadsData, error: leadsError } = await supabase
-            .from("leads")
-            .select("*")
-            .eq("user_id", user?.id)
-            .order("created_at", { ascending: false });
-
-          if (leadsError) throw leadsError;
-          setLeads(leadsData || []);
-
-          // Fetch estimates for these leads
-          if (leadsData && leadsData.length > 0) {
-            const leadIds = leadsData.map(lead => lead.id);
+          // For customers, fetch estimates directly by project IDs
+          if (projectsData && projectsData.length > 0) {
+            const projectIds = projectsData.map(project => project.id);
             
             const { data: estimatesData, error: estimatesError } = await supabase
               .from("estimates")
               .select("*")
-              .in("lead_id", leadIds)
+              .in("project_id", projectIds)
               .order("created_at", { ascending: false });
 
             if (estimatesError) throw estimatesError;
@@ -154,7 +144,6 @@ export default function Dashboard() {
         />
       ) : (
         <CustomerDashboardView 
-          leads={leads} 
           estimates={estimates} 
           invoices={invoices} 
         />

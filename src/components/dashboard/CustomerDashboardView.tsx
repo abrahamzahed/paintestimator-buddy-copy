@@ -5,19 +5,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PlusCircle, House, FileText, DollarSign, ChevronRight } from "lucide-react";
-import { Lead, Estimate, Invoice, Project } from "@/types";
+import { Estimate, Invoice, Project } from "@/types";
 import { useSession } from "@/context/SessionContext";
 import { supabase } from "../../App";
 import { useToast } from "@/hooks/use-toast";
 
 interface CustomerDashboardViewProps {
-  leads: Lead[];
   estimates: Estimate[];
   invoices: Invoice[];
 }
 
 const CustomerDashboardView = ({
-  leads,
   estimates,
   invoices,
 }: CustomerDashboardViewProps) => {
@@ -55,17 +53,9 @@ const CustomerDashboardView = ({
     fetchProjects();
   }, [user, toast]);
 
-  // Group leads by project
-  const leadsByProject = leads.reduce((acc, lead) => {
-    const projectId = lead.project_id || 'unassigned';
-    if (!acc[projectId]) acc[projectId] = [];
-    acc[projectId].push(lead);
-    return acc;
-  }, {} as Record<string, Lead[]>);
-
-  // Filter estimates by lead
-  const getEstimatesByLeadId = (leadId: string) => {
-    return estimates.filter(estimate => estimate.lead_id === leadId);
+  // Filter estimates by project
+  const getEstimatesByProjectId = (projectId: string) => {
+    return estimates.filter(estimate => estimate.project_id === projectId);
   };
 
   // Filter invoices by estimate
@@ -73,14 +63,13 @@ const CustomerDashboardView = ({
     return invoices.filter(invoice => invoice.estimate_id === estimateId);
   };
 
-  const projectLeadCount = Object.keys(leadsByProject).length;
   const totalEstimatesCount = estimates.length;
   const totalInvoicesCount = invoices.length;
   
   return (
     <div>
       {/* Metrics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="bg-secondary/50 rounded-xl p-6 shadow-sm">
           <div className="flex justify-between items-start">
             <div>
@@ -88,18 +77,6 @@ const CustomerDashboardView = ({
               <p className="text-3xl font-bold mt-2">{projects.length}</p>
             </div>
             <span className="bg-paint/10 p-2 rounded-full text-paint">
-              <House className="w-6 h-6" />
-            </span>
-          </div>
-        </div>
-        
-        <div className="bg-secondary/50 rounded-xl p-6 shadow-sm">
-          <div className="flex justify-between items-start">
-            <div>
-              <h3 className="font-semibold text-lg">Leads</h3>
-              <p className="text-3xl font-bold mt-2">{projectLeadCount}</p>
-            </div>
-            <span className="bg-yellow-500/10 p-2 rounded-full text-yellow-500">
               <House className="w-6 h-6" />
             </span>
           </div>
@@ -138,7 +115,7 @@ const CustomerDashboardView = ({
         </div>
       </div>
 
-      {projects.length === 0 && leads.length === 0 ? (
+      {projects.length === 0 ? (
         <div className="text-center py-12">
           <h3 className="text-xl font-medium mb-2">No projects yet</h3>
           <p className="text-muted-foreground mb-6">
@@ -163,16 +140,11 @@ const CustomerDashboardView = ({
             <TabsContent value="projects">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {projects.map((project) => {
-                  const projectLeads = leads.filter(lead => lead.project_id === project.id);
-                  const projectEstimatesCount = projectLeads.reduce((count, lead) => {
-                    return count + getEstimatesByLeadId(lead.id!).length;
-                  }, 0);
+                  const projectEstimates = getEstimatesByProjectId(project.id!);
+                  const projectEstimatesCount = projectEstimates.length;
                   
-                  const projectInvoicesCount = projectLeads.reduce((count, lead) => {
-                    const leadEstimates = getEstimatesByLeadId(lead.id!);
-                    return count + leadEstimates.reduce((iCount, estimate) => {
-                      return iCount + getInvoicesByEstimateId(estimate.id!).length;
-                    }, 0);
+                  const projectInvoicesCount = projectEstimates.reduce((count, estimate) => {
+                    return count + getInvoicesByEstimateId(estimate.id!).length;
                   }, 0);
                   
                   return (
@@ -185,8 +157,7 @@ const CustomerDashboardView = ({
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-2">
-                          <div className="grid grid-cols-3 gap-2 text-sm">
-                            <div>Leads: {projectLeads.length}</div>
+                          <div className="grid grid-cols-2 gap-2 text-sm">
                             <div>Estimates: {projectEstimatesCount}</div>
                             <div>Invoices: {projectInvoicesCount}</div>
                           </div>
@@ -219,8 +190,7 @@ const CustomerDashboardView = ({
                       </thead>
                       <tbody>
                         {estimates.map((estimate) => {
-                          const lead = leads.find(l => l.id === estimate.lead_id);
-                          const projectName = lead?.project_name || "Unknown Project";
+                          const projectName = projects.find(p => p.id === estimate.project_id)?.name || "Unknown Project";
                           
                           return (
                             <tr key={estimate.id} className="border-b hover:bg-secondary/50">
@@ -284,8 +254,9 @@ const CustomerDashboardView = ({
                       <tbody>
                         {invoices.map((invoice) => {
                           const estimate = estimates.find(e => e.id === invoice.estimate_id);
-                          const lead = estimate ? leads.find(l => l.id === estimate.lead_id) : null;
-                          const projectName = lead?.project_name || "Unknown Project";
+                          const projectName = estimate ? 
+                            projects.find(p => p.id === estimate.project_id)?.name || "Unknown Project" 
+                            : "Unknown Project";
                           
                           return (
                             <tr key={invoice.id} className="border-b hover:bg-secondary/50">
