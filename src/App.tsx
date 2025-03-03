@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { createClient } from "@supabase/supabase-js";
-import { SessionProvider } from "@/context/SessionContext";
+import { SessionContextProvider, useSession } from "@/context/SessionContext";
 import { Toaster } from "@/components/ui/toaster";
 import Index from "@/pages/Index";
 import Auth from "@/pages/Auth";
@@ -49,7 +49,7 @@ function App() {
   }, []);
 
   const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
-    const { session } = SessionProvider();
+    const { session } = useSession();
 
     if (!session) {
       return <Navigate to="/auth" replace />;
@@ -59,7 +59,7 @@ function App() {
   };
 
   return (
-    <SessionProvider>
+    <SessionContextProvider>
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
@@ -108,7 +108,7 @@ function App() {
         </Routes>
         <Toaster />
       </BrowserRouter>
-    </SessionProvider>
+    </SessionContextProvider>
   );
 }
 

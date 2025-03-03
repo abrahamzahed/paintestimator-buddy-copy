@@ -27,12 +27,19 @@ export default function EstimateDetail() {
         // Fetch estimate
         const { data: estimateData, error: estimateError } = await supabase
           .from("estimates")
-          .select("*")
+          .select("*, projects(name)")
           .eq("id", id)
           .single();
 
         if (estimateError) throw estimateError;
-        setEstimate(estimateData as Estimate);
+        
+        // Transform the data to match our Estimate interface
+        const formattedEstimate: Estimate = {
+          ...estimateData,
+          project_name: estimateData.projects?.name || "Unknown Project"
+        };
+        
+        setEstimate(formattedEstimate);
 
         // Fetch line items
         const { data: lineItemsData, error: lineItemsError } = await supabase
@@ -121,7 +128,7 @@ export default function EstimateDetail() {
             <div className="grid gap-6 md:grid-cols-2">
               <div>
                 <h3 className="font-semibold mb-2">Project Information</h3>
-                <p className="text-sm text-muted-foreground mb-1">Project: {estimate.project_name}</p>
+                <p className="text-sm text-muted-foreground mb-1">Project: {estimate.project_name || "Unknown Project"}</p>
                 <p className="text-sm text-muted-foreground">Created: {new Date(estimate.created_at!).toLocaleDateString()}</p>
               </div>
               <div>
@@ -135,7 +142,7 @@ export default function EstimateDetail() {
                     <span className="text-sm text-muted-foreground">Materials:</span>
                     <span className="text-sm">{formatCurrency(estimate.material_cost || 0)}</span>
                   </div>
-                  {estimate.discount > 0 && (
+                  {(estimate.discount || 0) > 0 && (
                     <div className="flex justify-between">
                       <span className="text-sm text-muted-foreground">Discount:</span>
                       <span className="text-sm text-green-600">-{formatCurrency(estimate.discount || 0)}</span>

@@ -95,16 +95,28 @@ export interface PricingRule {
   updated_at?: string;
 }
 
+export interface LineItem {
+  id?: string;
+  estimate_id: string;
+  description: string;
+  quantity: number;
+  unit_price: number;
+  created_at?: string;
+}
+
 export interface Estimate {
   id?: string;
   lead_id: string;
   project_id?: string;
+  project_name?: string;
   details: Record<string, any>;
   labor_cost: number;
   material_cost: number;
   total_cost: number;
   estimated_hours: number;
   estimated_paint_gallons: number;
+  notes?: string;
+  discount?: number;
   status?: string;
   created_at?: string;
   updated_at?: string;
