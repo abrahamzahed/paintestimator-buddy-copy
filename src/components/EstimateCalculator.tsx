@@ -22,7 +22,7 @@ interface EstimateCalculatorProps {
 const EstimateCalculator = ({ 
   onEstimateComplete, 
   initialUserData,
-  submitButtonText = "Calculate Estimate" 
+  submitButtonText = "Submit Request" 
 }: EstimateCalculatorProps) => {
   const { toast } = useToast();
   const [step, setStep] = useState(1);
@@ -257,12 +257,14 @@ const EstimateCalculator = ({
         >
           Back
         </Button>
-        <Button
-          onClick={handleNextStep}
-          className="bg-paint hover:bg-paint-dark"
-        >
-          {step === TOTAL_STEPS ? submitButtonText : "Next"}
-        </Button>
+        {step < TOTAL_STEPS && (
+          <Button
+            onClick={handleNextStep}
+            className="bg-paint hover:bg-paint-dark"
+          >
+            Next
+          </Button>
+        )}
       </div>
     </div>
   );
