@@ -1,5 +1,5 @@
 
-import { EstimateResult, RoomDetail } from "@/types";
+import { EstimateResult, RoomDetail, LineItem } from "@/types";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatCurrency } from "@/utils/estimateUtils";
@@ -7,6 +7,7 @@ import { CalendarIcon, ChevronDownIcon, ChevronUpIcon, HomeIcon, PrinterIcon } f
 import { Button } from "@/components/ui/button";
 import LineItemsTable from "./LineItemsTable";
 import { useState } from "react";
+import { useParams } from "react-router-dom";
 
 interface DetailedSummaryDialogProps {
   open: boolean;
@@ -24,6 +25,7 @@ const DetailedSummaryDialog = ({
   roomEstimates 
 }: DetailedSummaryDialogProps) => {
   const [expandedRoom, setExpandedRoom] = useState<string | null>(null);
+  const { id: estimateId } = useParams<{ id: string }>();
   
   const toggleRoomExpand = (roomId: string) => {
     if (expandedRoom === roomId) {
@@ -232,10 +234,10 @@ const DetailedSummaryDialog = ({
           {/* Line Items if any exist */}
           <LineItemsTable 
             lineItems={[
-              // Dummy line items for now, these would come from the estimate in a real implementation
-              { id: '1', description: 'Premium paint - Living Room', quantity: 2, unit_price: 45.99 },
-              { id: '2', description: 'Standard paint - Bedroom', quantity: 1, unit_price: 32.99 },
-              { id: '3', description: 'Painting supplies', quantity: 1, unit_price: 25.00 }
+              // Adding the required estimate_id to each line item
+              { id: '1', description: 'Premium paint - Living Room', quantity: 2, unit_price: 45.99, estimate_id: estimateId || '' },
+              { id: '2', description: 'Standard paint - Bedroom', quantity: 1, unit_price: 32.99, estimate_id: estimateId || '' },
+              { id: '3', description: 'Painting supplies', quantity: 1, unit_price: 25.00, estimate_id: estimateId || '' }
             ]} 
           />
           
