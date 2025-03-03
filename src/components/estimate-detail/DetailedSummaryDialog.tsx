@@ -3,10 +3,10 @@ import { EstimateResult, RoomDetail, LineItem } from "@/types";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatCurrency } from "@/utils/estimateUtils";
-import { CalendarIcon, ChevronDownIcon, ChevronUpIcon, HomeIcon, PrinterIcon } from "lucide-react";
+import { CalendarIcon, PrinterIcon, HomeIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import LineItemsTable from "./LineItemsTable";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 
 interface DetailedSummaryDialogProps {
@@ -24,16 +24,17 @@ const DetailedSummaryDialog = ({
   roomDetails, 
   roomEstimates 
 }: DetailedSummaryDialogProps) => {
-  const [expandedRoom, setExpandedRoom] = useState<string | null>(null);
   const { id: estimateId } = useParams<{ id: string }>();
   
-  const toggleRoomExpand = (roomId: string) => {
-    if (expandedRoom === roomId) {
-      setExpandedRoom(null);
-    } else {
-      setExpandedRoom(roomId);
+  // Initialize with all rooms expanded by default
+  const [expandedRooms, setExpandedRooms] = useState<string[]>([]);
+  
+  // Set all rooms to be expanded when the dialog opens
+  useEffect(() => {
+    if (open && roomDetails.length > 0) {
+      setExpandedRooms(roomDetails.map(room => room.id));
     }
-  };
+  }, [open, roomDetails]);
 
   const handlePrint = () => {
     window.print();
@@ -60,7 +61,7 @@ const DetailedSummaryDialog = ({
           </div>
         </DialogHeader>
         
-        <div className="py-6 space-y-8">
+        <div className="py-6 space-y-6">
           {/* Company and Client Info */}
           <div className="grid grid-cols-2 gap-8">
             <div>
@@ -82,29 +83,29 @@ const DetailedSummaryDialog = ({
             </div>
           </div>
 
-          {/* Summary Totals */}
+          {/* Summary Totals - More compact */}
           <Card className="border">
-            <CardContent className="p-6">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="space-y-1">
+            <CardContent className="p-4">
+              <div className="grid grid-cols-4 gap-4">
+                <div>
                   <p className="text-muted-foreground text-sm">Labor</p>
-                  <p className="font-semibold text-xl">{formatCurrency(currentEstimate.laborCost)}</p>
+                  <p className="font-semibold">{formatCurrency(currentEstimate.laborCost)}</p>
                 </div>
-                <div className="space-y-1">
+                <div>
                   <p className="text-muted-foreground text-sm">Materials</p>
-                  <p className="font-semibold text-xl">{formatCurrency(currentEstimate.materialCost)}</p>
+                  <p className="font-semibold">{formatCurrency(currentEstimate.materialCost)}</p>
                 </div>
-                <div className="space-y-1">
-                  <p className="text-muted-foreground text-sm">Paint Required</p>
-                  <p className="font-semibold text-xl">{currentEstimate.paintCans} gallons</p>
+                <div>
+                  <p className="text-muted-foreground text-sm">Paint</p>
+                  <p className="font-semibold">{currentEstimate.paintCans} gallons</p>
                 </div>
-                <div className="space-y-1">
-                  <p className="text-muted-foreground text-sm">Est. Time</p>
-                  <p className="font-semibold text-xl">{currentEstimate.timeEstimate.toFixed(1)} hours</p>
+                <div>
+                  <p className="text-muted-foreground text-sm">Time</p>
+                  <p className="font-semibold">{currentEstimate.timeEstimate.toFixed(1)} hours</p>
                 </div>
               </div>
               
-              <div className="border-t mt-4 pt-4">
+              <div className="border-t mt-3 pt-3">
                 <div className="flex justify-between items-center">
                   <span className="font-medium">Total Cost</span>
                   <span className="font-bold text-xl text-paint">{formatCurrency(currentEstimate.totalCost)}</span>
@@ -112,7 +113,7 @@ const DetailedSummaryDialog = ({
                 
                 {/* Discounts */}
                 {Object.entries(currentEstimate.discounts).length > 0 && (
-                  <div className="text-sm mt-2">
+                  <div className="text-sm mt-1">
                     <p className="text-muted-foreground">Includes discounts:</p>
                     {currentEstimate.discounts.volumeDiscount && (
                       <p className="text-green-600">- Volume Discount: {formatCurrency(currentEstimate.discounts.volumeDiscount)}</p>
@@ -123,110 +124,98 @@ const DetailedSummaryDialog = ({
             </CardContent>
           </Card>
           
-          {/* Room Details */}
+          {/* Room Details - Always expanded */}
           <div>
-            <h3 className="font-semibold text-lg mb-4">Room-by-Room Breakdown</h3>
-            <div className="space-y-3">
+            <h3 className="font-semibold text-lg mb-3">Room-by-Room Breakdown</h3>
+            <div className="space-y-4">
               {roomDetails.map((room) => (
-                <div key={room.id} className="border rounded-md overflow-hidden">
-                  <div 
-                    className="flex justify-between items-center p-4 bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors"
-                    onClick={() => toggleRoomExpand(room.id)}
-                  >
-                    <div className="flex items-center">
-                      <HomeIcon className="h-4 w-4 mr-2 text-muted-foreground" />
-                      <span className="font-medium">
-                        {room.roomType.charAt(0).toUpperCase() + room.roomType.slice(1)} - {room.roomSize}
-                      </span>
-                    </div>
-                    <div className="flex items-center">
-                      <span className="font-semibold mr-3">{formatCurrency(roomEstimates[room.id]?.totalCost || 0)}</span>
-                      {expandedRoom === room.id ? (
-                        <ChevronUpIcon className="h-4 w-4" />
-                      ) : (
-                        <ChevronDownIcon className="h-4 w-4" />
-                      )}
-                    </div>
+                <Card key={room.id} className="border overflow-hidden">
+                  <div className="p-3 bg-muted/30 flex items-center">
+                    <HomeIcon className="h-4 w-4 mr-2 text-muted-foreground" />
+                    <h4 className="font-medium flex-1">
+                      {room.roomType.charAt(0).toUpperCase() + room.roomType.slice(1)} - {room.roomSize}
+                    </h4>
+                    <span className="font-semibold">{formatCurrency(roomEstimates[room.id]?.totalCost || 0)}</span>
                   </div>
                   
-                  {expandedRoom === room.id && (
-                    <div className="p-4 bg-white border-t">
-                      <div className="grid grid-cols-2 gap-4 mb-3">
-                        <div>
-                          <h4 className="text-sm font-medium mb-2">Room Details</h4>
-                          <ul className="text-sm space-y-1">
-                            <li><span className="text-muted-foreground">Walls:</span> {room.wallsCount}</li>
-                            <li><span className="text-muted-foreground">Dimensions:</span> {room.wallHeight}ft height × {room.wallWidth}ft width</li>
-                            <li><span className="text-muted-foreground">Paint Type:</span> {room.paintType}</li>
-                            <li><span className="text-muted-foreground">Condition:</span> {room.condition}</li>
-                          </ul>
-                        </div>
-                        <div>
-                          <h4 className="text-sm font-medium mb-2">Options</h4>
-                          <ul className="text-sm space-y-1">
-                            <li><span className="text-muted-foreground">Ceiling:</span> {room.includeCeiling ? 'Yes' : 'No'}</li>
-                            <li><span className="text-muted-foreground">Baseboards:</span> {room.includeBaseboards ? 'Yes' : 'No'}</li>
-                            <li><span className="text-muted-foreground">Crown Molding:</span> {room.includeCrownMolding ? 'Yes' : 'No'}</li>
-                            <li><span className="text-muted-foreground">Empty Room:</span> {room.isEmptyHouse ? 'Yes (-15%)' : 'No'}</li>
-                          </ul>
+                  <div className="p-3 bg-white">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <h5 className="text-sm font-medium mb-2">Room Details</h5>
+                        <div className="grid grid-cols-2 text-sm gap-x-2 gap-y-1">
+                          <span className="text-muted-foreground">Walls:</span> 
+                          <span>{room.wallsCount}</span>
+                          <span className="text-muted-foreground">Dimensions:</span> 
+                          <span>{room.wallHeight}ft × {room.wallWidth}ft</span>
+                          <span className="text-muted-foreground">Paint Type:</span> 
+                          <span>{room.paintType}</span>
+                          <span className="text-muted-foreground">Condition:</span> 
+                          <span>{room.condition}</span>
                         </div>
                       </div>
-                      
-                      {/* Cost breakdown for the room */}
-                      <div className="border-t pt-3 mt-3">
-                        <h4 className="text-sm font-medium mb-2">Cost Breakdown</h4>
-                        <div className="space-y-1">
-                          <div className="flex justify-between items-center text-sm">
-                            <span>Labor</span>
-                            <span>{formatCurrency(roomEstimates[room.id]?.laborCost || 0)}</span>
-                          </div>
-                          <div className="flex justify-between items-center text-sm">
-                            <span>Materials</span>
-                            <span>{formatCurrency(roomEstimates[room.id]?.materialCost || 0)}</span>
-                          </div>
-                          
-                          {/* Additional costs */}
-                          {roomEstimates[room.id]?.additionalCosts && 
-                           Object.entries(roomEstimates[room.id].additionalCosts).length > 0 && (
-                            <div className="pt-1 mt-1 border-t">
-                              <div className="text-sm font-medium mb-1">Additional Costs:</div>
-                              {Object.entries(roomEstimates[room.id].additionalCosts).map(([key, value]) => (
-                                <div key={key} className="flex justify-between items-center text-sm">
-                                  <span className="text-muted-foreground">{key.charAt(0).toUpperCase() + key.slice(1)}</span>
-                                  <span>{formatCurrency(Number(value))}</span>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                          
-                          {/* Discounts for the room */}
-                          {(room.isEmptyHouse || !room.needFloorCovering) && (
-                            <div className="pt-1 mt-1 border-t">
-                              <div className="text-sm font-medium mb-1">Discounts:</div>
-                              {room.isEmptyHouse && (
-                                <div className="flex justify-between items-center text-sm text-green-600">
-                                  <span>Empty room discount</span>
-                                  <span>-15%</span>
-                                </div>
-                              )}
-                              {!room.needFloorCovering && (
-                                <div className="flex justify-between items-center text-sm text-green-600">
-                                  <span>No floor covering</span>
-                                  <span>-5%</span>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                          
-                          <div className="flex justify-between items-center pt-2 mt-2 border-t font-medium">
-                            <span>Total for this room</span>
-                            <span>{formatCurrency(roomEstimates[room.id]?.totalCost || 0)}</span>
-                          </div>
+                      <div>
+                        <h5 className="text-sm font-medium mb-2">Additional Options</h5>
+                        <div className="grid grid-cols-2 text-sm gap-x-2 gap-y-1">
+                          <span className="text-muted-foreground">Ceiling:</span> 
+                          <span>{room.includeCeiling ? 'Yes' : 'No'}</span>
+                          <span className="text-muted-foreground">Baseboards:</span> 
+                          <span>{room.includeBaseboards ? 'Yes' : 'No'}</span>
+                          <span className="text-muted-foreground">Crown Molding:</span> 
+                          <span>{room.includeCrownMolding ? 'Yes' : 'No'}</span>
+                          <span className="text-muted-foreground">Empty Room:</span> 
+                          <span>{room.isEmptyHouse ? 'Yes (-15%)' : 'No'}</span>
                         </div>
                       </div>
                     </div>
-                  )}
-                </div>
+                    
+                    {/* Cost breakdown for the room - compact */}
+                    <div className="border-t pt-3 mt-3">
+                      <h5 className="text-sm font-medium mb-2">Cost Breakdown</h5>
+                      <div className="grid grid-cols-2 text-sm gap-x-4 gap-y-1">
+                        <span>Labor</span>
+                        <span className="text-right">{formatCurrency(roomEstimates[room.id]?.laborCost || 0)}</span>
+                        <span>Materials</span>
+                        <span className="text-right">{formatCurrency(roomEstimates[room.id]?.materialCost || 0)}</span>
+                        
+                        {/* Additional costs */}
+                        {roomEstimates[room.id]?.additionalCosts && 
+                         Object.entries(roomEstimates[room.id].additionalCosts).length > 0 && (
+                          <>
+                            <span className="col-span-2 font-medium pt-1 mt-1 border-t">Additional Costs:</span>
+                            {Object.entries(roomEstimates[room.id].additionalCosts).map(([key, value]) => (
+                              <>
+                                <span key={`key-${key}`} className="text-muted-foreground pl-3">{key.charAt(0).toUpperCase() + key.slice(1)}</span>
+                                <span key={`value-${key}`} className="text-right">{formatCurrency(Number(value))}</span>
+                              </>
+                            ))}
+                          </>
+                        )}
+                        
+                        {/* Discounts for the room */}
+                        {(room.isEmptyHouse || !room.needFloorCovering) && (
+                          <>
+                            <span className="col-span-2 font-medium pt-1 mt-1 border-t">Discounts:</span>
+                            {room.isEmptyHouse && (
+                              <>
+                                <span className="text-green-600 pl-3">Empty room discount</span>
+                                <span className="text-right text-green-600">-15%</span>
+                              </>
+                            )}
+                            {!room.needFloorCovering && (
+                              <>
+                                <span className="text-green-600 pl-3">No floor covering</span>
+                                <span className="text-right text-green-600">-5%</span>
+                              </>
+                            )}
+                          </>
+                        )}
+                        
+                        <span className="font-medium pt-2 mt-1 border-t">Total for this room</span>
+                        <span className="text-right font-medium pt-2 mt-1 border-t">{formatCurrency(roomEstimates[room.id]?.totalCost || 0)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
               ))}
             </div>
           </div>
@@ -241,8 +230,8 @@ const DetailedSummaryDialog = ({
             ]} 
           />
           
-          {/* Terms and Notes */}
-          <div className="space-y-4">
+          {/* Terms and Notes - more compact */}
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <h3 className="text-sm font-medium mb-1">PAYMENT TERMS</h3>
               <p className="text-sm">Payment is due within 30 days of service completion. Please make checks payable to Premium Paint Contractors.</p>
