@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useSession } from "@/context/SessionContext";
@@ -47,7 +46,6 @@ export default function ProjectDetail() {
       try {
         if (!id) return;
         
-        // Don't filter by status so we can see archived projects as well
         const { data: projectData, error: projectError } = await supabase
           .from("projects")
           .select("*")
@@ -57,8 +55,6 @@ export default function ProjectDetail() {
         if (projectError) throw projectError;
         setProject(projectData);
         
-        // Only show estimates for this project that aren't deleted
-        // Removed the .is("status", null) filter to show all estimates regardless of status
         const { data: estimatesData, error: estimatesError } = await supabase
           .from("estimates")
           .select("*")
@@ -109,7 +105,6 @@ export default function ProjectDetail() {
     try {
       setIsUpdatingStatus(true);
       
-      // Update the project status
       const { error: projectError } = await supabase
         .from("projects")
         .update({ status: newStatus })
@@ -132,13 +127,7 @@ export default function ProjectDetail() {
         description: toastMessage,
       });
       
-      // Update local state
-      setProject({...project, status: newStatus});
-      
-      // If deleted or if the status was changed from archived, navigate back to dashboard
-      if (newStatus === "deleted" || (project.status === "archived" && newStatus === "active")) {
-        navigate("/dashboard");
-      }
+      navigate("/dashboard");
       
     } catch (error) {
       console.error(`Error updating project status to ${newStatus}:`, error);
@@ -184,7 +173,6 @@ export default function ProjectDetail() {
     );
   }
 
-  // Don't show deleted projects to regular users
   if (project.status === "deleted" && !isAdmin) {
     return (
       <DashboardLayout user={user} profile={profile} signOut={signOut}>
@@ -411,7 +399,6 @@ export default function ProjectDetail() {
         </Tabs>
       </div>
 
-      {/* Delete Project Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -433,7 +420,6 @@ export default function ProjectDetail() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Archive Project Dialog */}
       <AlertDialog open={showArchiveDialog} onOpenChange={setShowArchiveDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -455,7 +441,6 @@ export default function ProjectDetail() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Restore Project Dialog */}
       <AlertDialog open={showRestoreDialog} onOpenChange={setShowRestoreDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>

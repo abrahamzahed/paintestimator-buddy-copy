@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { Estimate } from "@/types";
 import { Button } from "@/components/ui/button";
 import { FileText, Edit, Trash2 } from "lucide-react";
@@ -23,6 +24,32 @@ const EstimateFooter = ({ estimate }: EstimateFooterProps) => {
   const { toast } = useToast();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [projectStatus, setProjectStatus] = useState<string>("active"); // Default to active
+  
+  useEffect(() => {
+    // Fetch the project status when component mounts
+    const fetchProjectStatus = async () => {
+      if (!estimate.project_id) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from("projects")
+          .select("status")
+          .eq("id", estimate.project_id)
+          .single();
+          
+        if (error) throw error;
+        
+        if (data) {
+          setProjectStatus(data.status);
+        }
+      } catch (error) {
+        console.error("Error fetching project status:", error);
+      }
+    };
+    
+    fetchProjectStatus();
+  }, [estimate.project_id]);
   
   const handleEdit = () => {
     navigate(`/estimate/edit/${estimate.id}`);
@@ -79,6 +106,9 @@ const EstimateFooter = ({ estimate }: EstimateFooterProps) => {
     }
   };
   
+  // Check if project is active to enable editing functionality
+  const isProjectActive = projectStatus === "active";
+  
   return (
     <div className="w-full flex justify-between items-center py-4">
       <div className="flex gap-2">
@@ -87,7 +117,7 @@ const EstimateFooter = ({ estimate }: EstimateFooterProps) => {
           Download PDF
         </Button>
         
-        {estimate?.status === "pending" && (
+        {estimate?.status === "pending" && isProjectActive && (
           <Button className="bg-green-600 hover:bg-green-700" size="sm">Approve Estimate</Button>
         )}
         {estimate?.status === "approved" && (
@@ -96,9 +126,12 @@ const EstimateFooter = ({ estimate }: EstimateFooterProps) => {
         {estimate?.status === "declined" && (
           <p className="text-sm text-red-600 ml-4">This estimate has been declined</p>
         )}
+        {!isProjectActive && estimate?.status === "pending" && (
+          <p className="text-sm text-amber-600 ml-4">Project is {projectStatus} - cannot modify estimates</p>
+        )}
       </div>
       
-      {estimate?.status !== "approved" && (
+      {estimate?.status !== "approved" && isProjectActive && (
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={handleEdit}>
             <Edit className="h-4 w-4 mr-2" />
