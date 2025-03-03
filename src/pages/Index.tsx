@@ -7,29 +7,29 @@ import EstimateCalculator from "@/components/EstimateCalculator";
 import { EstimateResult } from "@/types";
 import { Button } from "@/components/ui/button";
 import { useSession } from "@/context/SessionContext";
-
 const Index = () => {
-  const { user, isLoading } = useSession();
+  const {
+    user,
+    isLoading
+  } = useSession();
   const navigate = useNavigate();
   const [showEstimateCalculator, setShowEstimateCalculator] = useState(false);
   const chatSectionRef = useRef<HTMLDivElement>(null);
-  
   const handleOpenChat = () => {
     if (user) {
       navigate("/estimate");
     } else {
-      chatSectionRef.current?.scrollIntoView({ behavior: "smooth" });
+      chatSectionRef.current?.scrollIntoView({
+        behavior: "smooth"
+      });
     }
   };
-  
   const handleEstimateComplete = (estimate: EstimateResult) => {
     setShowEstimateCalculator(false);
-    
     if (user) {
       navigate("/estimate");
     }
   };
-  
   const handleStartEstimate = () => {
     if (user) {
       navigate("/estimate");
@@ -37,9 +37,7 @@ const Index = () => {
       setShowEstimateCalculator(true);
     }
   };
-
-  return (
-    <div className="min-h-screen">
+  return <div className="min-h-screen">
       <header className="border-b">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
@@ -52,22 +50,16 @@ const Index = () => {
               </nav>
             </div>
             <div className="flex items-center space-x-4">
-              {!isLoading && (
-                user ? (
-                  <Button asChild className="bg-paint hover:bg-paint-dark">
+              {!isLoading && (user ? <Button asChild className="bg-paint hover:bg-paint-dark">
                     <Link to="/dashboard">Dashboard</Link>
-                  </Button>
-                ) : (
-                  <>
+                  </Button> : <>
                     <Button variant="outline" asChild>
                       <Link to="/auth?tab=signin">Sign In</Link>
                     </Button>
                     <Button asChild className="bg-paint hover:bg-paint-dark">
                       <Link to="/auth?tab=signup">Sign Up</Link>
                     </Button>
-                  </>
-                )
-              )}
+                  </>)}
             </div>
           </div>
         </div>
@@ -95,19 +87,10 @@ const Index = () => {
               </div>
               
               <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
-                <Button 
-                  size="lg" 
-                  onClick={handleOpenChat}
-                  className="bg-paint hover:bg-paint-dark text-white font-medium px-8 shadow-lg shadow-paint/20 transition-all hover:shadow-xl hover:shadow-paint/30 hover:-translate-y-0.5"
-                >
+                <Button size="lg" onClick={handleOpenChat} className="bg-paint hover:bg-paint-dark text-white font-medium px-8 shadow-lg shadow-paint/20 transition-all hover:shadow-xl hover:shadow-paint/30 hover:-translate-y-0.5">
                   Get Free Estimate
                 </Button>
-                <Button 
-                  variant="outline" 
-                  size="lg"
-                  className="border-foreground/20 hover:bg-foreground/5"
-                  asChild
-                >
+                <Button variant="outline" size="lg" className="border-foreground/20 hover:bg-foreground/5" asChild>
                   <Link to={user ? "/dashboard" : "/auth"}>
                     {user ? "View Dashboard" : "Create Account"}
                   </Link>
@@ -116,12 +99,7 @@ const Index = () => {
               
               <div className="flex items-center space-x-6 pt-4">
                 <div className="flex -space-x-2">
-                  {[1, 2, 3, 4].map((i) => (
-                    <div
-                      key={i}
-                      className={`w-10 h-10 rounded-full border-2 border-white bg-[#${(i * 2 + 3).toString(16)}${(i * 3).toString(16)}${(i * 4).toString(16)}]`}
-                    />
-                  ))}
+                  {[1, 2, 3, 4].map(i => <div key={i} className={`w-10 h-10 rounded-full border-2 border-white bg-[#${(i * 2 + 3).toString(16)}${(i * 3).toString(16)}${(i * 4).toString(16)}]`} />)}
                 </div>
                 <div>
                   <div className="font-semibold">500+ Satisfied Clients</div>
@@ -143,12 +121,16 @@ const Index = () => {
                 <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 animate-pulse-subtle"></div>
               </div>
               
-              <div className="absolute -top-6 -right-6 glass px-4 py-3 rounded-xl shadow-lg animate-fade-in" style={{ animationDelay: '0.3s' }}>
+              <div className="absolute -top-6 -right-6 glass px-4 py-3 rounded-xl shadow-lg animate-fade-in" style={{
+              animationDelay: '0.3s'
+            }}>
                 <div className="font-semibold">Premium Quality</div>
                 <div className="text-sm text-muted-foreground">Industry-leading paints</div>
               </div>
               
-              <div className="absolute -bottom-6 -left-6 glass px-4 py-3 rounded-xl shadow-lg animate-fade-in" style={{ animationDelay: '0.6s' }}>
+              <div className="absolute -bottom-6 -left-6 glass px-4 py-3 rounded-xl shadow-lg animate-fade-in" style={{
+              animationDelay: '0.6s'
+            }}>
                 <div className="font-semibold">5-Year Warranty</div>
                 <div className="text-sm text-muted-foreground">On all our work</div>
               </div>
@@ -157,58 +139,28 @@ const Index = () => {
         </div>
       </section>
       
-      <div 
-        ref={chatSectionRef} 
-        className="py-16 bg-background"
-        id="services"
-      >
+      <div ref={chatSectionRef} className="py-16 bg-background" id="services">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
             <h2 className="text-3xl font-bold mb-8 text-center">Our Services</h2>
             
             <div className="grid gap-8 md:grid-cols-3">
-              <div className="glass rounded-xl p-6 shadow-lg">
+              <div className="glass rounded-xl p-6 shadow-lg px-[24px] py-[24px] mx-0">
                 <h3 className="text-xl font-semibold mb-4">Interior Painting</h3>
                 <p className="mb-4 text-muted-foreground">
                   Transform your living spaces with expert interior painting services. We handle everything from color selection to flawless application.
                 </p>
-                <Button 
-                  onClick={handleStartEstimate}
-                  className="w-full bg-paint hover:bg-paint-dark"
-                >
+                <Button onClick={handleStartEstimate} className="w-full bg-paint hover:bg-paint-dark">
                   Get Estimate
                 </Button>
               </div>
               
-              <div className="glass rounded-xl p-6 shadow-lg">
-                <h3 className="text-xl font-semibold mb-4">Exterior Painting</h3>
-                <p className="mb-4 text-muted-foreground">
-                  Protect and beautify your home's exterior with our durable, weather-resistant painting solutions and expert craftsmanship.
-                </p>
-                <Button 
-                  onClick={handleStartEstimate}
-                  className="w-full bg-paint hover:bg-paint-dark"
-                >
-                  Get Estimate
-                </Button>
-              </div>
               
-              <div className="glass rounded-xl p-6 shadow-lg">
-                <h3 className="text-xl font-semibold mb-4">Commercial Painting</h3>
-                <p className="mb-4 text-muted-foreground">
-                  Elevate your business space with professional commercial painting services designed to minimize disruption and maximize impact.
-                </p>
-                <Button 
-                  onClick={handleStartEstimate}
-                  className="w-full bg-paint hover:bg-paint-dark"
-                >
-                  Get Estimate
-                </Button>
-              </div>
+              
+              
             </div>
             
-            {showEstimateCalculator && (
-              <div className="mt-12 animate-fade-in">
+            {showEstimateCalculator && <div className="mt-12 animate-fade-in">
                 <h3 className="text-xl font-semibold mb-4">Get Your Free Estimate</h3>
                 <EstimateCalculator onEstimateComplete={handleEstimateComplete} />
                 
@@ -220,8 +172,7 @@ const Index = () => {
                     <Link to="/auth?tab=signup">Create Account</Link>
                   </Button>
                 </div>
-              </div>
-            )}
+              </div>}
           </div>
         </div>
       </div>
@@ -234,11 +185,7 @@ const Index = () => {
               Contact us today to schedule a consultation or get your detailed estimate.
             </p>
             <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
-              <Button 
-                size="lg" 
-                className="bg-paint hover:bg-paint-dark"
-                onClick={handleStartEstimate}
-              >
+              <Button size="lg" className="bg-paint hover:bg-paint-dark" onClick={handleStartEstimate}>
                 Get Free Estimate
               </Button>
               <Button variant="outline" size="lg" asChild>
@@ -284,8 +231,6 @@ const Index = () => {
           </div>
         </div>
       </footer>
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
