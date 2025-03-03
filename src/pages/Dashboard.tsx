@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useSession } from "@/context/SessionContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -105,7 +104,6 @@ export default function Dashboard() {
               .from("estimates")
               .select("*")
               .in("project_id", allProjectIds)
-              .is("status", null) // Only get non-deleted estimates
               .order("created_at", { ascending: false });
 
             if (estimatesError) throw estimatesError;

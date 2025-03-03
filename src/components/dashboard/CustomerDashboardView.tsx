@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -37,6 +36,16 @@ const CustomerDashboardView = ({
   const displayedProjects = projectsView === "active" ? projects : archivedProjects;
   
   return <div>
+      <div className="flex justify-between items-center mb-8">
+        <h2 className="text-3xl font-bold">Welcome!</h2>
+        <Button asChild className="bg-paint hover:bg-paint-dark">
+          <Link to="/estimate">
+            <PlusCircle className="mr-2 h-4 w-4" />
+            New Estimate
+          </Link>
+        </Button>
+      </div>
+
       {/* Metrics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <Card className="border-0 shadow-sm bg-blue-50">
@@ -51,11 +60,6 @@ const CustomerDashboardView = ({
           <CardContent>
             <p className="text-3xl font-bold">{projects.length}</p>
             <p className="text-sm text-muted-foreground mt-1">Active projects</p>
-            {archivedProjects.length > 0 && (
-              <p className="text-xs text-muted-foreground mt-1">
-                {archivedProjects.length} archived
-              </p>
-            )}
           </CardContent>
         </Card>
         
@@ -86,12 +90,6 @@ const CustomerDashboardView = ({
           <CardContent>
             <p className="text-3xl font-bold">{totalInvoicesCount}</p>
             <p className="text-sm text-muted-foreground mt-1">Total invoices</p>
-            <Button asChild className="mt-4 w-full bg-paint hover:bg-paint-dark">
-              <Link to="/estimate">
-                <PlusCircle className="mr-2 h-4 w-4" />
-                New Estimate
-              </Link>
-            </Button>
           </CardContent>
         </Card>
       </div>

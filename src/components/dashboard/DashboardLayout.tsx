@@ -22,7 +22,7 @@ const DashboardLayout = ({ children, user, profile, signOut }: DashboardLayoutPr
               <Link to="/" className="text-2xl font-bold text-paint">Paint Pro</Link>
               <nav className="hidden md:flex space-x-4">
                 <Link to="/dashboard" className="text-foreground hover:text-paint">Dashboard</Link>
-                <Link to="/estimate" className="text-foreground hover:text-paint">Get Estimate</Link>
+                {/* Removed the "Get Estimate" link */}
                 {profile?.role === "admin" && (
                   <Link to="/admin" className="text-foreground hover:text-paint">Admin</Link>
                 )}
@@ -41,24 +41,7 @@ const DashboardLayout = ({ children, user, profile, signOut }: DashboardLayoutPr
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold mb-2">Welcome, {profile?.name || "Customer"}!</h2>
-          <p className="text-muted-foreground">
-            {profile?.role === "admin" 
-              ? "View your dashboard snapshot below or visit the admin panel for full access."
-              : "Manage your painting projects and estimates in one place."}
-          </p>
-          
-          {profile?.role === "admin" && (
-            <Button 
-              onClick={() => window.location.href = "/admin"}
-              className="mt-4 bg-paint hover:bg-paint-dark"
-            >
-              Go to Admin Dashboard
-            </Button>
-          )}
-        </div>
-
+        {/* Removed the welcome message block to allow customer dashboard to manage it */}
         {children}
       </main>
     </div>

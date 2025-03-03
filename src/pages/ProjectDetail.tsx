@@ -58,11 +58,11 @@ export default function ProjectDetail() {
         setProject(projectData);
         
         // Only show estimates for this project that aren't deleted
+        // Removed the .is("status", null) filter to show all estimates regardless of status
         const { data: estimatesData, error: estimatesError } = await supabase
           .from("estimates")
           .select("*")
           .eq("project_id", id)
-          .is("status", null)
           .order("created_at", { ascending: false });
 
         if (estimatesError) throw estimatesError;
