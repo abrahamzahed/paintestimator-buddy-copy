@@ -87,7 +87,7 @@ export default function EstimateForm() {
           address: leadData.address,
           service_type: leadData.service_type,
           description: "",
-          room_count: estimateResult ? estimateResult.totalCost / 500 : 1, // Rough estimation
+          room_count: estimateResult ? Math.round(estimateResult.totalCost / 500) : 1, // Round to an integer
           square_footage: 0, // No longer collecting this
           status: "new"
         }])
@@ -104,7 +104,7 @@ export default function EstimateForm() {
             lead_id: createdLead.id,
             project_id: selectedProjectId,
             details: {
-              rooms: estimateResult.totalCost / 500, // Rough estimation
+              rooms: Math.round(estimateResult.totalCost / 500), // Round to an integer
               paintType: estimateResult.paintCans > 2 ? "premium" : "standard"
             },
             labor_cost: estimateResult.laborCost,
@@ -282,7 +282,7 @@ export default function EstimateForm() {
             </Card>
           )}
 
-          {showEstimateCalculator && (
+          {showEstimateCalculator && step === 1 && (
             <div className="animate-fade-in">
               <Card className="mb-4">
                 <CardHeader>
@@ -362,7 +362,6 @@ export default function EstimateForm() {
                   type="button"
                   variant="outline"
                   onClick={() => {
-                    setStep(1);
                     setShowEstimateCalculator(true);
                   }}
                 >
@@ -382,4 +381,4 @@ export default function EstimateForm() {
       </main>
     </div>
   );
-}
+};

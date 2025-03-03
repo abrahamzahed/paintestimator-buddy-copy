@@ -8,6 +8,7 @@ import { RoomDetail } from "@/types";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 
 interface MultiRoomSelectorProps {
   rooms: RoomDetail[];
@@ -276,6 +277,118 @@ const MultiRoomSelector = ({ rooms, updateRooms }: MultiRoomSelectorProps) => {
                       }
                       min={0}
                     />
+                  </div>
+                </div>
+
+                {/* Additional Options Section */}
+                <div className="border-t pt-4 mt-4">
+                  <h5 className="font-medium mb-3">Additional Options</h5>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor={`${room.id}-ceiling`} className="cursor-pointer">
+                        Include Ceiling (+40%)
+                      </Label>
+                      <Switch 
+                        id={`${room.id}-ceiling`} 
+                        checked={room.includeCeiling}
+                        onCheckedChange={(checked) => updateRoomDetail(room.id, "includeCeiling", checked)}
+                      />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor={`${room.id}-baseboards`} className="cursor-pointer">
+                        Include Baseboards
+                      </Label>
+                      <Switch 
+                        id={`${room.id}-baseboards`} 
+                        checked={room.includeBaseboards}
+                        onCheckedChange={(checked) => updateRoomDetail(room.id, "includeBaseboards", checked)}
+                      />
+                    </div>
+                    
+                    {room.includeBaseboards && (
+                      <div className="ml-6 mt-2">
+                        <RadioGroup
+                          value={room.baseboardsMethod}
+                          onValueChange={(value) => updateRoomDetail(room.id, "baseboardsMethod", value)}
+                          className="flex flex-col space-y-2"
+                        >
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="brush" id={`${room.id}-baseboards-brush`} />
+                            <Label htmlFor={`${room.id}-baseboards-brush`} className="cursor-pointer">
+                              Brush (+25%)
+                            </Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="spray" id={`${room.id}-baseboards-spray`} />
+                            <Label htmlFor={`${room.id}-baseboards-spray`} className="cursor-pointer">
+                              Spray (+50%)
+                            </Label>
+                          </div>
+                        </RadioGroup>
+                      </div>
+                    )}
+                    
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor={`${room.id}-crown-molding`} className="cursor-pointer">
+                        Include Crown Molding (+25%)
+                      </Label>
+                      <Switch 
+                        id={`${room.id}-crown-molding`} 
+                        checked={room.includeCrownMolding}
+                        onCheckedChange={(checked) => updateRoomDetail(room.id, "includeCrownMolding", checked)}
+                      />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor={`${room.id}-high-ceiling`} className="cursor-pointer">
+                        Has High Ceiling (+$300-600)
+                      </Label>
+                      <Switch 
+                        id={`${room.id}-high-ceiling`} 
+                        checked={room.hasHighCeiling}
+                        onCheckedChange={(checked) => updateRoomDetail(room.id, "hasHighCeiling", checked)}
+                      />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor={`${room.id}-closet`} className="cursor-pointer">
+                        Include Closet (+$60-300)
+                      </Label>
+                      <Switch 
+                        id={`${room.id}-closet`} 
+                        checked={room.includeCloset}
+                        onCheckedChange={(checked) => updateRoomDetail(room.id, "includeCloset", checked)}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Discounts Section */}
+                <div className="border-t pt-4 mt-4">
+                  <h5 className="font-medium mb-3">Room-Specific Discounts</h5>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor={`${room.id}-empty`} className="cursor-pointer">
+                        Room is Empty (15% discount)
+                      </Label>
+                      <Switch 
+                        id={`${room.id}-empty`} 
+                        checked={room.isEmptyHouse}
+                        onCheckedChange={(checked) => updateRoomDetail(room.id, "isEmptyHouse", checked)}
+                      />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor={`${room.id}-floor-covering`} className="cursor-pointer">
+                        Need Floor Covering? (5% discount if no)
+                      </Label>
+                      <Switch 
+                        id={`${room.id}-floor-covering`} 
+                        checked={room.needFloorCovering}
+                        onCheckedChange={(checked) => updateRoomDetail(room.id, "needFloorCovering", checked)}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
