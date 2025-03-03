@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -70,7 +71,8 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
               id: userId,
               name: userData?.name || user?.email?.split('@')[0] || null,
               phone: userData?.phone || null,
-              role: "customer" // Default role for new profiles is customer
+              role: "customer", // Default role for new profiles is customer
+              email: user?.email || null // Add email from user auth data
             }])
             .select();
             
@@ -85,14 +87,7 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
           }
           
           console.log("New profile created successfully:", newProfile?.[0]);
-          
-          // Add email from user to the profile object
-          const profileWithEmail = {
-            ...newProfile?.[0],
-            email: user?.email || null
-          };
-          
-          setProfile(profileWithEmail as Profile);
+          setProfile(newProfile?.[0] as Profile);
           return;
         }
         
@@ -116,13 +111,23 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
         });
       }
       
-      // Add email from user data if missing in profile
-      const profileWithEmail = {
-        ...data,
-        email: user?.email || null
-      };
+      // If email is missing in the profile but exists in auth, update the profile
+      if (!data.email && user?.email) {
+        console.log("Email missing in profile, updating with:", user.email);
+        const { error: updateError } = await supabase
+          .from("profiles")
+          .update({ email: user.email })
+          .eq("id", userId);
+          
+        if (updateError) {
+          console.error("Error updating profile email:", updateError);
+        } else {
+          // Update the local data with the email
+          data.email = user.email;
+        }
+      }
       
-      setProfile(profileWithEmail as Profile);
+      setProfile(data as Profile);
     } catch (error) {
       console.error("Error in fetchProfile function:", error);
     } finally {

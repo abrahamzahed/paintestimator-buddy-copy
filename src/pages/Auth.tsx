@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -54,6 +55,7 @@ export default function Auth() {
               id: data.user.id,
               name,
               phone,
+              email, // Ensure email is included here
               role: 'customer',
             }
           ], { onConflict: 'id' });
