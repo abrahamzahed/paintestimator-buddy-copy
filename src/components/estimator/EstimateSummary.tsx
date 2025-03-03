@@ -8,7 +8,7 @@ interface EstimateSummaryProps {
   currentEstimate: EstimateResult | null;
   rooms: RoomDetail[];
   roomEstimates: Record<string, any>;
-  onSubmit: () => void;
+  onSubmit: (e?: React.FormEvent) => void;
   submitButtonText: string;
   isLastStep: boolean;
 }
@@ -123,7 +123,7 @@ const EstimateSummary = ({
       {isLastStep && (
         <div className="absolute bottom-0 right-0">
           <Button
-            onClick={onSubmit}
+            onClick={() => onSubmit()}
             className="bg-paint hover:bg-paint-dark px-6"
           >
             <Send className="mr-2 h-4 w-4" />

@@ -106,7 +106,10 @@ const EstimateCalculator = ({
     });
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = (e?: React.FormEvent) => {
+    if (e) {
+      e.preventDefault();
+    }
     if (currentEstimate) {
       onEstimateComplete(currentEstimate, roomDetails.rooms, roomEstimates);
     }
