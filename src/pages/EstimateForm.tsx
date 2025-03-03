@@ -6,7 +6,6 @@ import { supabase } from "../App";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
@@ -17,7 +16,7 @@ import ProjectSelector from "@/components/estimator/ProjectSelector";
 
 export default function EstimateForm() {
   const navigate = useNavigate();
-  const { user } = useSession();
+  const { user, profile } = useSession();
   const { toast } = useToast();
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -28,16 +27,27 @@ export default function EstimateForm() {
   
   const [leadData, setLeadData] = useState<Partial<Lead>>({
     user_id: user?.id,
-    name: "",
-    email: "",
-    phone: "",
+    name: profile?.name || "",
+    email: user?.email || "",
+    phone: profile?.phone || "",
     address: "",
     service_type: "interior",
     description: "",
-    room_count: 1,
-    square_footage: 0,
     status: "new"
   });
+
+  // Update user info from profile when it loads
+  useEffect(() => {
+    if (profile || user) {
+      setLeadData(prevData => ({
+        ...prevData,
+        user_id: user?.id,
+        name: profile?.name || prevData.name,
+        email: user?.email || prevData.email,
+        phone: profile?.phone || prevData.phone
+      }));
+    }
+  }, [profile, user]);
 
   const handleEstimateComplete = async (estimate: EstimateResult) => {
     setEstimateResult(estimate);
@@ -52,11 +62,6 @@ export default function EstimateForm() {
 
   const handleRadioChange = (value: string) => {
     setLeadData({ ...leadData, service_type: value });
-  };
-
-  const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setLeadData({ ...leadData, [name]: parseFloat(value) || 0 });
   };
 
   const handleSelectProject = (projectId: string | null, projectName?: string) => {
@@ -81,9 +86,9 @@ export default function EstimateForm() {
           phone: leadData.phone,
           address: leadData.address,
           service_type: leadData.service_type,
-          description: leadData.description,
-          room_count: leadData.room_count,
-          square_footage: leadData.square_footage,
+          description: "",
+          room_count: estimateResult ? estimateResult.totalCost / 500 : 1, // Rough estimation
+          square_footage: 0, // No longer collecting this
           status: "new"
         }])
         .select("id")
@@ -99,9 +104,7 @@ export default function EstimateForm() {
             lead_id: createdLead.id,
             project_id: selectedProjectId,
             details: {
-              roomType: "bedroom", // This would come from the estimator
-              roomSize: "medium",
-              wallCondition: "good",
+              rooms: estimateResult.totalCost / 500, // Rough estimation
               paintType: estimateResult.paintCans > 2 ? "premium" : "standard"
             },
             labor_cost: estimateResult.laborCost,
@@ -194,7 +197,7 @@ export default function EstimateForm() {
               <CardHeader>
                 <CardTitle>Contact Information</CardTitle>
                 <CardDescription>
-                  Tell us about yourself and the painting project
+                  Confirm your contact details and provide the project address
                 </CardDescription>
               </CardHeader>
               <form onSubmit={(e) => { e.preventDefault(); setStep(2); }}>
@@ -243,6 +246,7 @@ export default function EstimateForm() {
                       placeholder="123 Main St, City, State, Zip"
                       value={leadData.address}
                       onChange={handleChange}
+                      required
                     />
                   </div>
                 </CardContent>
@@ -263,7 +267,7 @@ export default function EstimateForm() {
               <CardHeader>
                 <CardTitle>Project Details</CardTitle>
                 <CardDescription>
-                  Provide details about your painting project
+                  Select project and service type
                 </CardDescription>
               </CardHeader>
               <form onSubmit={(e) => { e.preventDefault(); setShowEstimateCalculator(true); }}>
@@ -295,42 +299,6 @@ export default function EstimateForm() {
                       </div>
                     </RadioGroup>
                   </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="room_count">Number of Rooms (for interior)</Label>
-                    <Input
-                      id="room_count"
-                      name="room_count"
-                      type="number"
-                      min="1"
-                      value={leadData.room_count}
-                      onChange={handleNumberChange}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="square_footage">Approximate Square Footage</Label>
-                    <Input
-                      id="square_footage"
-                      name="square_footage"
-                      type="number"
-                      min="0"
-                      value={leadData.square_footage}
-                      onChange={handleNumberChange}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="description">Additional Details</Label>
-                    <Textarea
-                      id="description"
-                      name="description"
-                      placeholder="Please provide any other details about your project..."
-                      rows={4}
-                      value={leadData.description}
-                      onChange={handleChange}
-                    />
-                  </div>
                 </CardContent>
                 <CardFooter className="flex justify-between">
                   <Button
@@ -344,7 +312,7 @@ export default function EstimateForm() {
                     type="submit"
                     className="bg-paint hover:bg-paint-dark"
                   >
-                    Calculate Estimate
+                    Continue
                   </Button>
                 </CardFooter>
               </form>
@@ -357,7 +325,7 @@ export default function EstimateForm() {
                 <CardHeader>
                   <CardTitle>Detailed Estimator</CardTitle>
                   <CardDescription>
-                    Use our estimator to get a detailed breakdown of costs
+                    Add rooms to paint and get a detailed breakdown of costs
                   </CardDescription>
                 </CardHeader>
                 <CardContent>

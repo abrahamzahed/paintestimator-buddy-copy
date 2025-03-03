@@ -1,3 +1,4 @@
+
 export interface Message {
   id: string;
   role: "bot" | "user";
@@ -28,7 +29,8 @@ export interface EstimateResult {
   };
 }
 
-export interface RoomDetails {
+export interface RoomDetail {
+  id: string;
   roomType: string;
   roomSize: string;
   wallsCount: number;
@@ -46,6 +48,12 @@ export interface RoomDetails {
   needFloorCovering: boolean;
   doorsCount: number;
   windowsCount: number;
+}
+
+export interface RoomDetails {
+  rooms: RoomDetail[];
+  isEmptyHouse: boolean;
+  needFloorCovering: boolean;
 }
 
 export interface Project {

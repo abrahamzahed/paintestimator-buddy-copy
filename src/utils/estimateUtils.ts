@@ -1,5 +1,5 @@
 
-import { RoomDetails, EstimateResult } from '../types';
+import { RoomDetails, RoomDetail, EstimateResult } from '../types';
 import { 
   roomBasePrices, 
   additionalCosts, 
@@ -25,9 +25,9 @@ const CONDITION_MULTIPLIERS = {
 };
 
 /**
- * Calculate the total area to be painted
+ * Calculate the total area to be painted for a single room
  */
-export const calculateArea = (details: RoomDetails): number => {
+export const calculateArea = (details: RoomDetail): number => {
   const { wallsCount, wallHeight, wallWidth } = details;
   return wallsCount * wallHeight * wallWidth;
 };
@@ -44,7 +44,7 @@ export const calculatePaintNeeded = (area: number): number => {
 /**
  * Calculate the time needed for the job in hours
  */
-export const calculateTimeNeeded = (area: number, condition: RoomDetails['condition']): number => {
+export const calculateTimeNeeded = (area: number, condition: RoomDetail['condition']): number => {
   // Base time: 1 hour per 100 sq ft
   const baseTime = area / 100;
   // Apply condition multiplier
@@ -54,7 +54,7 @@ export const calculateTimeNeeded = (area: number, condition: RoomDetails['condit
 /**
  * Get base room price based on room type and size
  */
-const getRoomBasePrice = (details: RoomDetails): number => {
+const getRoomBasePrice = (details: RoomDetail): number => {
   const { roomType, roomSize } = details;
   
   // Convert to key compatible with our pricing object
@@ -88,46 +88,54 @@ const getRoomBasePrice = (details: RoomDetails): number => {
 };
 
 /**
- * Calculate complete estimate based on room details
+ * Calculate single room estimate
  */
-export const calculateEstimate = (details: RoomDetails): EstimateResult => {
-  const area = calculateArea(details);
+export const calculateSingleRoomEstimate = (room: RoomDetail): {
+  roomPrice: number;
+  laborCost: number;
+  materialCost: number;
+  totalCost: number;
+  timeEstimate: number;
+  paintCans: number;
+  additionalCosts: EstimateResult['additionalCosts'];
+} => {
+  const area = calculateArea(room);
   const paintCans = calculatePaintNeeded(area);
-  const timeEstimate = calculateTimeNeeded(area, details.condition);
+  const timeEstimate = calculateTimeNeeded(area, room.condition);
   
   // Get base room price
-  const roomPrice = getRoomBasePrice(details);
+  const roomPrice = getRoomBasePrice(room);
   
   // Calculate additional costs
   const additionalCostsObj: EstimateResult['additionalCosts'] = {};
   
   // Add ceiling cost if selected
-  if (details.includeCeiling) {
+  if (room.includeCeiling) {
     additionalCostsObj.ceiling = roomPrice * additionalCosts.ceiling;
   }
   
   // Add baseboards cost if selected
-  if (details.includeBaseboards) {
-    const baseboardRate = details.baseboardsMethod === 'brush' ? 
+  if (room.includeBaseboards) {
+    const baseboardRate = room.baseboardsMethod === 'brush' ? 
       additionalCosts.baseboardsBrush : 
       additionalCosts.baseboardsSpray;
     additionalCostsObj.baseboards = roomPrice * baseboardRate;
   }
   
   // Add crown molding if selected
-  if (details.includeCrownMolding) {
+  if (room.includeCrownMolding) {
     additionalCostsObj.crownMolding = roomPrice * additionalCosts.crownMolding;
   }
   
   // Add high ceiling cost if applicable
-  if (details.hasHighCeiling) {
+  if (room.hasHighCeiling) {
     additionalCostsObj.highCeiling = 
       (additionalCosts.highCeiling.minimum + additionalCosts.highCeiling.maximum) / 2;
   }
   
   // Add closet cost if selected
-  if (details.includeCloset) {
-    const closetCostRange = details.roomType.toLowerCase().includes('master') ?
+  if (room.includeCloset) {
+    const closetCostRange = room.roomType.toLowerCase().includes('master') ?
       additionalCosts.walkInCloset :
       additionalCosts.closet;
     
@@ -136,51 +144,95 @@ export const calculateEstimate = (details: RoomDetails): EstimateResult => {
   }
   
   // Add door costs
-  if (details.doorsCount > 0) {
+  if (room.doorsCount > 0) {
     const doorPricing = additionalCosts.doorFrame.brushed; // Default to brushed
     
     let doorLaborCost;
-    if (details.doorsCount <= 10) {
+    if (room.doorsCount <= 10) {
       doorLaborCost = doorPricing.laborCost.few;
-    } else if (details.doorsCount <= 19) {
+    } else if (room.doorsCount <= 19) {
       doorLaborCost = doorPricing.laborCost.medium;
-    } else if (details.doorsCount <= 29) {
+    } else if (room.doorsCount <= 29) {
       doorLaborCost = doorPricing.laborCost.many;
     } else {
       doorLaborCost = doorPricing.laborCost.lots;
     }
     
-    additionalCostsObj.doors = doorPricing.paintCost + (doorLaborCost * details.doorsCount);
+    additionalCostsObj.doors = doorPricing.paintCost + (doorLaborCost * room.doorsCount);
   }
   
   // Add window costs
-  if (details.windowsCount > 0) {
+  if (room.windowsCount > 0) {
     const windowPricing = additionalCosts.windowTrim.brushed;
-    additionalCostsObj.windows = windowPricing.paintCost + (windowPricing.perWindow * details.windowsCount);
+    additionalCostsObj.windows = windowPricing.paintCost + (windowPricing.perWindow * room.windowsCount);
   }
   
   // Calculate material cost
-  const materialCost = paintCans * PAINT_COSTS[details.paintType];
+  const materialCost = paintCans * PAINT_COSTS[room.paintType];
   
   // Total additional costs
   const totalAdditionalCosts = Object.values(additionalCostsObj).reduce((sum, cost) => sum + cost, 0);
+  
+  // Calculate total before discounts
+  const totalBeforeDiscount = roomPrice + totalAdditionalCosts + materialCost;
+  
+  // Calculate labor cost (total minus materials)
+  const laborCost = totalBeforeDiscount - materialCost;
+  
+  return {
+    roomPrice,
+    laborCost,
+    materialCost,
+    totalCost: totalBeforeDiscount,
+    timeEstimate,
+    paintCans,
+    additionalCosts: additionalCostsObj
+  };
+};
+
+/**
+ * Calculate complete estimate based on multiple rooms
+ */
+export const calculateMultiRoomEstimate = (details: RoomDetails): EstimateResult => {
+  // Calculate estimates for each room
+  const roomEstimates = details.rooms.map(room => calculateSingleRoomEstimate(room));
+  
+  // Aggregate all room estimates
+  const totalRoomPrice = roomEstimates.reduce((sum, estimate) => sum + estimate.roomPrice, 0);
+  const totalLaborCost = roomEstimates.reduce((sum, estimate) => sum + estimate.laborCost, 0);
+  const totalMaterialCost = roomEstimates.reduce((sum, estimate) => sum + estimate.materialCost, 0);
+  const totalTotalCost = roomEstimates.reduce((sum, estimate) => sum + estimate.totalCost, 0);
+  const totalTimeEstimate = roomEstimates.reduce((sum, estimate) => sum + estimate.timeEstimate, 0);
+  const totalPaintCans = roomEstimates.reduce((sum, estimate) => sum + estimate.paintCans, 0);
+  
+  // Calculate additional costs aggregated
+  const additionalCostsObj: EstimateResult['additionalCosts'] = {};
+  for (const estimate of roomEstimates) {
+    for (const [key, value] of Object.entries(estimate.additionalCosts)) {
+      additionalCostsObj[key as keyof EstimateResult['additionalCosts']] = 
+        (additionalCostsObj[key as keyof EstimateResult['additionalCosts']] || 0) + value;
+    }
+  }
   
   // Calculate discounts
   const discountObj: EstimateResult['discounts'] = {};
   
   if (details.isEmptyHouse) {
-    discountObj.emptyHouse = (roomPrice + totalAdditionalCosts) * discounts.emptyHouse;
+    discountObj.emptyHouse = (totalRoomPrice + Object.values(additionalCostsObj).reduce((sum, cost) => sum + cost, 0)) * discounts.emptyHouse;
   }
   
   if (!details.needFloorCovering) {
-    discountObj.noFloorCovering = (roomPrice + totalAdditionalCosts) * discounts.noFloorCovering;
+    discountObj.noFloorCovering = (totalRoomPrice + Object.values(additionalCostsObj).reduce((sum, cost) => sum + cost, 0)) * discounts.noFloorCovering;
   }
   
   // Calculate total discounts
   const totalDiscounts = Object.values(discountObj).reduce((sum, discount) => sum + discount, 0);
   
   // Calculate total before volume discount
-  let totalBeforeVolumeDiscount = roomPrice + totalAdditionalCosts - totalDiscounts + materialCost;
+  let totalBeforeVolumeDiscount = totalRoomPrice + 
+    Object.values(additionalCostsObj).reduce((sum, cost) => sum + cost, 0) - 
+    totalDiscounts + 
+    totalMaterialCost;
   
   // Apply volume discount if eligible
   const totalAfterVolumeDiscount = calculateVolumeDiscount(totalBeforeVolumeDiscount);
@@ -192,16 +244,16 @@ export const calculateEstimate = (details: RoomDetails): EstimateResult => {
   // Calculate total cost
   const totalCost = Math.max(MINIMUM_SERVICE_CHARGE, totalAfterVolumeDiscount);
   
-  // Calculate labor cost (total minus materials)
-  const laborCost = totalCost - materialCost;
+  // Adjust labor cost to account for discounts
+  const adjustedLaborCost = totalCost - totalMaterialCost;
   
   return {
+    roomPrice: totalRoomPrice,
+    laborCost: adjustedLaborCost,
+    materialCost: totalMaterialCost,
     totalCost,
-    laborCost,
-    materialCost,
-    timeEstimate,
-    paintCans,
-    roomPrice,
+    timeEstimate: totalTimeEstimate,
+    paintCans: totalPaintCans,
     additionalCosts: additionalCostsObj,
     discounts: discountObj
   };
