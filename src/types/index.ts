@@ -1,4 +1,3 @@
-
 export interface Message {
   id: string;
   role: "bot" | "user";
@@ -116,4 +115,4 @@ export interface Invoice {
   updated_at?: string;
 }
 
-export { Profile } from "@/context/SessionContext";
+export type { Profile } from "@/context/SessionContext";

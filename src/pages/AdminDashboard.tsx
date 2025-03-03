@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "../App";
 import { useSession } from "@/context/SessionContext";
@@ -333,7 +332,7 @@ export default function AdminDashboard() {
                             </td>
                             <td className="py-3 px-4">{user.phone || "No phone"}</td>
                             <td className="py-3 px-4">
-                              {new Date(user.created_at!).toLocaleDateString()}
+                              Unknown
                             </td>
                             <td className="py-3 px-4">
                               <Button variant="outline" size="sm">
