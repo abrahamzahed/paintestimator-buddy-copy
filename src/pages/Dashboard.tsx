@@ -69,6 +69,7 @@ export default function Dashboard() {
             .from("projects")
             .select("*")
             .eq("user_id", user?.id)
+            .is("status", null) // Only get non-deleted projects
             .order("created_at", { ascending: false });
 
           if (projectsError) throw projectsError;
@@ -82,6 +83,7 @@ export default function Dashboard() {
               .from("estimates")
               .select("*")
               .in("project_id", projectIds)
+              .is("status", null) // Only get non-deleted estimates
               .order("created_at", { ascending: false });
 
             if (estimatesError) throw estimatesError;

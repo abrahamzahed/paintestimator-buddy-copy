@@ -1,4 +1,3 @@
-
 import { Json } from "@/integrations/supabase/types";
 
 export interface Message {
@@ -63,6 +62,7 @@ export interface Project {
   name: string;
   user_id?: string;
   description?: string;
+  status?: string;
   created_at?: string;
   updated_at?: string;
 }

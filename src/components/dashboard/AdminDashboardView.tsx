@@ -18,6 +18,14 @@ const AdminDashboardView = ({
   invoices,
   handleAdminRedirect,
 }: AdminDashboardViewProps) => {
+  // Count active and deleted projects
+  const activeProjects = projects.filter(p => p.status !== "deleted").length;
+  const totalProjects = projects.length;
+  
+  // Count active and deleted estimates
+  const activeEstimates = estimates.filter(e => e.status !== "deleted").length;
+  const totalEstimates = estimates.length;
+
   return (
     <div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -25,7 +33,12 @@ const AdminDashboardView = ({
           <div className="flex justify-between items-start">
             <div>
               <h3 className="font-semibold text-lg">Recent Projects</h3>
-              <p className="text-3xl font-bold mt-2">{projects.length}</p>
+              <p className="text-3xl font-bold mt-2">{activeProjects}</p>
+              {activeProjects !== totalProjects && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  ({totalProjects - activeProjects} archived)
+                </p>
+              )}
             </div>
             <span className="bg-paint/10 p-2 rounded-full text-paint">
               <House className="w-6 h-6" />
@@ -37,7 +50,12 @@ const AdminDashboardView = ({
           <div className="flex justify-between items-start">
             <div>
               <h3 className="font-semibold text-lg">Recent Estimates</h3>
-              <p className="text-3xl font-bold mt-2">{estimates.length}</p>
+              <p className="text-3xl font-bold mt-2">{activeEstimates}</p>
+              {activeEstimates !== totalEstimates && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  ({totalEstimates - activeEstimates} archived)
+                </p>
+              )}
             </div>
             <span className="bg-blue-500/10 p-2 rounded-full text-blue-500">
               <FileText className="w-6 h-6" />

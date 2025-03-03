@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useSession } from "@/context/SessionContext";
@@ -43,6 +42,7 @@ export default function ProjectDetail() {
           .from("projects")
           .select("*")
           .eq("id", id)
+          .is("status", null)
           .single();
 
         if (projectError) throw projectError;
@@ -52,6 +52,7 @@ export default function ProjectDetail() {
           .from("estimates")
           .select("*")
           .eq("project_id", id)
+          .is("status", null)
           .order("created_at", { ascending: false });
 
         if (estimatesError) throw estimatesError;
@@ -98,40 +99,27 @@ export default function ProjectDetail() {
     try {
       setIsDeleting(true);
       
-      // Check if there are any estimates in the project
-      if (estimates.length > 0) {
-        const estimateIds = estimates.map((estimate) => estimate.id);
-        
-        // Delete invoices related to estimates
-        if (invoices.length > 0) {
-          const { error: invoiceError } = await supabase
-            .from("invoices")
-            .delete()
-            .in("estimate_id", estimateIds);
-            
-          if (invoiceError) throw invoiceError;
-        }
-        
-        // Delete all estimates related to the project
-        const { error: estimateError } = await supabase
-          .from("estimates")
-          .delete()
-          .eq("project_id", id);
-          
-        if (estimateError) throw estimateError;
-      }
-      
-      // Delete the project
+      // Update the project status to "deleted" instead of deleting it
       const { error: projectError } = await supabase
         .from("projects")
-        .delete()
+        .update({ status: "deleted" })
         .eq("id", id);
         
       if (projectError) throw projectError;
       
+      // Update related estimates to "deleted" status if they exist
+      if (estimates.length > 0) {
+        const { error: estimatesError } = await supabase
+          .from("estimates")
+          .update({ status: "deleted" })
+          .eq("project_id", id);
+          
+        if (estimatesError) throw estimatesError;
+      }
+      
       toast({
         title: "Project deleted",
-        description: `"${project.name}" has been permanently deleted`,
+        description: `"${project.name}" has been removed from your dashboard`,
       });
       
       // Navigate back to dashboard
@@ -354,7 +342,7 @@ export default function ProjectDetail() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Project</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{project.name}"? This action cannot be undone and will delete all estimates and invoices associated with this project.
+              Are you sure you want to delete "{project.name}"? This will hide the project and its estimates from your dashboard, but the data will be preserved for administrative purposes.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
