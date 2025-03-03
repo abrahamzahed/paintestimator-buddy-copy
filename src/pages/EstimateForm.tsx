@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "@/context/SessionContext";
@@ -6,21 +7,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import EstimateCalculator from "@/components/EstimateCalculator";
 import { EstimateResult, Lead, RoomDetail } from "@/types";
-import { House } from "lucide-react";
+import { House, Send } from "lucide-react";
 import ProjectSelector from "@/components/estimator/ProjectSelector";
-import EstimateSummary from "@/components/estimator/EstimateSummary";
+import { formatCurrency } from "@/utils/estimateUtils";
 
 export default function EstimateForm() {
   const navigate = useNavigate();
   const { user, profile } = useSession();
   const { toast } = useToast();
   const [step, setStep] = useState(1);
+  const TOTAL_STEPS = 3; // Exactly 3 steps as requested
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showEstimateCalculator, setShowEstimateCalculator] = useState(false);
   const [estimateResult, setEstimateResult] = useState<EstimateResult | null>(null);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [selectedProjectName, setSelectedProjectName] = useState<string | undefined>(undefined);
@@ -33,7 +33,6 @@ export default function EstimateForm() {
     email: user?.email || "",
     phone: profile?.phone || "",
     address: "",
-    service_type: "interior",
     description: "",
     status: "new"
   });
@@ -54,17 +53,12 @@ export default function EstimateForm() {
     setEstimateResult(estimate);
     setRoomDetails(rooms);
     setRoomEstimates(estimates);
-    setShowEstimateCalculator(false);
-    setStep(2);
+    setStep(3); // Skip directly to final step
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setLeadData({ ...leadData, [name]: value });
-  };
-
-  const handleRadioChange = (value: string) => {
-    setLeadData({ ...leadData, service_type: value });
   };
 
   const handleSelectProject = (projectId: string | null, projectName?: string) => {
@@ -99,9 +93,9 @@ export default function EstimateForm() {
           email: leadData.email,
           phone: leadData.phone,
           address: leadData.address,
-          service_type: leadData.service_type,
+          service_type: "interior", // Default to interior as service type was removed
           description: "",
-          room_count: estimateResult ? Math.round(estimateResult.totalCost / 500) : 1,
+          room_count: estimateResult ? roomDetails.length : 1,
           square_footage: 0,
           status: "new"
         }])
@@ -124,8 +118,9 @@ export default function EstimateForm() {
             lead_id: createdLead.id,
             project_id: selectedProjectId,
             details: {
-              rooms: Math.round(estimateResult.totalCost / 500),
-              paintType: estimateResult.paintCans > 2 ? "premium" : "standard"
+              rooms: roomDetails.length,
+              paintType: estimateResult.paintCans > 2 ? "premium" : "standard",
+              roomDetails: roomDetails
             },
             labor_cost: estimateResult.laborCost,
             material_cost: estimateResult.materialCost,
@@ -161,12 +156,15 @@ export default function EstimateForm() {
     }
   };
 
-  const handleGoBack = () => {
-    if (step === 2) {
-      setShowEstimateCalculator(true);
-    } else {
-      setShowEstimateCalculator(false);
-      setStep(1);
+  const handleNextStep = () => {
+    if (step < TOTAL_STEPS) {
+      setStep(step + 1);
+    }
+  };
+
+  const handlePrevStep = () => {
+    if (step > 1) {
+      setStep(step - 1);
     }
   };
 
@@ -197,7 +195,7 @@ export default function EstimateForm() {
 
           <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
-              <div className="flex space-x-2">
+              <div className="flex items-center space-x-2">
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                   step >= 1 ? "bg-paint text-white" : "bg-secondary text-muted-foreground"
                 }`}>
@@ -211,14 +209,23 @@ export default function EstimateForm() {
                 }`}>
                   2
                 </div>
+                <div className={`w-20 h-1 ${
+                  step >= 3 ? "bg-paint" : "bg-secondary"
+                }`}></div>
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                  step >= 3 ? "bg-paint text-white" : "bg-secondary text-muted-foreground"
+                }`}>
+                  3
+                </div>
               </div>
               <div className="text-sm text-muted-foreground">
-                Step {step} of 2
+                Step {step} of {TOTAL_STEPS}
               </div>
             </div>
           </div>
 
-          {step === 1 && !showEstimateCalculator && (
+          {/* Step 1: Project Information */}
+          {step === 1 && (
             <Card>
               <CardHeader>
                 <CardTitle>Project Information</CardTitle>
@@ -226,7 +233,7 @@ export default function EstimateForm() {
                   Provide your contact details and project information
                 </CardDescription>
               </CardHeader>
-              <form onSubmit={(e) => { e.preventDefault(); setShowEstimateCalculator(true); }}>
+              <form onSubmit={(e) => { e.preventDefault(); handleNextStep(); }}>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="name">Full Name</Label>
@@ -280,48 +287,27 @@ export default function EstimateForm() {
                     selectedProjectId={selectedProjectId} 
                     onSelectProject={handleSelectProject} 
                   />
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="service_type">Service Type</Label>
-                    <RadioGroup
-                      value={leadData.service_type}
-                      onValueChange={handleRadioChange}
-                      className="flex flex-col space-y-2 mt-2"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="interior" id="interior" />
-                        <Label htmlFor="interior">Interior Painting</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="exterior" id="exterior" />
-                        <Label htmlFor="exterior">Exterior Painting</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="commercial" id="commercial" />
-                        <Label htmlFor="commercial">Commercial Painting</Label>
-                      </div>
-                    </RadioGroup>
-                  </div>
                 </CardContent>
                 <CardFooter>
                   <Button
                     type="submit"
                     className="w-full bg-paint hover:bg-paint-dark"
                   >
-                    Continue to Detailed Estimator
+                    Continue to Room Details
                   </Button>
                 </CardFooter>
               </form>
             </Card>
           )}
 
-          {showEstimateCalculator && step === 1 && (
+          {/* Step 2: Room Details */}
+          {step === 2 && (
             <div className="animate-fade-in">
               <Card className="mb-4">
                 <CardHeader>
-                  <CardTitle>Detailed Estimator</CardTitle>
+                  <CardTitle>Room Details</CardTitle>
                   <CardDescription>
-                    Add rooms to paint and get a detailed breakdown of costs
+                    Add rooms to paint and provide detailed information
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -338,26 +324,42 @@ export default function EstimateForm() {
             </div>
           )}
 
-          {step === 2 && estimateResult && (
+          {/* Step 3: Review and Submit */}
+          {step === 3 && estimateResult && (
             <Card>
               <CardHeader>
-                <CardTitle>Estimate Summary</CardTitle>
+                <CardTitle>Review Your Estimate</CardTitle>
                 <CardDescription>
-                  Review your estimate and submit your request
+                  Review your estimate details and submit your request
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4 relative">
-                <EstimateSummary
-                  currentEstimate={estimateResult}
-                  rooms={roomDetails}
-                  roomEstimates={roomEstimates}
-                  onSubmit={handleSubmit}
-                  submitButtonText="Submit Request"
-                  isLastStep={true}
-                />
+              <CardContent className="space-y-6">
+                {/* Project Information Summary */}
+                <div className="border-b pb-4">
+                  <h3 className="text-lg font-semibold mb-3">Project Information</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Name</p>
+                      <p className="font-medium">{leadData.name}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Email</p>
+                      <p className="font-medium">{leadData.email}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Phone</p>
+                      <p className="font-medium">{leadData.phone || "Not provided"}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Address</p>
+                      <p className="font-medium">{leadData.address}</p>
+                    </div>
+                  </div>
+                </div>
                 
+                {/* Project Selection */}
                 {selectedProjectName && (
-                  <div className="mt-4 pt-4 border-t">
+                  <div className="border-b pb-4">
                     <div className="flex items-start">
                       <div className="bg-secondary/50 p-2 rounded-full text-foreground mr-3">
                         <House className="w-5 h-5" />
@@ -371,14 +373,87 @@ export default function EstimateForm() {
                     </div>
                   </div>
                 )}
+                
+                {/* Rooms Summary */}
+                <div className="border-b pb-4">
+                  <h3 className="text-lg font-semibold mb-3">Rooms ({roomDetails.length})</h3>
+                  <div className="space-y-4">
+                    {roomDetails.map((room, index) => (
+                      <div key={room.id} className="border rounded-lg p-3">
+                        <h4 className="font-medium">Room {index + 1}: {room.roomType.charAt(0).toUpperCase() + room.roomType.slice(1)}</h4>
+                        <div className="grid grid-cols-2 gap-2 mt-2 text-sm">
+                          <div>
+                            <span className="text-muted-foreground">Dimensions:</span> {room.wallsCount} walls, {room.wallHeight}' x {room.wallWidth}'
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Paint:</span> {room.paintType.charAt(0).toUpperCase() + room.paintType.slice(1)}
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Condition:</span> {room.condition.charAt(0).toUpperCase() + room.condition.slice(1)}
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Price:</span> {formatCurrency(roomEstimates[room.id]?.totalCost || 0)}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Cost Summary */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-3">Cost Summary</h3>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span>Labor Cost</span>
+                      <span>{formatCurrency(estimateResult.laborCost)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Material Cost</span>
+                      <span>{formatCurrency(estimateResult.materialCost)}</span>
+                    </div>
+                    {Object.entries(estimateResult.additionalCosts).map(([key, value]) => (
+                      <div key={key} className="flex justify-between text-sm">
+                        <span className="capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</span>
+                        <span>{formatCurrency(value as number)}</span>
+                      </div>
+                    ))}
+                    {Object.entries(estimateResult.discounts).map(([key, value]) => (
+                      <div key={key} className="flex justify-between text-sm text-green-600">
+                        <span className="capitalize">{key.replace(/([A-Z])/g, ' $1').trim()} Discount</span>
+                        <span>-{formatCurrency(value as number)}</span>
+                      </div>
+                    ))}
+                    <div className="flex justify-between font-semibold text-lg pt-2 border-t">
+                      <span>Total Estimate</span>
+                      <span>{formatCurrency(estimateResult.totalCost)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm text-muted-foreground">
+                      <span>Estimated Time</span>
+                      <span>{estimateResult.timeEstimate.toFixed(1)} hours</span>
+                    </div>
+                    <div className="flex justify-between text-sm text-muted-foreground">
+                      <span>Paint Required</span>
+                      <span>{estimateResult.paintCans} gallons</span>
+                    </div>
+                  </div>
+                </div>
               </CardContent>
               <CardFooter className="flex justify-between">
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={handleGoBack}
+                  onClick={handlePrevStep}
                 >
                   Back
+                </Button>
+                <Button
+                  className="bg-paint hover:bg-paint-dark px-6"
+                  onClick={handleSubmit}
+                  disabled={isSubmitting}
+                >
+                  <Send className="mr-2 h-4 w-4" />
+                  {isSubmitting ? "Submitting..." : "Submit Request"}
                 </Button>
               </CardFooter>
             </Card>

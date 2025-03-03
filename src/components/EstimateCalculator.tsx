@@ -28,7 +28,7 @@ const EstimateCalculator = ({
 }: EstimateCalculatorProps) => {
   const { toast } = useToast();
   const [step, setStep] = useState(1);
-  const TOTAL_STEPS = 2;
+  const TOTAL_STEPS = 1; // Only one step within calculator - rooms configuration
   const [currentEstimate, setCurrentEstimate] = useState<EstimateResult | null>(null);
   const [roomEstimates, setRoomEstimates] = useState<Record<string, ReturnType<typeof calculateSingleRoomEstimate>>>({});
   
@@ -37,7 +37,7 @@ const EstimateCalculator = ({
       {
         id: uuidv4(),
         roomType: "bedroom",
-        roomSize: "average",
+        roomSize: "average", // Default, but will be removed from UI
         wallsCount: 4,
         wallHeight: 8,
         wallWidth: 10,
@@ -84,18 +84,8 @@ const EstimateCalculator = ({
   }, [roomDetails, toast]);
 
   const handleNextStep = () => {
-    if (step < TOTAL_STEPS) {
-      setStep(step + 1);
-    } else {
-      if (currentEstimate) {
-        onEstimateComplete(currentEstimate, roomDetails.rooms, roomEstimates);
-      }
-    }
-  };
-
-  const handlePrevStep = () => {
-    if (step > 1) {
-      setStep(step - 1);
+    if (currentEstimate) {
+      onEstimateComplete(currentEstimate, roomDetails.rooms, roomEstimates);
     }
   };
 
@@ -120,7 +110,7 @@ const EstimateCalculator = ({
       <ProgressIndicator totalSteps={TOTAL_STEPS} currentStep={step} />
 
       <div className="min-h-[300px] relative">
-        <FormStep title="What rooms are you painting?" isActive={step === 1}>
+        <FormStep title="What rooms are you painting?" isActive={true}>
           <p className="text-muted-foreground mb-4">
             Add all rooms you want to paint and their details. You can add multiple rooms.
           </p>
@@ -129,30 +119,18 @@ const EstimateCalculator = ({
             updateRooms={updateRooms} 
           />
         </FormStep>
-
-        <FormStep title="Estimate Summary" isActive={step === 2}>
-          <p className="text-muted-foreground mb-4">
-            Review your estimate details before submitting.
-          </p>
-          <EstimateSummary 
-            currentEstimate={currentEstimate}
-            rooms={roomDetails.rooms}
-            roomEstimates={roomEstimates}
-            onSubmit={handleSubmit}
-            submitButtonText={submitButtonText}
-            isLastStep={step === TOTAL_STEPS}
-          />
-        </FormStep>
       </div>
 
       <CurrentEstimatePanel currentEstimate={currentEstimate} />
 
-      <EstimatorNavigation 
-        currentStep={step}
-        totalSteps={TOTAL_STEPS}
-        onNext={handleNextStep}
-        onPrev={handlePrevStep}
-      />
+      <div className="mt-6 flex justify-end">
+        <button
+          className="bg-paint hover:bg-paint-dark text-white font-medium py-2 px-6 rounded-md"
+          onClick={handleNextStep}
+        >
+          Continue
+        </button>
+      </div>
     </div>
   );
 };

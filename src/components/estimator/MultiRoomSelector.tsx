@@ -43,7 +43,7 @@ const MultiRoomSelector = ({ rooms, updateRooms }: MultiRoomSelectorProps) => {
     const newRoom: RoomDetail = {
       id: uuidv4(),
       roomType: "bedroom",
-      roomSize: "average",
+      roomSize: "average", // Keep default but hidden from UI
       wallsCount: 4,
       wallHeight: 8,
       wallWidth: 10,
@@ -134,37 +134,6 @@ const MultiRoomSelector = ({ rooms, updateRooms }: MultiRoomSelectorProps) => {
                         </Label>
                       </div>
                     ))}
-                  </RadioGroup>
-                </div>
-
-                {/* Room Size */}
-                <div className="space-y-2">
-                  <Label>Room Size</Label>
-                  <RadioGroup
-                    value={room.roomSize}
-                    onValueChange={(value: "small" | "average" | "large") => 
-                      updateRoomDetail(room.id, "roomSize", value)
-                    }
-                    className="grid grid-cols-3 gap-4"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="small" id={`${room.id}-size-small`} />
-                      <Label htmlFor={`${room.id}-size-small`} className="cursor-pointer">
-                        Small
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="average" id={`${room.id}-size-average`} />
-                      <Label htmlFor={`${room.id}-size-average`} className="cursor-pointer">
-                        Average
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="large" id={`${room.id}-size-large`} />
-                      <Label htmlFor={`${room.id}-size-large`} className="cursor-pointer">
-                        Large
-                      </Label>
-                    </div>
                   </RadioGroup>
                 </div>
 
