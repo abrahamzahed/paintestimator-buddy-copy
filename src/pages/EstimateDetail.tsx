@@ -13,6 +13,7 @@ import LineItemsTable from "@/components/estimate-detail/LineItemsTable";
 import EstimateFooter from "@/components/estimate-detail/EstimateFooter";
 import DetailedSummaryDialog from "@/components/estimate-detail/DetailedSummaryDialog";
 import { Button } from "@/components/ui/button";
+import { calculateSingleRoomEstimate } from "@/utils/estimateUtils";
 
 export default function EstimateDetail() {
   const { id } = useParams<{ id: string }>();
@@ -30,7 +31,6 @@ export default function EstimateDetail() {
       try {
         if (!id) return;
 
-        // Fetch estimate
         const { data: estimateData, error: estimateError } = await supabase
           .from("estimates")
           .select("*, projects(name)")
@@ -39,41 +39,29 @@ export default function EstimateDetail() {
 
         if (estimateError) throw estimateError;
         
-        // Transform the data to match our Estimate interface
         const formattedEstimate: Estimate = {
           ...estimateData,
           project_name: estimateData.projects?.name || "Unknown Project",
-          // Make sure to explicitly cast details to our expected type
           details: estimateData.details,
-          // Add any missing fields with default values
           notes: estimateData.notes || "",
           discount: estimateData.discount || 0
         };
         
         setEstimate(formattedEstimate);
 
-        // Extract room details if available - Handle type checking properly
         if (formattedEstimate.details && 
             typeof formattedEstimate.details === 'object') {
           
-          // Safely access roomDetails with type checking
           const details = formattedEstimate.details;
           const roomDetailsArray = details && 'roomDetails' in details ? details.roomDetails : null;
           
           if (Array.isArray(roomDetailsArray)) {
             setRoomDetails(roomDetailsArray as RoomDetail[]);
             
-            // Create simple room estimate objects based on available data
             const estimates: Record<string, any> = {};
             roomDetailsArray.forEach((room: RoomDetail) => {
               if (room.id) {
-                // Create a simple estimate object for each room
-                estimates[room.id] = {
-                  totalCost: 0, // We don't have individual room costs in the database
-                  laborCost: 0,
-                  materialCost: 0,
-                  additionalCosts: {},
-                };
+                estimates[room.id] = calculateSingleRoomEstimate(room);
               }
             });
             setRoomEstimates(estimates);
@@ -81,12 +69,10 @@ export default function EstimateDetail() {
         }
 
         try {
-          // Use the RPC function to get line items for this estimate
           const { data: itemsData, error: itemsError } = await supabase
             .rpc('get_line_items_for_estimate', { estimate_id: id });
 
           if (!itemsError && itemsData) {
-            // Cast the returned data to LineItem[] type
             setLineItems(itemsData as LineItem[]);
           } else {
             console.log("No line items found or error:", itemsError);
@@ -132,7 +118,7 @@ export default function EstimateDetail() {
       materialCost: estimate.material_cost || 0,
       timeEstimate: estimate.estimated_hours || 0,
       paintCans: estimate.estimated_paint_gallons || 0,
-      roomPrice: 0, // Required by the EstimateResult type but not used here
+      roomPrice: 0,
       additionalCosts: {},
       discounts: estimate.discount ? { volumeDiscount: estimate.discount } : {}
     };
@@ -189,7 +175,6 @@ export default function EstimateDetail() {
               </div>
             </div>
 
-            {/* Room details summary */}
             {roomDetails.length > 0 && (
               <RoomDetailsList 
                 roomDetails={roomDetails} 
@@ -211,7 +196,6 @@ export default function EstimateDetail() {
           </CardFooter>
         </Card>
 
-        {/* Detailed Summary Dialog */}
         <DetailedSummaryDialog
           open={showDetailedView}
           onOpenChange={setShowDetailedView}
