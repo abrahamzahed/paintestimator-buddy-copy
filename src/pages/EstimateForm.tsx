@@ -112,15 +112,36 @@ export default function EstimateForm() {
       if (estimateResult && createdLead) {
         console.log("Creating estimate with lead_id:", createdLead.id);
         
+        // Convert the complex RoomDetail objects to a simpler structure for JSON compatibility
+        const simplifiedRoomDetails = roomDetails.map(room => ({
+          id: room.id,
+          roomType: room.roomType,
+          wallsCount: room.wallsCount,
+          wallHeight: room.wallHeight,
+          wallWidth: room.wallWidth,
+          condition: room.condition,
+          paintType: room.paintType,
+          includeCeiling: room.includeCeiling,
+          includeBaseboards: room.includeBaseboards,
+          baseboardsMethod: room.baseboardsMethod,
+          includeCrownMolding: room.includeCrownMolding,
+          hasHighCeiling: room.hasHighCeiling,
+          includeCloset: room.includeCloset,
+          isEmptyHouse: room.isEmptyHouse,
+          needFloorCovering: room.needFloorCovering,
+          doorsCount: room.doorsCount,
+          windowsCount: room.windowsCount
+        }));
+        
         const { error: estimateError } = await supabase
           .from("estimates")
-          .insert([{
+          .insert({
             lead_id: createdLead.id,
             project_id: selectedProjectId,
             details: {
               rooms: roomDetails.length,
               paintType: estimateResult.paintCans > 2 ? "premium" : "standard",
-              roomDetails: roomDetails
+              roomDetails: simplifiedRoomDetails
             },
             labor_cost: estimateResult.laborCost,
             material_cost: estimateResult.materialCost,
@@ -128,7 +149,7 @@ export default function EstimateForm() {
             estimated_hours: estimateResult.timeEstimate,
             estimated_paint_gallons: estimateResult.paintCans,
             status: "pending"
-          }]);
+          });
 
         if (estimateError) {
           console.error("Estimate creation error:", estimateError);
