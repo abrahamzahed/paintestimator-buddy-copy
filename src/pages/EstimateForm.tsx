@@ -52,7 +52,7 @@ export default function EstimateForm() {
   const handleEstimateComplete = async (estimate: EstimateResult) => {
     setEstimateResult(estimate);
     setShowEstimateCalculator(false);
-    setStep(3);
+    setStep(2);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -177,30 +177,22 @@ export default function EstimateForm() {
                 }`}>
                   2
                 </div>
-                <div className={`w-20 h-1 ${
-                  step >= 3 ? "bg-paint" : "bg-secondary"
-                }`}></div>
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                  step >= 3 ? "bg-paint text-white" : "bg-secondary text-muted-foreground"
-                }`}>
-                  3
-                </div>
               </div>
               <div className="text-sm text-muted-foreground">
-                Step {step} of 3
+                Step {step} of 2
               </div>
             </div>
           </div>
 
-          {step === 1 && (
+          {step === 1 && !showEstimateCalculator && (
             <Card>
               <CardHeader>
-                <CardTitle>Contact Information</CardTitle>
+                <CardTitle>Project Information</CardTitle>
                 <CardDescription>
-                  Confirm your contact details and provide the project address
+                  Provide your contact details and project information
                 </CardDescription>
               </CardHeader>
-              <form onSubmit={(e) => { e.preventDefault(); setStep(2); }}>
+              <form onSubmit={(e) => { e.preventDefault(); setShowEstimateCalculator(true); }}>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="name">Full Name</Label>
@@ -249,29 +241,7 @@ export default function EstimateForm() {
                       required
                     />
                   </div>
-                </CardContent>
-                <CardFooter>
-                  <Button
-                    type="submit"
-                    className="w-full bg-paint hover:bg-paint-dark"
-                  >
-                    Next Step
-                  </Button>
-                </CardFooter>
-              </form>
-            </Card>
-          )}
 
-          {step === 2 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Project Details</CardTitle>
-                <CardDescription>
-                  Select project and service type
-                </CardDescription>
-              </CardHeader>
-              <form onSubmit={(e) => { e.preventDefault(); setShowEstimateCalculator(true); }}>
-                <CardContent className="space-y-4">
                   {/* Project Selector */}
                   <ProjectSelector 
                     selectedProjectId={selectedProjectId} 
@@ -300,19 +270,12 @@ export default function EstimateForm() {
                     </RadioGroup>
                   </div>
                 </CardContent>
-                <CardFooter className="flex justify-between">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setStep(1)}
-                  >
-                    Previous
-                  </Button>
+                <CardFooter>
                   <Button
                     type="submit"
-                    className="bg-paint hover:bg-paint-dark"
+                    className="w-full bg-paint hover:bg-paint-dark"
                   >
-                    Continue
+                    Continue to Detailed Estimator
                   </Button>
                 </CardFooter>
               </form>
@@ -329,13 +292,20 @@ export default function EstimateForm() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <EstimateCalculator onEstimateComplete={handleEstimateComplete} />
+                  <EstimateCalculator 
+                    onEstimateComplete={handleEstimateComplete} 
+                    initialUserData={{
+                      name: leadData.name,
+                      email: leadData.email,
+                      phone: leadData.phone
+                    }}
+                  />
                 </CardContent>
               </Card>
             </div>
           )}
 
-          {step === 3 && estimateResult && (
+          {step === 2 && estimateResult && (
             <Card>
               <CardHeader>
                 <CardTitle>Estimate Summary</CardTitle>
@@ -391,7 +361,10 @@ export default function EstimateForm() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setStep(2)}
+                  onClick={() => {
+                    setStep(1);
+                    setShowEstimateCalculator(true);
+                  }}
                 >
                   Previous
                 </Button>
