@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { RoomDetails, RoomDetail, EstimateResult } from "../types";
@@ -8,6 +7,7 @@ import FormStep from "./estimator/FormStep";
 import MultiRoomSelector from "./estimator/MultiRoomSelector";
 import { v4 as uuidv4 } from "uuid";
 import { useToast } from "@/hooks/use-toast";
+import { Send } from "lucide-react";
 
 interface EstimateCalculatorProps {
   onEstimateComplete: (estimate: EstimateResult) => void;
@@ -16,9 +16,14 @@ interface EstimateCalculatorProps {
     email?: string;
     phone?: string;
   };
+  submitButtonText?: string;
 }
 
-const EstimateCalculator = ({ onEstimateComplete, initialUserData }: EstimateCalculatorProps) => {
+const EstimateCalculator = ({ 
+  onEstimateComplete, 
+  initialUserData,
+  submitButtonText = "Calculate Estimate" 
+}: EstimateCalculatorProps) => {
   const { toast } = useToast();
   const [step, setStep] = useState(1);
   const TOTAL_STEPS = 2;
@@ -55,7 +60,6 @@ const EstimateCalculator = ({ onEstimateComplete, initialUserData }: EstimateCal
   useEffect(() => {
     try {
       if (roomDetails.rooms.length > 0) {
-        // Calculate individual room estimates
         const estimates: Record<string, ReturnType<typeof calculateSingleRoomEstimate>> = {};
         
         for (const room of roomDetails.rooms) {
@@ -64,7 +68,6 @@ const EstimateCalculator = ({ onEstimateComplete, initialUserData }: EstimateCal
         
         setRoomEstimates(estimates);
         
-        // Still calculate multi-room estimate for the total
         const estimate = calculateMultiRoomEstimate(roomDetails);
         setCurrentEstimate(estimate);
       }
@@ -218,6 +221,15 @@ const EstimateCalculator = ({ onEstimateComplete, initialUserData }: EstimateCal
               </div>
             </div>
           )}
+          {step === TOTAL_STEPS && (
+            <Button
+              onClick={() => onEstimateComplete(currentEstimate)}
+              className="w-full mt-4 bg-paint hover:bg-paint-dark"
+            >
+              <Send className="mr-2 h-4 w-4" />
+              Submit Request
+            </Button>
+          )}
         </FormStep>
       </div>
 
@@ -249,7 +261,7 @@ const EstimateCalculator = ({ onEstimateComplete, initialUserData }: EstimateCal
           onClick={handleNextStep}
           className="bg-paint hover:bg-paint-dark"
         >
-          {step === TOTAL_STEPS ? "Calculate Estimate" : "Next"}
+          {step === TOTAL_STEPS ? submitButtonText : "Next"}
         </Button>
       </div>
     </div>
