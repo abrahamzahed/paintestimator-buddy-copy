@@ -1,10 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useSession } from "@/context/SessionContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Estimate, LineItem, RoomDetail } from "@/types";
+import { Estimate, LineItem, RoomDetail, EstimateResult } from "@/types";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -43,7 +42,7 @@ export default function EstimateDetail() {
           ...estimateData,
           project_name: estimateData.projects?.name || "Unknown Project",
           // Make sure to explicitly cast details to our expected type
-          details: estimateData.details as Record<string, any>,
+          details: estimateData.details,
           // Add any missing fields with default values
           notes: estimateData.notes || "",
           discount: estimateData.discount || 0
@@ -51,25 +50,31 @@ export default function EstimateDetail() {
         
         setEstimate(formattedEstimate);
 
-        // Extract room details if available
-        if (formattedEstimate.details && formattedEstimate.details.roomDetails) {
-          // Cast to RoomDetail[] to ensure proper typing
-          setRoomDetails(formattedEstimate.details.roomDetails as RoomDetail[]);
+        // Extract room details if available - Handle type checking properly
+        if (formattedEstimate.details && 
+            typeof formattedEstimate.details === 'object' && 
+            'roomDetails' in formattedEstimate.details) {
           
-          // Create simple room estimate objects based on available data
-          const estimates: Record<string, any> = {};
-          formattedEstimate.details.roomDetails.forEach((room: any) => {
-            if (room.id) {
-              // Create a simple estimate object for each room
-              estimates[room.id] = {
-                totalCost: 0, // We don't have individual room costs in the database
-                laborCost: 0,
-                materialCost: 0,
-                additionalCosts: {},
-              };
-            }
-          });
-          setRoomEstimates(estimates);
+          // Safely cast to RoomDetail[] with type checking
+          const roomDetailsArray = formattedEstimate.details.roomDetails as RoomDetail[];
+          if (Array.isArray(roomDetailsArray)) {
+            setRoomDetails(roomDetailsArray);
+            
+            // Create simple room estimate objects based on available data
+            const estimates: Record<string, any> = {};
+            roomDetailsArray.forEach((room: RoomDetail) => {
+              if (room.id) {
+                // Create a simple estimate object for each room
+                estimates[room.id] = {
+                  totalCost: 0, // We don't have individual room costs in the database
+                  laborCost: 0,
+                  materialCost: 0,
+                  additionalCosts: {},
+                };
+              }
+            });
+            setRoomEstimates(estimates);
+          }
         }
 
         try {
@@ -139,56 +144,56 @@ export default function EstimateDetail() {
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" asChild>
-              <Link to={`/project/${estimate.project_id}`}>
+              <Link to={`/project/${estimate?.project_id}`}>
                 <ChevronLeft className="h-4 w-4" />
                 Back to Project
               </Link>
             </Button>
-            <h1 className="text-2xl font-bold">Estimate #{estimate.id?.substring(0, 8)}</h1>
+            <h1 className="text-2xl font-bold">Estimate #{estimate?.id?.substring(0, 8)}</h1>
           </div>
           <div className={`px-3 py-1 rounded text-sm ${
-            estimate.status === "pending" 
+            estimate?.status === "pending" 
               ? "bg-yellow-100 text-yellow-800" 
-              : estimate.status === "approved" 
+              : estimate?.status === "approved" 
               ? "bg-green-100 text-green-800"
               : "bg-gray-100 text-gray-800"
           }`}>
-            {estimate.status?.toUpperCase()}
+            {estimate?.status?.toUpperCase()}
           </div>
         </div>
 
         <Card className="border border-gray-100 shadow-sm">
           <CardHeader className="bg-secondary/20">
             <CardTitle>Estimate Details</CardTitle>
-            <CardDescription>Created on {new Date(estimate.created_at!).toLocaleDateString()}</CardDescription>
+            <CardDescription>Created on {estimate?.created_at ? new Date(estimate.created_at).toLocaleDateString() : 'Unknown date'}</CardDescription>
           </CardHeader>
           <CardContent className="p-6">
             <div className="grid gap-6 md:grid-cols-2">
               <div>
                 <h3 className="font-semibold mb-2">Project Information</h3>
-                <p className="text-sm text-muted-foreground mb-1">Project: {estimate.project_name || "Unknown Project"}</p>
-                <p className="text-sm text-muted-foreground">Created: {new Date(estimate.created_at!).toLocaleDateString()}</p>
+                <p className="text-sm text-muted-foreground mb-1">Project: {estimate?.project_name || "Unknown Project"}</p>
+                <p className="text-sm text-muted-foreground">Created: {estimate?.created_at ? new Date(estimate.created_at).toLocaleDateString() : 'Unknown date'}</p>
               </div>
               <div>
                 <h3 className="font-semibold mb-2">Cost Summary</h3>
                 <div className="space-y-1">
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Labor:</span>
-                    <span className="text-sm">{formatCurrency(estimate.labor_cost || 0)}</span>
+                    <span className="text-sm">{formatCurrency(estimate?.labor_cost || 0)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Materials:</span>
-                    <span className="text-sm">{formatCurrency(estimate.material_cost || 0)}</span>
+                    <span className="text-sm">{formatCurrency(estimate?.material_cost || 0)}</span>
                   </div>
-                  {(estimate.discount || 0) > 0 && (
+                  {(estimate?.discount || 0) > 0 && (
                     <div className="flex justify-between">
                       <span className="text-sm text-muted-foreground">Discount:</span>
-                      <span className="text-sm text-green-600">-{formatCurrency(estimate.discount || 0)}</span>
+                      <span className="text-sm text-green-600">-{formatCurrency(estimate?.discount || 0)}</span>
                     </div>
                   )}
                   <div className="flex justify-between border-t pt-1 mt-1">
                     <span className="font-semibold">Total:</span>
-                    <span className="font-semibold">{formatCurrency(estimate.total_cost || 0)}</span>
+                    <span className="font-semibold">{formatCurrency(estimate?.total_cost || 0)}</span>
                   </div>
                 </div>
               </div>
@@ -316,7 +321,7 @@ export default function EstimateDetail() {
               </div>
             )}
 
-            {estimate.notes && (
+            {estimate?.notes && (
               <div className="mt-8">
                 <h3 className="font-semibold mb-2">Notes</h3>
                 <p className="text-sm text-muted-foreground p-4 bg-gray-50 rounded-md">{estimate.notes}</p>
@@ -325,16 +330,16 @@ export default function EstimateDetail() {
           </CardContent>
           <CardFooter className="bg-gray-50 border-t">
             <div className="w-full flex justify-between items-center">
-              {estimate.status === "pending" && (
+              {estimate?.status === "pending" && (
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm">Decline</Button>
                   <Button className="bg-green-600 hover:bg-green-700" size="sm">Approve Estimate</Button>
                 </div>
               )}
-              {estimate.status === "approved" && (
+              {estimate?.status === "approved" && (
                 <p className="text-sm text-green-600">This estimate has been approved</p>
               )}
-              {estimate.status === "declined" && (
+              {estimate?.status === "declined" && (
                 <p className="text-sm text-red-600">This estimate has been declined</p>
               )}
               <Button variant="outline" size="sm">
@@ -363,6 +368,7 @@ export default function EstimateDetail() {
                 materialCost: estimate.material_cost || 0,
                 timeEstimate: estimate.estimated_hours || 0,
                 paintCans: estimate.estimated_paint_gallons || 0,
+                roomPrice: 0,
                 additionalCosts: {},
                 discounts: estimate.discount ? { volumeDiscount: estimate.discount } : {}
               }}
