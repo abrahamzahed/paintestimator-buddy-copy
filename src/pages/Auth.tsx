@@ -36,6 +36,7 @@ export default function Auth() {
           data: {
             name,
             phone,
+            email // Explicitly add email to user metadata
           },
           emailRedirectTo: `${window.location.origin}/dashboard`,
         },
@@ -130,7 +131,9 @@ export default function Auth() {
     <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-background to-secondary/20 p-4">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <h1 className="text-4xl font-bold tracking-tight text-paint mb-2">Paint Pro</h1>
+          <Link to="/">
+            <h1 className="text-4xl font-bold tracking-tight text-paint mb-2">Paint Pro</h1>
+          </Link>
           <p className="text-muted-foreground">Professional painting services management</p>
         </div>
         

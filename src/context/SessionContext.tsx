@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -62,7 +61,7 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
           console.log("No profile found, creating new profile");
           const userData = user?.user_metadata;
           
-          // Create profile with customer role by default
+          // Create profile with customer role by default and include email
           console.log("User metadata:", userData);
           
           const { data: newProfile, error: createError } = await supabase
@@ -72,7 +71,7 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
               name: userData?.name || user?.email?.split('@')[0] || null,
               phone: userData?.phone || null,
               role: "customer", // Default role for new profiles is customer
-              email: user?.email || null // Add email from user auth data
+              email: user?.email || null // Ensure email is always included
             }])
             .select();
             
@@ -112,8 +111,8 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
       }
       
       // If email is missing in the profile but exists in auth, update the profile
-      if (!data.email && user?.email) {
-        console.log("Email missing in profile, updating with:", user.email);
+      if ((!data.email || data.email === '') && user?.email) {
+        console.log("Email missing or empty in profile, updating with:", user.email);
         const { error: updateError } = await supabase
           .from("profiles")
           .update({ email: user.email })
@@ -124,6 +123,7 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
         } else {
           // Update the local data with the email
           data.email = user.email;
+          console.log("Profile email updated successfully:", data.email);
         }
       }
       

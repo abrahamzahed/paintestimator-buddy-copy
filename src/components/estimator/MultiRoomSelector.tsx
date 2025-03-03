@@ -83,16 +83,6 @@ const MultiRoomSelector = ({ rooms, updateRooms }: MultiRoomSelectorProps) => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <Label className="text-lg font-semibold">Rooms to Paint</Label>
-        <Button 
-          type="button" 
-          variant="outline" 
-          size="sm" 
-          onClick={addNewRoom}
-          className="flex items-center gap-1"
-        >
-          <PlusCircle className="h-4 w-4" />
-          Add Room
-        </Button>
       </div>
 
       {rooms.length === 0 ? (
@@ -100,7 +90,7 @@ const MultiRoomSelector = ({ rooms, updateRooms }: MultiRoomSelectorProps) => {
           <p className="text-muted-foreground">No rooms added yet. Click "Add Room" to begin.</p>
         </div>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-8">
           {rooms.map((room, index) => (
             <div key={room.id} className="border rounded-lg p-4 relative">
               <Button
@@ -116,7 +106,6 @@ const MultiRoomSelector = ({ rooms, updateRooms }: MultiRoomSelectorProps) => {
               <h4 className="text-md font-medium mb-4">Room {index + 1}</h4>
               
               <div className="space-y-4">
-                {/* Room Type */}
                 <div className="space-y-2">
                   <Label>Room Type</Label>
                   <RadioGroup
@@ -137,7 +126,6 @@ const MultiRoomSelector = ({ rooms, updateRooms }: MultiRoomSelectorProps) => {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Room Dimensions */}
                   <div className="space-y-2">
                     <Label>Wall Count</Label>
                     <Input
@@ -177,7 +165,6 @@ const MultiRoomSelector = ({ rooms, updateRooms }: MultiRoomSelectorProps) => {
                     />
                   </div>
 
-                  {/* Wall Condition */}
                   <div className="space-y-2">
                     <Label>Wall Condition</Label>
                     <Select 
@@ -199,7 +186,6 @@ const MultiRoomSelector = ({ rooms, updateRooms }: MultiRoomSelectorProps) => {
                     </Select>
                   </div>
 
-                  {/* Paint Quality */}
                   <div className="space-y-2">
                     <Label>Paint Quality</Label>
                     <Select 
@@ -221,7 +207,6 @@ const MultiRoomSelector = ({ rooms, updateRooms }: MultiRoomSelectorProps) => {
                     </Select>
                   </div>
                   
-                  {/* Doors Count */}
                   <div className="space-y-2">
                     <Label>Doors to Paint</Label>
                     <Input
@@ -234,7 +219,6 @@ const MultiRoomSelector = ({ rooms, updateRooms }: MultiRoomSelectorProps) => {
                     />
                   </div>
                   
-                  {/* Windows Count */}
                   <div className="space-y-2">
                     <Label>Windows to Paint</Label>
                     <Input
@@ -248,7 +232,6 @@ const MultiRoomSelector = ({ rooms, updateRooms }: MultiRoomSelectorProps) => {
                   </div>
                 </div>
 
-                {/* Additional Options Section */}
                 <div className="border-t pt-4 mt-4">
                   <h5 className="font-medium mb-3">Additional Options</h5>
                   <div className="space-y-4">
@@ -332,7 +315,6 @@ const MultiRoomSelector = ({ rooms, updateRooms }: MultiRoomSelectorProps) => {
                   </div>
                 </div>
 
-                {/* Discounts Section */}
                 <div className="border-t pt-4 mt-4">
                   <h5 className="font-medium mb-3">Room-Specific Discounts</h5>
                   <div className="space-y-4">
@@ -364,6 +346,18 @@ const MultiRoomSelector = ({ rooms, updateRooms }: MultiRoomSelectorProps) => {
           ))}
         </div>
       )}
+      
+      <div className="flex justify-center mt-6">
+        <Button 
+          type="button" 
+          variant="outline" 
+          onClick={addNewRoom}
+          className="flex items-center gap-1"
+        >
+          <PlusCircle className="h-4 w-4 mr-1" />
+          Add Room
+        </Button>
+      </div>
     </div>
   );
 };
