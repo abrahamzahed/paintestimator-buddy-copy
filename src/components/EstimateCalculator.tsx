@@ -18,12 +18,14 @@ interface EstimateCalculatorProps {
     email?: string;
     phone?: string;
   };
+  initialRoomDetails?: RoomDetail[];
   submitButtonText?: string;
 }
 
 const EstimateCalculator = ({ 
   onEstimateComplete, 
   initialUserData,
+  initialRoomDetails,
   submitButtonText = "Submit Request" 
 }: EstimateCalculatorProps) => {
   const { toast } = useToast();
@@ -33,7 +35,7 @@ const EstimateCalculator = ({
   const [roomEstimates, setRoomEstimates] = useState<Record<string, ReturnType<typeof calculateSingleRoomEstimate>>>({});
   
   const [roomDetails, setRoomDetails] = useState<RoomDetails>({
-    rooms: [
+    rooms: initialRoomDetails || [
       {
         id: uuidv4(),
         roomType: "bedroom",

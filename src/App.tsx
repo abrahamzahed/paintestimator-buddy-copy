@@ -1,118 +1,76 @@
-
-import { useState, useEffect } from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { SessionContextProvider, useSession } from "@/context/SessionContext";
-import { Toaster } from "@/components/ui/toaster";
-import Index from "@/pages/Index";
-import Auth from "@/pages/Auth";
-import Dashboard from "@/pages/Dashboard";
-import AdminDashboard from "@/pages/AdminDashboard";
-import ProjectDetail from "@/pages/ProjectDetail";
-import EstimateForm from "@/pages/EstimateForm";
-import EstimateDetail from "@/pages/EstimateDetail";
-import NotFound from "@/pages/NotFound";
-import { Profile } from "./types";
-import { supabase } from "@/integrations/supabase/client";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Index from "./pages/Index";
+import Auth from "./pages/Auth";
+import Dashboard from "./pages/Dashboard";
+import AdminDashboard from "./pages/AdminDashboard";
+import EstimateForm from "./pages/EstimateForm";
+import EstimateDetail from "./pages/EstimateDetail";
+import EditEstimate from "./pages/EditEstimate";
+import ProjectDetail from "./pages/ProjectDetail";
+import NotFound from "./pages/NotFound";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
+import { SessionContextProvider } from "./context/SessionContext";
+import { Toaster } from "./components/ui/toaster";
 
 function App() {
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const { data } = await supabase.auth.getSession();
-        const user = data.session?.user;
-        
-        if (!user) {
-          setLoading(false);
-          return;
-        }
-
-        const { data: profileData, error } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", user.id)
-          .single();
-
-        if (error) {
-          console.error("Error fetching profile:", error);
-        } else {
-          // Add email to the profile data from the user
-          const completeProfile = {
-            ...profileData,
-            email: user.email // Use the email directly from the user auth data
-          };
-          setProfile(completeProfile as Profile);
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProfile();
-  }, []);
-
-  const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
-    const { session } = useSession();
-
-    if (!session) {
-      return <Navigate to="/auth" replace />;
-    }
-
-    return children;
-  };
-
   return (
     <SessionContextProvider>
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
-          <Route 
-            path="/dashboard" 
+          <Route
+            path="/dashboard"
             element={
               <ProtectedRoute>
                 <Dashboard />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/admin" 
+          <Route
+            path="/admin"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={["admin"]}>
                 <AdminDashboard />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/project/:id" 
+          <Route
+            path="/project/:id"
             element={
               <ProtectedRoute>
                 <ProjectDetail />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/estimate/:id" 
-            element={
-              <ProtectedRoute>
-                <EstimateDetail />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/estimate" 
+          <Route
+            path="/estimate"
             element={
               <ProtectedRoute>
                 <EstimateForm />
               </ProtectedRoute>
-            } 
+            }
+          />
+          <Route
+            path="/estimate/:id"
+            element={
+              <ProtectedRoute>
+                <EstimateDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/estimate/edit/:id"
+            element={
+              <ProtectedRoute>
+                <EditEstimate />
+              </ProtectedRoute>
+            }
           />
           <Route path="*" element={<NotFound />} />
         </Routes>
-        <Toaster />
       </BrowserRouter>
+      <Toaster />
     </SessionContextProvider>
   );
 }
