@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { EstimateResult, RoomDetail, LineItem } from "@/types";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
@@ -28,7 +27,6 @@ const DetailedSummaryDialog = ({
 }: DetailedSummaryDialogProps) => {
   const { id: estimateId } = useParams<{ id: string }>();
   
-  // Initialize with all rooms expanded by default
   const [expandedRooms, setExpandedRooms] = useState<string[]>([]);
   const [calculatedRoomEstimates, setCalculatedRoomEstimates] = useState<Record<string, any>>(roomEstimates);
   const [clientInfo, setClientInfo] = useState<{ name: string; address: string; city: string; state: string; zip: string }>({
@@ -40,19 +38,15 @@ const DetailedSummaryDialog = ({
   });
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
   
-  // Set all rooms to be expanded when the dialog opens
   useEffect(() => {
     if (open && roomDetails.length > 0) {
       setExpandedRooms(roomDetails.map(room => room.id));
       
-      // Calculate proper estimates for each room if they're not already calculated
       const updatedEstimates = { ...roomEstimates };
       let needsUpdate = false;
       
       roomDetails.forEach(room => {
-        // Check if the room estimate exists and has a valid totalCost
         if (!roomEstimates[room.id] || roomEstimates[room.id].totalCost === 0) {
-          // Calculate the estimate for this room
           updatedEstimates[room.id] = calculateSingleRoomEstimate(room);
           needsUpdate = true;
         }
@@ -62,7 +56,6 @@ const DetailedSummaryDialog = ({
         setCalculatedRoomEstimates(updatedEstimates);
       }
 
-      // Fetch real line items and client info if we have an estimate ID
       if (estimateId) {
         fetchLineItems(estimateId);
         fetchClientInfo(estimateId);
@@ -78,7 +71,6 @@ const DetailedSummaryDialog = ({
       if (!error && data && data.length > 0) {
         setLineItems(data);
       } else {
-        // If no real line items found, set default ones with estimate_id
         setLineItems([
           { id: '1', description: 'Premium paint - Living Room', quantity: 2, unit_price: 45.99, estimate_id: estId },
           { id: '2', description: 'Standard paint - Bedroom', quantity: 1, unit_price: 32.99, estimate_id: estId },
@@ -92,7 +84,6 @@ const DetailedSummaryDialog = ({
 
   const fetchClientInfo = async (estId: string) => {
     try {
-      // Get the estimate to find the lead ID
       const { data: estimateData, error: estimateError } = await supabase
         .from("estimates")
         .select("lead_id")
@@ -100,7 +91,6 @@ const DetailedSummaryDialog = ({
         .single();
       
       if (!estimateError && estimateData && estimateData.lead_id) {
-        // Get the lead info
         const { data: leadData, error: leadError } = await supabase
           .from("leads")
           .select("name, email, phone, address")
@@ -108,13 +98,11 @@ const DetailedSummaryDialog = ({
           .single();
         
         if (!leadError && leadData) {
-          // Parse address if available
           let street = leadData.address || "555 Home Avenue";
           let city = "Residence City";
           let state = "CA";
           let zip = "90210";
           
-          // Simple parsing of address field if it contains commas
           if (leadData.address && leadData.address.includes(',')) {
             const addressParts = leadData.address.split(',');
             street = addressParts[0].trim();
@@ -143,14 +131,11 @@ const DetailedSummaryDialog = ({
   };
 
   const handlePrint = () => {
-    // Add a temporary class to the body for print styles
     document.body.classList.add('printing');
     
-    // Clone the dialog content to a new div
     const printContent = document.querySelector('.print-content');
     if (!printContent) return;
     
-    // Create a new window for printing
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
       alert('Please allow popups for this website');
@@ -158,7 +143,6 @@ const DetailedSummaryDialog = ({
       return;
     }
     
-    // Add print styles
     printWindow.document.write(`
       <html>
         <head>
@@ -245,7 +229,6 @@ const DetailedSummaryDialog = ({
     
     printWindow.document.close();
     
-    // Wait for resources to load
     setTimeout(() => {
       printWindow.print();
       printWindow.onafterprint = () => {
@@ -254,25 +237,20 @@ const DetailedSummaryDialog = ({
       document.body.classList.remove('printing');
     }, 500);
   };
-  
-  // Verify and recalculate the total costs
+
   const verifyTotalCosts = () => {
-    // Calculate the sum of all room costs
     const totalRoomCosts = Object.values(calculatedRoomEstimates).reduce(
       (sum, roomEst: any) => sum + (roomEst.totalCost || 0), 0
     );
     
-    // Calculate total from line items
     const lineItemsTotal = lineItems.reduce(
       (sum, item) => sum + (item.quantity * item.unit_price), 0
     );
     
-    // Get discount amount
     const discountAmount = Object.values(currentEstimate.discounts).reduce(
       (sum, discount) => sum + (Number(discount) || 0), 0
     );
     
-    // Grand total should be rooms + items - discounts
     const calculatedTotal = totalRoomCosts + lineItemsTotal - discountAmount;
     
     return {
@@ -282,13 +260,12 @@ const DetailedSummaryDialog = ({
       calculatedTotal: Math.max(calculatedTotal, 0)
     };
   };
-  
+
   const { roomTotal, lineItemsTotal, discountAmount, calculatedTotal } = verifyTotalCosts();
-  
-  // Get today's date for the invoice
+
   const today = new Date();
   const formattedDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-  
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -307,7 +284,6 @@ const DetailedSummaryDialog = ({
         </DialogHeader>
         
         <div className="print-content py-6 space-y-6">
-          {/* Company and Client Info */}
           <div className="grid grid-cols-2 gap-8">
             <div>
               <h3 className="text-sm font-medium text-muted-foreground mb-2">SERVICE PROVIDER</h3>
@@ -328,7 +304,6 @@ const DetailedSummaryDialog = ({
             </div>
           </div>
 
-          {/* Summary Totals - More compact */}
           <Card className="border">
             <CardContent className="p-4">
               <div className="grid grid-cols-4 gap-4">
@@ -361,7 +336,6 @@ const DetailedSummaryDialog = ({
                   <span className="font-medium">{formatCurrency(lineItemsTotal)}</span>
                 </div>
                 
-                {/* Discounts */}
                 {discountAmount > 0 && (
                   <div className="flex justify-between items-center mt-1 text-green-600">
                     <span className="font-medium">Discounts</span>
@@ -377,12 +351,10 @@ const DetailedSummaryDialog = ({
             </CardContent>
           </Card>
           
-          {/* Room Details - Always expanded */}
           <div>
             <h3 className="font-semibold text-lg mb-3">Room-by-Room Breakdown</h3>
             <div className="space-y-4">
               {roomDetails.map((room) => {
-                // Get the calculated estimate for this room
                 const roomEstimate = calculatedRoomEstimates[room.id] || { 
                   totalCost: 0, 
                   laborCost: 0, 
@@ -430,7 +402,6 @@ const DetailedSummaryDialog = ({
                         </div>
                       </div>
                       
-                      {/* Cost breakdown for the room - compact */}
                       <div className="border-t pt-3 mt-3">
                         <h5 className="text-sm font-medium mb-2">Cost Breakdown</h5>
                         <div className="grid grid-cols-2 text-sm gap-x-4 gap-y-1">
@@ -441,7 +412,6 @@ const DetailedSummaryDialog = ({
                           <span>Materials</span>
                           <span className="text-right">{formatCurrency(roomEstimate.materialCost || 0)}</span>
                           
-                          {/* Additional costs */}
                           {roomEstimate.additionalCosts && 
                            Object.entries(roomEstimate.additionalCosts).length > 0 && (
                             <>
@@ -455,7 +425,6 @@ const DetailedSummaryDialog = ({
                             </>
                           )}
                           
-                          {/* Discounts for the room */}
                           {(room.isEmptyHouse || !room.needFloorCovering) && (
                             <>
                               <span className="col-span-2 font-medium pt-1 mt-1 border-t">Discounts:</span>
@@ -485,12 +454,10 @@ const DetailedSummaryDialog = ({
             </div>
           </div>
           
-          {/* Line Items */}
           {lineItems.length > 0 && (
             <LineItemsTable lineItems={lineItems} />
           )}
           
-          {/* Terms and Notes - more compact */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <h3 className="text-sm font-medium mb-1">PAYMENT TERMS</h3>
