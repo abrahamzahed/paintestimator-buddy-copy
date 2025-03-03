@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "../App";
@@ -58,7 +57,7 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
           console.log("No profile found, creating new profile");
           const userData = user?.user_metadata;
           
-          // Log the actual user metadata to see what we're working with
+          // Create profile with customer role by default
           console.log("User metadata:", userData);
           
           const { data: newProfile, error: createError } = await supabase
@@ -67,7 +66,7 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
               id: userId,
               name: userData?.name || user?.email?.split('@')[0] || null,
               phone: userData?.phone || null,
-              role: "customer"
+              role: "customer" // Default role for new profiles is customer
             }])
             .select();
             
@@ -96,7 +95,7 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
 
       console.log("Profile fetched successfully:", data);
       
-      // Verify that the profile data looks correct
+      // Verify profile data integrity
       if (!data || !data.id) {
         console.error("Profile data is incomplete:", data);
         toast({
@@ -109,7 +108,6 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
       setProfile(data as Profile);
     } catch (error) {
       console.error("Error in fetchProfile function:", error);
-      setIsLoading(false);
     } finally {
       setIsLoading(false);
     }
