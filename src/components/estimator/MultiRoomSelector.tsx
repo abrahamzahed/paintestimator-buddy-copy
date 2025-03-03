@@ -94,7 +94,7 @@ const MultiRoomSelector = ({
       {rooms.length === 0 ? <div className="text-center py-8 border border-dashed rounded-lg">
           <p className="text-muted-foreground">No rooms added yet. Click "Add Room" to begin.</p>
         </div> : <div className="space-y-6">
-          {rooms.map((room, index) => <div key={room.id} className="border rounded-lg p-4 relative bg-paint-light">
+          {rooms.map((room, index) => <div key={room.id} className="border rounded-lg p-4 relative bg-sky-100">
               <Button type="button" variant="ghost" size="icon" onClick={() => removeRoom(room.id)} className="absolute top-2 right-2 h-8 w-8">
                 <Trash2 className="h-4 w-4" />
               </Button>
