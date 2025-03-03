@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useSession } from "@/context/SessionContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -40,10 +41,11 @@ export default function Dashboard() {
           setProjects(active as Project[]);
           setArchivedProjects(archived as Project[]);
 
-          // Fetch estimates
+          // Fetch estimates - filter out deleted estimates
           const { data: estimatesData, error: estimatesError } = await supabase
             .from("estimates")
             .select("*")
+            .neq("status_type", "deleted")
             .order("created_at", { ascending: false })
             .limit(10);
 
@@ -98,12 +100,13 @@ export default function Dashboard() {
             ...(archivedProjectsData?.map(p => p.id) || [])
           ];
           
-          // For customers, fetch estimates for their projects
+          // For customers, fetch estimates for their projects, excluding deleted estimates
           if (allProjectIds.length > 0) {
             const { data: estimatesData, error: estimatesError } = await supabase
               .from("estimates")
               .select("*")
               .in("project_id", allProjectIds)
+              .neq("status_type", "deleted") // Filter out deleted estimates
               .order("created_at", { ascending: false });
 
             if (estimatesError) throw estimatesError;

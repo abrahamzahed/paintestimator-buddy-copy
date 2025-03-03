@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -21,9 +22,12 @@ const CustomerDashboardView = ({
 }: CustomerDashboardViewProps) => {
   const [projectsView, setProjectsView] = useState<"active" | "archived">("active");
   
+  // Filter out deleted estimates
+  const visibleEstimates = estimates.filter(estimate => estimate.status_type !== "deleted");
+  
   // Filter estimates by project
   const getEstimatesByProjectId = (projectId: string) => {
-    return estimates.filter(estimate => estimate.project_id === projectId);
+    return visibleEstimates.filter(estimate => estimate.project_id === projectId);
   };
 
   // Filter invoices by estimate
@@ -31,7 +35,7 @@ const CustomerDashboardView = ({
     return invoices.filter(invoice => invoice.estimate_id === estimateId);
   };
   
-  const totalEstimatesCount = estimates.length;
+  const totalEstimatesCount = visibleEstimates.length;
   const totalInvoicesCount = invoices.length;
   const displayedProjects = projectsView === "active" ? projects : archivedProjects;
   
@@ -236,7 +240,7 @@ const CustomerDashboardView = ({
             </TabsContent>
             
             <TabsContent value="estimates">
-              {estimates.length > 0 ? <div className="bg-white rounded-lg border border-gray-100 shadow-sm overflow-hidden">
+              {visibleEstimates.length > 0 ? <div className="bg-white rounded-lg border border-gray-100 shadow-sm overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full border-collapse">
                       <thead>
@@ -249,7 +253,7 @@ const CustomerDashboardView = ({
                         </tr>
                       </thead>
                       <tbody>
-                        {estimates.map(estimate => {
+                        {visibleEstimates.map(estimate => {
                     const projectName = projects.find(p => p.id === estimate.project_id)?.name || "Unknown Project";
                     return <tr key={estimate.id} className="border-b hover:bg-secondary/50">
                               <td className="py-3 px-4">{projectName}</td>

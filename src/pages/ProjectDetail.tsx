@@ -60,6 +60,7 @@ export default function ProjectDetail() {
           .from("estimates")
           .select("*")
           .eq("project_id", id)
+          .neq("status_type", "deleted") // Filter out deleted estimates
           .order("created_at", { ascending: false });
 
         if (estimatesError) throw estimatesError;
