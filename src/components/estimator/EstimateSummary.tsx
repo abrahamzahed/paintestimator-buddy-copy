@@ -55,7 +55,7 @@ const EstimateSummary = ({
                             {Object.entries(roomEstimate.additionalCosts).map(([key, value]) => (
                               <div key={key} className="flex justify-between">
                                 <span>{key.charAt(0).toUpperCase() + key.slice(1)}:</span>
-                                <span>{formatCurrency(value)}</span>
+                                <span>{formatCurrency(Number(value))}</span>
                               </div>
                             ))}
                           </div>
