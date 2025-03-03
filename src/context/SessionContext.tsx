@@ -1,9 +1,11 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "../App";
 import { useToast } from "@/hooks/use-toast";
 
-type Profile = {
+// Export the Profile type so it can be imported in other files
+export type Profile = {
   id: string;
   role: "admin" | "staff" | "customer";
   name: string | null;
