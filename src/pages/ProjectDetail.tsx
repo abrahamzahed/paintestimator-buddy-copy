@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useSession } from "@/context/SessionContext";
@@ -26,7 +25,6 @@ export default function ProjectDetail() {
       try {
         if (!id) return;
 
-        // Fetch project
         const { data: projectData, error: projectError } = await supabase
           .from("projects")
           .select("*")
@@ -36,7 +34,6 @@ export default function ProjectDetail() {
         if (projectError) throw projectError;
         setProject(projectData as Project);
 
-        // Fetch estimates directly by project ID
         const { data: estimatesData, error: estimatesError } = await supabase
           .from("estimates")
           .select("*")
@@ -46,7 +43,6 @@ export default function ProjectDetail() {
         if (estimatesError) throw estimatesError;
         setEstimates(estimatesData || []);
 
-        // Fetch invoices for these estimates
         if (estimatesData && estimatesData.length > 0) {
           const estimateIds = estimatesData.map(estimate => estimate.id);
           
