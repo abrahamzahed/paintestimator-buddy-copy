@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useSession } from "@/context/SessionContext";
 import { supabase } from "../App";
 import { useToast } from "@/hooks/use-toast";
-import { Lead, Estimate, Invoice } from "@/types";
+import { Lead, Estimate, Invoice, Project } from "@/types";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import AdminDashboardView from "@/components/dashboard/AdminDashboardView";
@@ -15,6 +15,7 @@ export default function Dashboard() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [estimates, setEstimates] = useState<Estimate[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -24,12 +25,22 @@ export default function Dashboard() {
         // If admin, fetch all data; if customer, fetch only their data
         if (isAdmin) {
           // Admin sees all data limited to recent items
+          // Fetch projects
+          const { data: projectsData, error: projectsError } = await supabase
+            .from("projects")
+            .select("*")
+            .order("created_at", { ascending: false })
+            .limit(10);
+
+          if (projectsError) throw projectsError;
+          setProjects(projectsData || []);
+
           // Fetch leads
           const { data: leadsData, error: leadsError } = await supabase
             .from("leads")
             .select("*")
             .order("created_at", { ascending: false })
-            .limit(5);
+            .limit(10);
 
           if (leadsError) throw leadsError;
           setLeads(leadsData || []);
@@ -39,7 +50,7 @@ export default function Dashboard() {
             .from("estimates")
             .select("*")
             .order("created_at", { ascending: false })
-            .limit(5);
+            .limit(10);
 
           if (estimatesError) throw estimatesError;
           setEstimates(estimatesData || []);
@@ -49,12 +60,22 @@ export default function Dashboard() {
             .from("invoices")
             .select("*")
             .order("created_at", { ascending: false })
-            .limit(5);
+            .limit(10);
 
           if (invoicesError) throw invoicesError;
           setInvoices(invoicesData || []);
         } else {
           // Regular customer - only see their own data
+          // Fetch projects
+          const { data: projectsData, error: projectsError } = await supabase
+            .from("projects")
+            .select("*")
+            .eq("user_id", user?.id)
+            .order("created_at", { ascending: false });
+
+          if (projectsError) throw projectsError;
+          setProjects(projectsData || []);
+
           // Fetch leads
           const { data: leadsData, error: leadsError } = await supabase
             .from("leads")

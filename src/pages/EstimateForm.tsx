@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "@/context/SessionContext";
 import { supabase } from "../App";
@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import EstimateCalculator from "@/components/EstimateCalculator";
 import { EstimateResult, Lead } from "@/types";
 import { House } from "lucide-react";
+import ProjectSelector from "@/components/estimator/ProjectSelector";
 
 export default function EstimateForm() {
   const navigate = useNavigate();
@@ -22,6 +23,8 @@ export default function EstimateForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showEstimateCalculator, setShowEstimateCalculator] = useState(false);
   const [estimateResult, setEstimateResult] = useState<EstimateResult | null>(null);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [selectedProjectName, setSelectedProjectName] = useState<string | undefined>(undefined);
   
   const [leadData, setLeadData] = useState<Partial<Lead>>({
     user_id: user?.id,
@@ -56,6 +59,11 @@ export default function EstimateForm() {
     setLeadData({ ...leadData, [name]: parseFloat(value) || 0 });
   };
 
+  const handleSelectProject = (projectId: string | null, projectName?: string) => {
+    setSelectedProjectId(projectId);
+    setSelectedProjectName(projectName);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -66,6 +74,8 @@ export default function EstimateForm() {
         .from("leads")
         .insert([{
           user_id: user?.id,
+          project_id: selectedProjectId,
+          project_name: selectedProjectName,
           name: leadData.name,
           email: leadData.email,
           phone: leadData.phone,
@@ -87,6 +97,7 @@ export default function EstimateForm() {
           .from("estimates")
           .insert([{
             lead_id: createdLead.id,
+            project_id: selectedProjectId,
             details: {
               roomType: "bedroom", // This would come from the estimator
               roomSize: "medium",
@@ -257,6 +268,12 @@ export default function EstimateForm() {
               </CardHeader>
               <form onSubmit={(e) => { e.preventDefault(); setShowEstimateCalculator(true); }}>
                 <CardContent className="space-y-4">
+                  {/* Project Selector */}
+                  <ProjectSelector 
+                    selectedProjectId={selectedProjectId} 
+                    onSelectProject={handleSelectProject} 
+                  />
+                  
                   <div className="space-y-2">
                     <Label htmlFor="service_type">Service Type</Label>
                     <RadioGroup
@@ -362,6 +379,13 @@ export default function EstimateForm() {
                 <div className="bg-secondary/30 p-4 rounded-lg">
                   <h3 className="font-semibold mb-2">Estimate Details</h3>
                   <div className="grid grid-cols-2 gap-2">
+                    {selectedProjectName && (
+                      <>
+                        <div className="text-muted-foreground">Project:</div>
+                        <div className="font-medium">{selectedProjectName}</div>
+                      </>
+                    )}
+                    
                     <div className="text-muted-foreground">Labor Cost:</div>
                     <div className="font-medium">${estimateResult.laborCost.toFixed(2)}</div>
                     

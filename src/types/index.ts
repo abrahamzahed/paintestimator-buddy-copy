@@ -1,3 +1,4 @@
+
 export interface Message {
   id: string;
   role: "bot" | "user";
@@ -48,9 +49,20 @@ export interface RoomDetails {
   windowsCount: number;
 }
 
+export interface Project {
+  id?: string;
+  name: string;
+  user_id?: string;
+  description?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface Lead {
   id?: string;
   user_id?: string;
+  project_id?: string;
+  project_name?: string;
   name: string;
   email: string;
   phone?: string;
@@ -79,6 +91,7 @@ export interface PricingRule {
 export interface Estimate {
   id?: string;
   lead_id: string;
+  project_id?: string;
   details: Record<string, any>;
   labor_cost: number;
   material_cost: number;

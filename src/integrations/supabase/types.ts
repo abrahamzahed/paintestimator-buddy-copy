@@ -14,11 +14,12 @@ export type Database = {
           created_at: string | null
           details: Json
           estimated_hours: number
-          estimated_paint_gallons: number
+          estimated_paint_gallons: number | null
           id: string
           labor_cost: number
           lead_id: string
           material_cost: number
+          project_id: string | null
           status: string | null
           total_cost: number
           updated_at: string | null
@@ -27,11 +28,12 @@ export type Database = {
           created_at?: string | null
           details: Json
           estimated_hours?: number
-          estimated_paint_gallons?: number
+          estimated_paint_gallons?: number | null
           id?: string
           labor_cost?: number
           lead_id: string
           material_cost?: number
+          project_id?: string | null
           status?: string | null
           total_cost?: number
           updated_at?: string | null
@@ -40,11 +42,12 @@ export type Database = {
           created_at?: string | null
           details?: Json
           estimated_hours?: number
-          estimated_paint_gallons?: number
+          estimated_paint_gallons?: number | null
           id?: string
           labor_cost?: number
           lead_id?: string
           material_cost?: number
+          project_id?: string | null
           status?: string | null
           total_cost?: number
           updated_at?: string | null
@@ -55,6 +58,13 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estimates_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]
@@ -115,6 +125,8 @@ export type Database = {
           id: string
           name: string
           phone: string | null
+          project_id: string | null
+          project_name: string | null
           room_count: number | null
           service_type: string
           square_footage: number | null
@@ -130,6 +142,8 @@ export type Database = {
           id?: string
           name: string
           phone?: string | null
+          project_id?: string | null
+          project_name?: string | null
           room_count?: number | null
           service_type: string
           square_footage?: number | null
@@ -145,6 +159,8 @@ export type Database = {
           id?: string
           name?: string
           phone?: string | null
+          project_id?: string | null
+          project_name?: string | null
           room_count?: number | null
           service_type?: string
           square_footage?: number | null
@@ -152,7 +168,15 @@ export type Database = {
           updated_at?: string | null
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "leads_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pricing_rules: {
         Row: {
@@ -214,6 +238,33 @@ export type Database = {
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"] | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      projects: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }
