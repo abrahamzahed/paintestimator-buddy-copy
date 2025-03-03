@@ -3,17 +3,17 @@ import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { House, FileText, DollarSign, ChevronRight } from "lucide-react";
-import { Lead, Estimate, Invoice } from "@/types";
+import { Project, Estimate, Invoice } from "@/types";
 
 interface AdminDashboardViewProps {
-  leads: Lead[];
+  projects: Project[];
   estimates: Estimate[];
   invoices: Invoice[];
   handleAdminRedirect: () => void;
 }
 
 const AdminDashboardView = ({
-  leads,
+  projects,
   estimates,
   invoices,
   handleAdminRedirect,
@@ -24,8 +24,8 @@ const AdminDashboardView = ({
         <div className="bg-secondary/50 rounded-xl p-6 shadow-sm">
           <div className="flex justify-between items-start">
             <div>
-              <h3 className="font-semibold text-lg">Recent Leads</h3>
-              <p className="text-3xl font-bold mt-2">{leads.length}</p>
+              <h3 className="font-semibold text-lg">Recent Projects</h3>
+              <p className="text-3xl font-bold mt-2">{projects.length}</p>
             </div>
             <span className="bg-paint/10 p-2 rounded-full text-paint">
               <House className="w-6 h-6" />
