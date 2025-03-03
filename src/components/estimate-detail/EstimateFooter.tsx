@@ -86,12 +86,19 @@ const EstimateFooter = ({ estimate }: EstimateFooterProps) => {
         description: "The estimate has been successfully deleted.",
       });
       
-      // Navigate back to the project page or dashboard
-      if (estimate.project_id) {
-        navigate(`/project/${estimate.project_id}`);
-      } else {
-        navigate("/dashboard");
-      }
+      // Close dialog before navigating
+      setIsDeleting(false);
+      setIsDeleteDialogOpen(false);
+      
+      // Use a small timeout to ensure state updates complete before navigation
+      setTimeout(() => {
+        // Navigate back to the project page or dashboard
+        if (estimate.project_id) {
+          navigate(`/project/${estimate.project_id}`);
+        } else {
+          navigate("/dashboard");
+        }
+      }, 50);
       
     } catch (error: any) {
       console.error("Error deleting estimate:", error);
@@ -100,7 +107,6 @@ const EstimateFooter = ({ estimate }: EstimateFooterProps) => {
         description: error.message || "An unexpected error occurred",
         variant: "destructive",
       });
-    } finally {
       setIsDeleting(false);
       setIsDeleteDialogOpen(false);
     }

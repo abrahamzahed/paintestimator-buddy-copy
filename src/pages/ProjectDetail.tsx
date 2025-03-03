@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useSession } from "@/context/SessionContext";
@@ -127,7 +128,16 @@ export default function ProjectDetail() {
         description: toastMessage,
       });
       
-      navigate("/dashboard");
+      // Important: First close all dialogs, then navigate
+      setShowDeleteDialog(false);
+      setShowArchiveDialog(false);
+      setShowRestoreDialog(false);
+      setIsUpdatingStatus(false);
+      
+      // Use a small timeout to ensure state updates complete before navigation
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 50);
       
     } catch (error) {
       console.error(`Error updating project status to ${newStatus}:`, error);
@@ -136,7 +146,6 @@ export default function ProjectDetail() {
         description: "An error occurred while trying to update the project",
         variant: "destructive",
       });
-    } finally {
       setIsUpdatingStatus(false);
       setShowDeleteDialog(false);
       setShowArchiveDialog(false);
