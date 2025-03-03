@@ -1,14 +1,17 @@
+
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useSession } from "@/context/SessionContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Estimate, LineItem } from "@/types";
+import { Estimate, LineItem, RoomDetail } from "@/types";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { ChevronLeft, FileText } from "lucide-react";
+import { ChevronLeft, FileText, CheckCircle, XCircle } from "lucide-react";
 import { formatCurrency } from "@/utils/estimateUtils";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import EstimateSummary from "@/components/estimator/EstimateSummary";
 
 export default function EstimateDetail() {
   const { id } = useParams<{ id: string }>();
@@ -17,6 +20,9 @@ export default function EstimateDetail() {
   const [estimate, setEstimate] = useState<Estimate | null>(null);
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showDetailedView, setShowDetailedView] = useState(false);
+  const [roomDetails, setRoomDetails] = useState<RoomDetail[]>([]);
+  const [roomEstimates, setRoomEstimates] = useState<Record<string, any>>({});
 
   useEffect(() => {
     const fetchEstimateData = async () => {
@@ -44,6 +50,27 @@ export default function EstimateDetail() {
         };
         
         setEstimate(formattedEstimate);
+
+        // Extract room details if available
+        if (formattedEstimate.details && formattedEstimate.details.roomDetails) {
+          // Cast to RoomDetail[] to ensure proper typing
+          setRoomDetails(formattedEstimate.details.roomDetails as RoomDetail[]);
+          
+          // Create simple room estimate objects based on available data
+          const estimates: Record<string, any> = {};
+          formattedEstimate.details.roomDetails.forEach((room: any) => {
+            if (room.id) {
+              // Create a simple estimate object for each room
+              estimates[room.id] = {
+                totalCost: 0, // We don't have individual room costs in the database
+                laborCost: 0,
+                materialCost: 0,
+                additionalCosts: {},
+              };
+            }
+          });
+          setRoomEstimates(estimates);
+        }
 
         try {
           // Use the RPC function to get line items for this estimate
@@ -167,6 +194,100 @@ export default function EstimateDetail() {
               </div>
             </div>
 
+            {/* Room details summary */}
+            {roomDetails.length > 0 && (
+              <div className="mt-8">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="font-semibold">Rooms ({roomDetails.length})</h3>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => setShowDetailedView(true)}
+                  >
+                    View Detailed Summary
+                  </Button>
+                </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  {roomDetails.map((room, index) => (
+                    <Card key={room.id} className="border">
+                      <CardHeader className="py-3 px-4">
+                        <CardTitle className="text-base">
+                          {room.roomType.charAt(0).toUpperCase() + room.roomType.slice(1)}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-4 pt-0">
+                        <div className="text-sm space-y-1">
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="text-muted-foreground">Dimensions:</div>
+                            <div>{room.wallsCount} walls, {room.wallHeight}′ × {room.wallWidth}′</div>
+                            
+                            <div className="text-muted-foreground">Paint Type:</div>
+                            <div>{room.paintType.charAt(0).toUpperCase() + room.paintType.slice(1)}</div>
+                            
+                            <div className="text-muted-foreground">Wall Condition:</div>
+                            <div>{room.condition.charAt(0).toUpperCase() + room.condition.slice(1)}</div>
+                          </div>
+                          
+                          <div className="mt-2 pt-2 border-t">
+                            <div className="font-medium mb-1">Additional Options:</div>
+                            <ul className="space-y-1">
+                              <li className="flex items-center">
+                                {room.includeCeiling ? 
+                                  <CheckCircle className="h-3.5 w-3.5 text-green-500 mr-1" /> : 
+                                  <XCircle className="h-3.5 w-3.5 text-gray-300 mr-1" />}
+                                <span>Ceiling</span>
+                              </li>
+                              <li className="flex items-center">
+                                {room.includeBaseboards ? 
+                                  <CheckCircle className="h-3.5 w-3.5 text-green-500 mr-1" /> : 
+                                  <XCircle className="h-3.5 w-3.5 text-gray-300 mr-1" />}
+                                <span>Baseboards {room.includeBaseboards && `(${room.baseboardsMethod})`}</span>
+                              </li>
+                              <li className="flex items-center">
+                                {room.includeCrownMolding ? 
+                                  <CheckCircle className="h-3.5 w-3.5 text-green-500 mr-1" /> : 
+                                  <XCircle className="h-3.5 w-3.5 text-gray-300 mr-1" />}
+                                <span>Crown Molding</span>
+                              </li>
+                              <li className="flex items-center">
+                                {room.hasHighCeiling ? 
+                                  <CheckCircle className="h-3.5 w-3.5 text-green-500 mr-1" /> : 
+                                  <XCircle className="h-3.5 w-3.5 text-gray-300 mr-1" />}
+                                <span>High Ceiling</span>
+                              </li>
+                              <li className="flex items-center">
+                                {room.includeCloset ? 
+                                  <CheckCircle className="h-3.5 w-3.5 text-green-500 mr-1" /> : 
+                                  <XCircle className="h-3.5 w-3.5 text-gray-300 mr-1" />}
+                                <span>Closet</span>
+                              </li>
+                            </ul>
+                          </div>
+                          
+                          {(room.doorsCount > 0 || room.windowsCount > 0) && (
+                            <div className="mt-2 pt-2 border-t grid grid-cols-2 gap-2">
+                              {room.doorsCount > 0 && (
+                                <>
+                                  <div className="text-muted-foreground">Doors:</div>
+                                  <div>{room.doorsCount}</div>
+                                </>
+                              )}
+                              {room.windowsCount > 0 && (
+                                <>
+                                  <div className="text-muted-foreground">Windows:</div>
+                                  <div>{room.windowsCount}</div>
+                                </>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {lineItems.length > 0 && (
               <div className="mt-8">
                 <h3 className="font-semibold mb-4">Line Items</h3>
@@ -224,6 +345,36 @@ export default function EstimateDetail() {
           </CardFooter>
         </Card>
       </div>
+
+      {/* Detailed Summary Dialog */}
+      <Dialog open={showDetailedView} onOpenChange={setShowDetailedView}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Detailed Estimate Summary</DialogTitle>
+            <DialogDescription>
+              Complete breakdown of your estimate
+            </DialogDescription>
+          </DialogHeader>
+          {estimate && (
+            <EstimateSummary
+              currentEstimate={{
+                totalCost: estimate.total_cost || 0,
+                laborCost: estimate.labor_cost || 0,
+                materialCost: estimate.material_cost || 0,
+                timeEstimate: estimate.estimated_hours || 0,
+                paintCans: estimate.estimated_paint_gallons || 0,
+                additionalCosts: {},
+                discounts: estimate.discount ? { volumeDiscount: estimate.discount } : {}
+              }}
+              rooms={roomDetails}
+              roomEstimates={roomEstimates}
+              onSubmit={() => {}}
+              submitButtonText=""
+              isLastStep={false}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }
