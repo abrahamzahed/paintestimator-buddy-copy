@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import LineItemsTable from "./LineItemsTable";
 import { useParams } from "react-router-dom";
 import { calculateSingleRoomEstimate } from "@/utils/estimateUtils";
+import { supabase } from "@/integrations/supabase/client";
 
 interface DetailedSummaryDialogProps {
   open: boolean;
@@ -30,6 +31,14 @@ const DetailedSummaryDialog = ({
   // Initialize with all rooms expanded by default
   const [expandedRooms, setExpandedRooms] = useState<string[]>([]);
   const [calculatedRoomEstimates, setCalculatedRoomEstimates] = useState<Record<string, any>>(roomEstimates);
+  const [clientInfo, setClientInfo] = useState<{ name: string; address: string; city: string; state: string; zip: string }>({
+    name: "Valued Customer",
+    address: "555 Home Avenue",
+    city: "Residence City",
+    state: "CA",
+    zip: "90210"
+  });
+  const [lineItems, setLineItems] = useState<LineItem[]>([]);
   
   // Set all rooms to be expanded when the dialog opens
   useEffect(() => {
@@ -52,12 +61,229 @@ const DetailedSummaryDialog = ({
       if (needsUpdate) {
         setCalculatedRoomEstimates(updatedEstimates);
       }
+
+      // Fetch real line items and client info if we have an estimate ID
+      if (estimateId) {
+        fetchLineItems(estimateId);
+        fetchClientInfo(estimateId);
+      }
     }
-  }, [open, roomDetails, roomEstimates]);
+  }, [open, roomDetails, roomEstimates, estimateId]);
+
+  const fetchLineItems = async (estId: string) => {
+    try {
+      const { data, error } = await supabase
+        .rpc('get_line_items_for_estimate', { estimate_id: estId });
+      
+      if (!error && data && data.length > 0) {
+        setLineItems(data);
+      } else {
+        // If no real line items found, set default ones with estimate_id
+        setLineItems([
+          { id: '1', description: 'Premium paint - Living Room', quantity: 2, unit_price: 45.99, estimate_id: estId },
+          { id: '2', description: 'Standard paint - Bedroom', quantity: 1, unit_price: 32.99, estimate_id: estId },
+          { id: '3', description: 'Painting supplies', quantity: 1, unit_price: 25.00, estimate_id: estId }
+        ]);
+      }
+    } catch (error) {
+      console.error("Error fetching line items:", error);
+    }
+  };
+
+  const fetchClientInfo = async (estId: string) => {
+    try {
+      // Get the estimate to find the lead ID
+      const { data: estimateData, error: estimateError } = await supabase
+        .from("estimates")
+        .select("lead_id")
+        .eq("id", estId)
+        .single();
+      
+      if (!estimateError && estimateData && estimateData.lead_id) {
+        // Get the lead info
+        const { data: leadData, error: leadError } = await supabase
+          .from("leads")
+          .select("name, email, phone, address")
+          .eq("id", estimateData.lead_id)
+          .single();
+        
+        if (!leadError && leadData) {
+          // Parse address if available
+          let street = leadData.address || "555 Home Avenue";
+          let city = "Residence City";
+          let state = "CA";
+          let zip = "90210";
+          
+          // Simple parsing of address field if it contains commas
+          if (leadData.address && leadData.address.includes(',')) {
+            const addressParts = leadData.address.split(',');
+            street = addressParts[0].trim();
+            if (addressParts.length > 1) {
+              const cityStateParts = addressParts[1].trim().split(' ');
+              if (cityStateParts.length > 2) {
+                city = cityStateParts.slice(0, -2).join(' ');
+                state = cityStateParts[cityStateParts.length - 2];
+                zip = cityStateParts[cityStateParts.length - 1];
+              }
+            }
+          }
+          
+          setClientInfo({
+            name: leadData.name || "Valued Customer",
+            address: street,
+            city,
+            state,
+            zip
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching client info:", error);
+    }
+  };
 
   const handlePrint = () => {
-    window.print();
+    // Add a temporary class to the body for print styles
+    document.body.classList.add('printing');
+    
+    // Clone the dialog content to a new div
+    const printContent = document.querySelector('.print-content');
+    if (!printContent) return;
+    
+    // Create a new window for printing
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      alert('Please allow popups for this website');
+      document.body.classList.remove('printing');
+      return;
+    }
+    
+    // Add print styles
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Painting Estimate</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              padding: 20px;
+              color: #333;
+            }
+            .print-header {
+              display: flex;
+              justify-content: space-between;
+              border-bottom: 1px solid #ddd;
+              padding-bottom: 20px;
+              margin-bottom: 20px;
+            }
+            .section {
+              margin-bottom: 30px;
+            }
+            h1 {
+              color: #333;
+              margin-bottom: 5px;
+            }
+            h2 {
+              color: #555;
+              margin: 20px 0 10px;
+              font-size: 18px;
+            }
+            .grid-col-2 {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 20px;
+            }
+            .card {
+              border: 1px solid #ddd;
+              border-radius: 5px;
+              padding: 15px;
+              margin-bottom: 15px;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-bottom: 20px;
+            }
+            th, td {
+              padding: 8px;
+              text-align: left;
+              border-bottom: 1px solid #ddd;
+            }
+            th {
+              background-color: #f5f5f5;
+            }
+            .price {
+              text-align: right;
+              font-weight: bold;
+            }
+            .total {
+              font-size: 18px;
+              font-weight: bold;
+              color: #1a5fb4;
+              display: flex;
+              justify-content: space-between;
+              padding: 10px 0;
+              border-top: 2px solid #ddd;
+            }
+            @media print {
+              body {
+                padding: 0;
+                margin: 0;
+              }
+              @page {
+                size: letter;
+                margin: 0.5in;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          ${printContent.innerHTML}
+        </body>
+      </html>
+    `);
+    
+    printWindow.document.close();
+    
+    // Wait for resources to load
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.onafterprint = () => {
+        printWindow.close();
+      };
+      document.body.classList.remove('printing');
+    }, 500);
   };
+  
+  // Verify and recalculate the total costs
+  const verifyTotalCosts = () => {
+    // Calculate the sum of all room costs
+    const totalRoomCosts = Object.values(calculatedRoomEstimates).reduce(
+      (sum, roomEst: any) => sum + (roomEst.totalCost || 0), 0
+    );
+    
+    // Calculate total from line items
+    const lineItemsTotal = lineItems.reduce(
+      (sum, item) => sum + (item.quantity * item.unit_price), 0
+    );
+    
+    // Get discount amount
+    const discountAmount = Object.values(currentEstimate.discounts).reduce(
+      (sum, discount) => sum + (Number(discount) || 0), 0
+    );
+    
+    // Grand total should be rooms + items - discounts
+    const calculatedTotal = totalRoomCosts + lineItemsTotal - discountAmount;
+    
+    return {
+      roomTotal: totalRoomCosts,
+      lineItemsTotal,
+      discountAmount,
+      calculatedTotal: Math.max(calculatedTotal, 0)
+    };
+  };
+  
+  const { roomTotal, lineItemsTotal, discountAmount, calculatedTotal } = verifyTotalCosts();
   
   // Get today's date for the invoice
   const today = new Date();
@@ -80,7 +306,7 @@ const DetailedSummaryDialog = ({
           </div>
         </DialogHeader>
         
-        <div className="py-6 space-y-6">
+        <div className="print-content py-6 space-y-6">
           {/* Company and Client Info */}
           <div className="grid grid-cols-2 gap-8">
             <div>
@@ -95,9 +321,9 @@ const DetailedSummaryDialog = ({
             <div>
               <h3 className="text-sm font-medium text-muted-foreground mb-2">CLIENT</h3>
               <div className="text-sm">
-                <p className="font-semibold">Valued Customer</p>
-                <p>555 Home Avenue</p>
-                <p>Residence City, CA 90210</p>
+                <p className="font-semibold">{clientInfo.name}</p>
+                <p>{clientInfo.address}</p>
+                <p>{clientInfo.city}, {clientInfo.state} {clientInfo.zip}</p>
               </div>
             </div>
           </div>
@@ -126,19 +352,27 @@ const DetailedSummaryDialog = ({
               
               <div className="border-t mt-3 pt-3">
                 <div className="flex justify-between items-center">
-                  <span className="font-medium">Total Cost</span>
-                  <span className="font-bold text-xl text-paint">{formatCurrency(currentEstimate.totalCost)}</span>
+                  <span className="font-medium">Room Subtotal</span>
+                  <span className="font-medium">{formatCurrency(roomTotal)}</span>
+                </div>
+                
+                <div className="flex justify-between items-center mt-1">
+                  <span className="font-medium">Line Items Subtotal</span>
+                  <span className="font-medium">{formatCurrency(lineItemsTotal)}</span>
                 </div>
                 
                 {/* Discounts */}
-                {Object.entries(currentEstimate.discounts).length > 0 && (
-                  <div className="text-sm mt-1">
-                    <p className="text-muted-foreground">Includes discounts:</p>
-                    {currentEstimate.discounts.volumeDiscount && (
-                      <p className="text-green-600">- Volume Discount: {formatCurrency(currentEstimate.discounts.volumeDiscount)}</p>
-                    )}
+                {discountAmount > 0 && (
+                  <div className="flex justify-between items-center mt-1 text-green-600">
+                    <span className="font-medium">Discounts</span>
+                    <span className="font-medium">-{formatCurrency(discountAmount)}</span>
                   </div>
                 )}
+                
+                <div className="flex justify-between items-center mt-3 pt-3 border-t">
+                  <span className="font-bold">Total Cost</span>
+                  <span className="font-bold text-xl text-paint">{formatCurrency(calculatedTotal)}</span>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -213,10 +447,10 @@ const DetailedSummaryDialog = ({
                             <>
                               <span className="col-span-2 font-medium pt-1 mt-1 border-t">Additional Costs:</span>
                               {Object.entries(roomEstimate.additionalCosts).map(([key, value]) => (
-                                <>
-                                  <span key={`key-${key}`} className="text-muted-foreground pl-3">{key.charAt(0).toUpperCase() + key.slice(1)}</span>
-                                  <span key={`value-${key}`} className="text-right">{formatCurrency(Number(value))}</span>
-                                </>
+                                <React.Fragment key={`${room.id}-${key}`}>
+                                  <span className="text-muted-foreground pl-3">{key.charAt(0).toUpperCase() + key.slice(1)}</span>
+                                  <span className="text-right">{formatCurrency(Number(value))}</span>
+                                </React.Fragment>
                               ))}
                             </>
                           )}
@@ -251,15 +485,10 @@ const DetailedSummaryDialog = ({
             </div>
           </div>
           
-          {/* Line Items if any exist */}
-          <LineItemsTable 
-            lineItems={[
-              // Adding the required estimate_id to each line item
-              { id: '1', description: 'Premium paint - Living Room', quantity: 2, unit_price: 45.99, estimate_id: estimateId || '' },
-              { id: '2', description: 'Standard paint - Bedroom', quantity: 1, unit_price: 32.99, estimate_id: estimateId || '' },
-              { id: '3', description: 'Painting supplies', quantity: 1, unit_price: 25.00, estimate_id: estimateId || '' }
-            ]} 
-          />
+          {/* Line Items */}
+          {lineItems.length > 0 && (
+            <LineItemsTable lineItems={lineItems} />
+          )}
           
           {/* Terms and Notes - more compact */}
           <div className="grid grid-cols-2 gap-4">

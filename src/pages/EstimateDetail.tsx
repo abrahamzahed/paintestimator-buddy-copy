@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useSession } from "@/context/SessionContext";
@@ -61,6 +62,7 @@ export default function EstimateDetail() {
             const estimates: Record<string, any> = {};
             roomDetailsArray.forEach((room: RoomDetail) => {
               if (room.id) {
+                // Ensure each room has the correct calculation
                 estimates[room.id] = calculateSingleRoomEstimate(room);
               }
             });
@@ -112,8 +114,19 @@ export default function EstimateDetail() {
       };
     }
     
+    // Calculate the sum of all room costs to verify the total
+    const totalRoomCosts = Object.values(roomEstimates).reduce(
+      (sum, est: any) => sum + (est.totalCost || 0), 0
+    );
+    
+    // If our calculated total differs significantly from the stored total,
+    // use the calculated one for better accuracy
+    const storedTotal = estimate.total_cost || 0;
+    const finalTotal = Math.abs(storedTotal - totalRoomCosts) > 10 ? 
+      totalRoomCosts : storedTotal;
+    
     return {
-      totalCost: estimate.total_cost || 0,
+      totalCost: finalTotal,
       laborCost: estimate.labor_cost || 0,
       materialCost: estimate.material_cost || 0,
       timeEstimate: estimate.estimated_hours || 0,

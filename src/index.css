@@ -1,4 +1,3 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import url('https://rsms.me/inter/inter.css');
 
@@ -151,4 +150,42 @@
 .chat-wrapper:hover .chat-panel {
   transform: translateY(0);
   opacity: 1;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  
+  .print-content,
+  .print-content * {
+    visibility: visible;
+  }
+  
+  .print-content {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 20px;
+  }
+  
+  .print-content button {
+    display: none;
+  }
+
+  /* Hide UI elements that shouldn't be printed */
+  header, 
+  nav, 
+  .sidebar,
+  .dialog-title,
+  .dialog-close {
+    display: none !important;
+  }
+}
+
+body.printing .print-content {
+  position: relative;
+  left: auto;
+  top: auto;
 }
