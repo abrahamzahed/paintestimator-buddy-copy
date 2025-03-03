@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useSession } from "@/context/SessionContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -106,7 +106,7 @@ export default function ProjectDetail() {
     try {
       setIsUpdatingStatus(true);
       
-      // 1. First update the project status and await for the operation to complete
+      // First update the project status
       const { error: projectError } = await supabase
         .from("projects")
         .update({ status: newStatus })
@@ -114,7 +114,7 @@ export default function ProjectDetail() {
         
       if (projectError) throw projectError;
       
-      // 2. Prepare toast message
+      // Prepare toast message
       let toastMessage = "";
       
       if (newStatus === "deleted") {
@@ -125,25 +125,28 @@ export default function ProjectDetail() {
         toastMessage = `"${project.name}" has been restored to active status`;
       }
       
-      // 3. Show success message
+      // Show success message
       toast({
         title: `Project ${newStatus}`,
         description: toastMessage,
       });
       
-      // 4. Clean up dialog state first
+      // Use a zero-timeout to move navigation to the next event loop
+      // after all state updates have been processed
       setShowDeleteDialog(false);
       setShowArchiveDialog(false);
       setShowRestoreDialog(false);
-      setIsUpdatingStatus(false);
       
-      // 5. Only after state is updated and async operations are complete, navigate
-      // Use both setTimeout and requestAnimationFrame to ensure UI updates and redraws are complete
-      requestAnimationFrame(() => {
+      // Force sync with React state updates
+      await new Promise(resolve => {
         setTimeout(() => {
-          navigate("/dashboard", { replace: true });
-        }, 100);
+          setIsUpdatingStatus(false);
+          resolve(true);
+        }, 0);
       });
+      
+      // Navigate after state updates have been processed
+      window.location.href = "/dashboard";
       
     } catch (error) {
       console.error(`Error updating project status to ${newStatus}:`, error);
