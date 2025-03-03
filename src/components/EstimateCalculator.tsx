@@ -107,7 +107,7 @@ const EstimateCalculator = ({
 
   return (
     <div className="glass rounded-xl p-6 shadow-lg animate-scale-in relative">
-      <ProgressIndicator totalSteps={TOTAL_STEPS} currentStep={step} />
+      <ProgressIndicator totalSteps={TOTAL_STEPS} currentStep={step} hideDisplay={true} />
 
       <div className="min-h-[300px] relative">
         <FormStep title="What rooms are you painting?" isActive={true}>

@@ -2,12 +2,18 @@
 interface ProgressIndicatorProps {
   totalSteps: number;
   currentStep: number;
+  hideDisplay?: boolean;
 }
 
 const ProgressIndicator = ({
   totalSteps,
-  currentStep
+  currentStep,
+  hideDisplay = false
 }: ProgressIndicatorProps) => {
+  if (hideDisplay) {
+    return null;
+  }
+  
   return (
     <div className="mb-6">
       <div className="flex justify-between mb-2">
