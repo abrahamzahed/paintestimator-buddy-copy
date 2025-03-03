@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { RoomDetails, RoomDetail, EstimateResult } from "../types";
@@ -222,13 +223,15 @@ const EstimateCalculator = ({
             </div>
           )}
           {step === TOTAL_STEPS && (
-            <Button
-              onClick={() => onEstimateComplete(currentEstimate)}
-              className="w-full mt-4 bg-paint hover:bg-paint-dark"
-            >
-              <Send className="mr-2 h-4 w-4" />
-              Submit Request
-            </Button>
+            <div className="absolute bottom-0 right-0">
+              <Button
+                onClick={() => onEstimateComplete(currentEstimate)}
+                className="bg-paint hover:bg-paint-dark px-6"
+              >
+                <Send className="mr-2 h-4 w-4" />
+                {submitButtonText}
+              </Button>
+            </div>
           )}
         </FormStep>
       </div>
