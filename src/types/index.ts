@@ -121,6 +121,7 @@ export interface Estimate {
   notes?: string;
   discount?: number;
   status?: string;
+  status_type?: 'active' | 'deleted' | 'closed' | 'archived'; // Add the new status_type field
   created_at?: string;
   updated_at?: string;
 }

@@ -65,18 +65,10 @@ const EstimateFooter = ({ estimate }: EstimateFooterProps) => {
     setIsDeleting(true);
     
     try {
-      // First delete all line items related to this estimate
-      const { error: lineItemsError } = await supabase
-        .from("line_items")
-        .delete()
-        .eq("estimate_id", estimate.id);
-        
-      if (lineItemsError) throw lineItemsError;
-      
-      // Then delete the estimate itself
+      // Instead of deleting, update the status_type to 'deleted'
       const { error: estimateError } = await supabase
         .from("estimates")
-        .delete()
+        .update({ status_type: 'deleted' })
         .eq("id", estimate.id);
         
       if (estimateError) throw estimateError;
@@ -141,7 +133,7 @@ const EstimateFooter = ({ estimate }: EstimateFooterProps) => {
         )}
       </div>
       
-      {estimate?.status !== "approved" && isProjectActive && (
+      {estimate?.status !== "approved" && isProjectActive && estimate?.status_type === "active" && (
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={handleEdit}>
             <Edit className="h-4 w-4 mr-2" />

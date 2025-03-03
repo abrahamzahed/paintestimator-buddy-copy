@@ -40,12 +40,24 @@ export default function EstimateDetail() {
 
         if (estimateError) throw estimateError;
         
+        // Skip loading if estimate is deleted
+        if (estimateData.status_type === 'deleted') {
+          toast({
+            title: "Estimate not available",
+            description: "This estimate has been deleted",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+        
         const formattedEstimate: Estimate = {
           ...estimateData,
           project_name: estimateData.projects?.name || "Unknown Project",
           details: estimateData.details,
           notes: estimateData.notes || "",
-          discount: estimateData.discount || 0
+          discount: estimateData.discount || 0,
+          status_type: estimateData.status_type || 'active'
         };
         
         setEstimate(formattedEstimate);
@@ -153,7 +165,7 @@ export default function EstimateDetail() {
         <div className="text-center py-12">
           <h3 className="text-xl font-medium mb-2">Estimate not found</h3>
           <p className="text-muted-foreground mb-6">
-            The estimate you're looking for doesn't exist or you don't have access to it.
+            The estimate you're looking for doesn't exist or has been deleted.
           </p>
           <Link to="/dashboard">
             <Button>
