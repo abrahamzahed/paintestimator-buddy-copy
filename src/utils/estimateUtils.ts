@@ -98,6 +98,7 @@ export const calculateSingleRoomEstimate = (room: RoomDetail): {
   timeEstimate: number;
   paintCans: number;
   additionalCosts: EstimateResult['additionalCosts'];
+  discounts?: EstimateResult['discounts'];
 } => {
   const area = calculateArea(room);
   const paintCans = calculatePaintNeeded(area);
@@ -173,20 +174,42 @@ export const calculateSingleRoomEstimate = (room: RoomDetail): {
   // Total additional costs
   const totalAdditionalCosts = Object.values(additionalCostsObj).reduce((sum, cost) => sum + cost, 0);
   
-  // Calculate total before discounts
-  const totalBeforeDiscount = roomPrice + totalAdditionalCosts + materialCost;
+  // Calculate subtotal before room-specific discounts
+  const subtotalBeforeRoomDiscounts = roomPrice + totalAdditionalCosts + materialCost;
+  
+  // Apply room-specific discounts
+  const roomDiscounts: Partial<EstimateResult['discounts']> = {};
+  let totalRoomDiscounts = 0;
+  
+  // Empty house discount (15%)
+  if (room.isEmptyHouse) {
+    const emptyRoomDiscount = (roomPrice + totalAdditionalCosts) * discounts.emptyHouse;
+    roomDiscounts.emptyHouse = emptyRoomDiscount;
+    totalRoomDiscounts += emptyRoomDiscount;
+  }
+  
+  // No floor covering discount (5%)
+  if (!room.needFloorCovering) {
+    const noFloorDiscount = (roomPrice + totalAdditionalCosts) * discounts.noFloorCovering;
+    roomDiscounts.noFloorCovering = noFloorDiscount;
+    totalRoomDiscounts += noFloorDiscount;
+  }
+  
+  // Calculate total after room-specific discounts
+  const totalAfterRoomDiscounts = subtotalBeforeRoomDiscounts - totalRoomDiscounts;
   
   // Calculate labor cost (total minus materials)
-  const laborCost = totalBeforeDiscount - materialCost;
+  const laborCost = totalAfterRoomDiscounts - materialCost;
   
   return {
     roomPrice,
     laborCost,
     materialCost,
-    totalCost: totalBeforeDiscount,
+    totalCost: totalAfterRoomDiscounts,
     timeEstimate,
     paintCans,
-    additionalCosts: additionalCostsObj
+    additionalCosts: additionalCostsObj,
+    discounts: Object.keys(roomDiscounts).length > 0 ? roomDiscounts : undefined
   };
 };
 
@@ -214,15 +237,28 @@ export const calculateMultiRoomEstimate = (details: RoomDetails): EstimateResult
     }
   }
   
-  // Calculate discounts
+  // Aggregate room-specific discounts
   const discountObj: EstimateResult['discounts'] = {};
   
+  // Add up all discounts from each room
+  for (const estimate of roomEstimates) {
+    if (estimate.discounts) {
+      for (const [key, value] of Object.entries(estimate.discounts)) {
+        discountObj[key as keyof EstimateResult['discounts']] = 
+          (discountObj[key as keyof EstimateResult['discounts']] || 0) + value;
+      }
+    }
+  }
+  
+  // Add global discounts
   if (details.isEmptyHouse) {
-    discountObj.emptyHouse = (totalRoomPrice + Object.values(additionalCostsObj).reduce((sum, cost) => sum + cost, 0)) * discounts.emptyHouse;
+    discountObj.emptyHouse = (discountObj.emptyHouse || 0) + 
+      (totalRoomPrice + Object.values(additionalCostsObj).reduce((sum, cost) => sum + cost, 0)) * discounts.emptyHouse;
   }
   
   if (!details.needFloorCovering) {
-    discountObj.noFloorCovering = (totalRoomPrice + Object.values(additionalCostsObj).reduce((sum, cost) => sum + cost, 0)) * discounts.noFloorCovering;
+    discountObj.noFloorCovering = (discountObj.noFloorCovering || 0) + 
+      (totalRoomPrice + Object.values(additionalCostsObj).reduce((sum, cost) => sum + cost, 0)) * discounts.noFloorCovering;
   }
   
   // Calculate total discounts
