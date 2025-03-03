@@ -86,19 +86,21 @@ const EstimateFooter = ({ estimate }: EstimateFooterProps) => {
         description: "The estimate has been successfully deleted.",
       });
       
-      // Close dialog before navigating
+      // Clean up dialog state first
       setIsDeleting(false);
       setIsDeleteDialogOpen(false);
       
-      // Use a small timeout to ensure state updates complete before navigation
-      setTimeout(() => {
-        // Navigate back to the project page or dashboard
-        if (estimate.project_id) {
-          navigate(`/project/${estimate.project_id}`);
-        } else {
-          navigate("/dashboard");
-        }
-      }, 50);
+      // Use both requestAnimationFrame and setTimeout to ensure UI updates completely
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          // Navigate back to the project page or dashboard with replace: true to avoid history issues
+          if (estimate.project_id) {
+            navigate(`/project/${estimate.project_id}`, { replace: true });
+          } else {
+            navigate("/dashboard", { replace: true });
+          }
+        }, 100);
+      });
       
     } catch (error: any) {
       console.error("Error deleting estimate:", error);

@@ -106,6 +106,7 @@ export default function ProjectDetail() {
     try {
       setIsUpdatingStatus(true);
       
+      // 1. First update the project status and await for the operation to complete
       const { error: projectError } = await supabase
         .from("projects")
         .update({ status: newStatus })
@@ -113,6 +114,7 @@ export default function ProjectDetail() {
         
       if (projectError) throw projectError;
       
+      // 2. Prepare toast message
       let toastMessage = "";
       
       if (newStatus === "deleted") {
@@ -123,21 +125,25 @@ export default function ProjectDetail() {
         toastMessage = `"${project.name}" has been restored to active status`;
       }
       
+      // 3. Show success message
       toast({
         title: `Project ${newStatus}`,
         description: toastMessage,
       });
       
-      // Important: First close all dialogs, then navigate
+      // 4. Clean up dialog state first
       setShowDeleteDialog(false);
       setShowArchiveDialog(false);
       setShowRestoreDialog(false);
       setIsUpdatingStatus(false);
       
-      // Use a small timeout to ensure state updates complete before navigation
-      setTimeout(() => {
-        navigate("/dashboard");
-      }, 50);
+      // 5. Only after state is updated and async operations are complete, navigate
+      // Use both setTimeout and requestAnimationFrame to ensure UI updates and redraws are complete
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          navigate("/dashboard", { replace: true });
+        }, 100);
+      });
       
     } catch (error) {
       console.error(`Error updating project status to ${newStatus}:`, error);
