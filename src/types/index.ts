@@ -63,7 +63,7 @@ export interface Project {
   name: string;
   user_id?: string;
   description?: string;
-  status?: "active" | "archived" | "deleted";
+  status?: string; // Changed from "active" | "archived" | "deleted" to string to match DB
   created_at?: string;
   updated_at?: string;
 }

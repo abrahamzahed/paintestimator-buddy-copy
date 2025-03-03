@@ -40,7 +40,7 @@ const ProjectSelector = ({ selectedProjectId, onSelectProject }: ProjectSelector
           .order("created_at", { ascending: false });
 
         if (error) throw error;
-        setProjects(data || []);
+        setProjects(data as Project[] || []);
       } catch (error) {
         console.error("Error fetching projects:", error);
         toast({
@@ -84,7 +84,7 @@ const ProjectSelector = ({ selectedProjectId, onSelectProject }: ProjectSelector
 
       if (error) throw error;
 
-      setProjects([data, ...projects]);
+      setProjects([data as Project, ...projects]);
       onSelectProject(data.id, data.name);
       
       toast({

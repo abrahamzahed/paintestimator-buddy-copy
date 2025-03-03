@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useSession } from "@/context/SessionContext";
@@ -103,7 +102,7 @@ export default function ProjectDetail() {
     fetchProjectData();
   }, [id, toast]);
 
-  const handleUpdateProjectStatus = async (newStatus: "active" | "archived" | "deleted") => {
+  const handleUpdateProjectStatus = async (newStatus: string) => {
     if (!id || !project) return;
     
     try {

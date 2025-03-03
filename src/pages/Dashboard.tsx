@@ -38,8 +38,8 @@ export default function Dashboard() {
           const active = projectsData?.filter(p => p.status === 'active') || [];
           const archived = projectsData?.filter(p => p.status === 'archived') || [];
           
-          setProjects(active);
-          setArchivedProjects(archived);
+          setProjects(active as Project[]);
+          setArchivedProjects(archived as Project[]);
 
           // Fetch estimates
           const { data: estimatesData, error: estimatesError } = await supabase
@@ -80,7 +80,7 @@ export default function Dashboard() {
             .order("created_at", { ascending: false });
 
           if (activeProjectsError) throw activeProjectsError;
-          setProjects(activeProjectsData || []);
+          setProjects(activeProjectsData as Project[] || []);
           
           // Fetch archived projects
           const { data: archivedProjectsData, error: archivedProjectsError } = await supabase
@@ -91,7 +91,7 @@ export default function Dashboard() {
             .order("created_at", { ascending: false });
 
           if (archivedProjectsError) throw archivedProjectsError;
-          setArchivedProjects(archivedProjectsData || []);
+          setArchivedProjects(archivedProjectsData as Project[] || []);
 
           // Get all project IDs (both active and archived)
           const allProjectIds = [
