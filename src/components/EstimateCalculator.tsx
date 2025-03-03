@@ -12,7 +12,7 @@ import CurrentEstimatePanel from "./estimator/CurrentEstimatePanel";
 import EstimatorNavigation from "./estimator/EstimatorNavigation";
 
 interface EstimateCalculatorProps {
-  onEstimateComplete: (estimate: EstimateResult) => void;
+  onEstimateComplete: (estimate: EstimateResult, rooms: RoomDetail[], roomEstimates: Record<string, any>) => void;
   initialUserData?: {
     name?: string;
     email?: string;
@@ -88,7 +88,7 @@ const EstimateCalculator = ({
       setStep(step + 1);
     } else {
       if (currentEstimate) {
-        onEstimateComplete(currentEstimate);
+        onEstimateComplete(currentEstimate, roomDetails.rooms, roomEstimates);
       }
     }
   };
@@ -108,7 +108,7 @@ const EstimateCalculator = ({
 
   const handleSubmit = () => {
     if (currentEstimate) {
-      onEstimateComplete(currentEstimate);
+      onEstimateComplete(currentEstimate, roomDetails.rooms, roomEstimates);
     }
   };
 

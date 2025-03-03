@@ -9,9 +9,10 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import EstimateCalculator from "@/components/EstimateCalculator";
-import { EstimateResult, Lead } from "@/types";
+import { EstimateResult, Lead, RoomDetail } from "@/types";
 import { House } from "lucide-react";
 import ProjectSelector from "@/components/estimator/ProjectSelector";
+import EstimateSummary from "@/components/estimator/EstimateSummary";
 
 export default function EstimateForm() {
   const navigate = useNavigate();
@@ -23,6 +24,8 @@ export default function EstimateForm() {
   const [estimateResult, setEstimateResult] = useState<EstimateResult | null>(null);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [selectedProjectName, setSelectedProjectName] = useState<string | undefined>(undefined);
+  const [roomDetails, setRoomDetails] = useState<RoomDetail[]>([]);
+  const [roomEstimates, setRoomEstimates] = useState<Record<string, any>>({});
   
   const [leadData, setLeadData] = useState<Partial<Lead>>({
     user_id: user?.id,
@@ -47,8 +50,10 @@ export default function EstimateForm() {
     }
   }, [profile, user]);
 
-  const handleEstimateComplete = async (estimate: EstimateResult) => {
+  const handleEstimateComplete = async (estimate: EstimateResult, rooms: RoomDetail[], estimates: Record<string, any>) => {
     setEstimateResult(estimate);
+    setRoomDetails(rooms);
+    setRoomEstimates(estimates);
     setShowEstimateCalculator(false);
     setStep(2);
   };
@@ -341,49 +346,31 @@ export default function EstimateForm() {
                   Review your estimate and submit your request
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="bg-secondary/30 p-4 rounded-lg">
-                  <h3 className="font-semibold mb-2">Estimate Details</h3>
-                  <div className="grid grid-cols-2 gap-2">
-                    {selectedProjectName && (
-                      <>
-                        <div className="text-muted-foreground">Project:</div>
-                        <div className="font-medium">{selectedProjectName}</div>
-                      </>
-                    )}
-                    
-                    <div className="text-muted-foreground">Labor Cost:</div>
-                    <div className="font-medium">${estimateResult.laborCost.toFixed(2)}</div>
-                    
-                    <div className="text-muted-foreground">Material Cost:</div>
-                    <div className="font-medium">${estimateResult.materialCost.toFixed(2)}</div>
-                    
-                    <div className="text-muted-foreground">Estimated Time:</div>
-                    <div className="font-medium">{estimateResult.timeEstimate.toFixed(1)} hours</div>
-                    
-                    <div className="text-muted-foreground">Paint Required:</div>
-                    <div className="font-medium">{estimateResult.paintCans} gallons</div>
-                    
-                    <div className="border-t pt-2 mt-2 col-span-2"></div>
-                    
-                    <div className="text-muted-foreground font-medium">Total Cost:</div>
-                    <div className="text-paint font-bold text-xl">${estimateResult.totalCost.toFixed(2)}</div>
-                  </div>
-                </div>
+              <CardContent className="space-y-4 relative">
+                <EstimateSummary
+                  currentEstimate={estimateResult}
+                  rooms={roomDetails}
+                  roomEstimates={roomEstimates}
+                  onSubmit={handleSubmit}
+                  submitButtonText="Submit Request"
+                  isLastStep={true}
+                />
                 
-                <div className="bg-green-50 dark:bg-green-950/30 p-4 rounded-lg border border-green-200 dark:border-green-900">
-                  <div className="flex items-start">
-                    <div className="bg-green-100 dark:bg-green-900/50 p-2 rounded-full text-green-800 dark:text-green-400 mr-3">
-                      <House className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-green-800 dark:text-green-400">Ready to submit?</h4>
-                      <p className="text-sm text-green-700 dark:text-green-500 mt-1">
-                        By submitting this request, a painting professional will contact you to discuss your project.
-                      </p>
+                {selectedProjectName && (
+                  <div className="mt-4 pt-4 border-t">
+                    <div className="flex items-start">
+                      <div className="bg-secondary/50 p-2 rounded-full text-foreground mr-3">
+                        <House className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h4 className="font-medium">Selected Project</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {selectedProjectName}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
               </CardContent>
               <CardFooter className="flex justify-between">
                 <Button
@@ -391,14 +378,7 @@ export default function EstimateForm() {
                   variant="outline"
                   onClick={handleGoBack}
                 >
-                  Previous
-                </Button>
-                <Button
-                  onClick={handleSubmit}
-                  className="bg-paint hover:bg-paint-dark"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? "Submitting..." : "Submit Request"}
+                  Back
                 </Button>
               </CardFooter>
             </Card>
@@ -407,4 +387,4 @@ export default function EstimateForm() {
       </main>
     </div>
   );
-};
+}
