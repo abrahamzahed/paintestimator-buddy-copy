@@ -38,7 +38,12 @@ function App() {
         if (error) {
           console.error("Error fetching profile:", error);
         } else {
-          setProfile(profileData as Profile);
+          // Add email to the profile data from the user
+          const completeProfile = {
+            ...profileData,
+            email: profileData.email || user.email
+          };
+          setProfile(completeProfile as Profile);
         }
       } finally {
         setLoading(false);

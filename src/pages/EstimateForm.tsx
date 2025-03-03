@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "@/context/SessionContext";
-import { supabase } from "../App";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,7 +35,6 @@ export default function EstimateForm() {
     status: "new"
   });
 
-  // Update user info from profile when it loads
   useEffect(() => {
     if (profile || user) {
       setLeadData(prevData => ({
@@ -73,7 +72,6 @@ export default function EstimateForm() {
     setIsSubmitting(true);
     
     try {
-      // Ensure user is authenticated
       if (!user) {
         toast({
           title: "Authentication required",
@@ -86,11 +84,10 @@ export default function EstimateForm() {
 
       console.log("Creating lead with user_id:", user.id);
       
-      // First create the lead
       const { data: createdLead, error: leadError } = await supabase
         .from("leads")
         .insert([{
-          user_id: user.id, // Ensure user_id is explicitly set
+          user_id: user.id,
           project_id: selectedProjectId,
           project_name: selectedProjectName,
           name: leadData.name,
@@ -99,8 +96,8 @@ export default function EstimateForm() {
           address: leadData.address,
           service_type: leadData.service_type,
           description: "",
-          room_count: estimateResult ? Math.round(estimateResult.totalCost / 500) : 1, // Round to an integer
-          square_footage: 0, // No longer collecting this
+          room_count: estimateResult ? Math.round(estimateResult.totalCost / 500) : 1,
+          square_footage: 0,
           status: "new"
         }])
         .select("id")
@@ -116,14 +113,13 @@ export default function EstimateForm() {
       if (estimateResult && createdLead) {
         console.log("Creating estimate with lead_id:", createdLead.id);
         
-        // Create estimate record
         const { error: estimateError } = await supabase
           .from("estimates")
           .insert([{
             lead_id: createdLead.id,
             project_id: selectedProjectId,
             details: {
-              rooms: Math.round(estimateResult.totalCost / 500), // Round to an integer
+              rooms: Math.round(estimateResult.totalCost / 500),
               paintType: estimateResult.paintCans > 2 ? "premium" : "standard"
             },
             labor_cost: estimateResult.laborCost,
@@ -162,7 +158,6 @@ export default function EstimateForm() {
 
   const handleGoBack = () => {
     if (step === 2) {
-      // Go back to the estimator, not all the way to step 1
       setShowEstimateCalculator(true);
     } else {
       setShowEstimateCalculator(false);
@@ -276,7 +271,6 @@ export default function EstimateForm() {
                     />
                   </div>
 
-                  {/* Project Selector */}
                   <ProjectSelector 
                     selectedProjectId={selectedProjectId} 
                     onSelectProject={handleSelectProject} 

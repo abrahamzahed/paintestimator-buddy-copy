@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useSession } from "@/context/SessionContext";
-import { supabase } from "../App";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Project, Estimate, Invoice } from "@/types";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";

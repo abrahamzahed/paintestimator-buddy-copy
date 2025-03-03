@@ -1,7 +1,6 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "../App";
+import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/context/SessionContext";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -20,7 +19,6 @@ export default function Auth() {
   const [phone, setPhone] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // If user is already logged in, redirect to dashboard
   if (session && !isLoading) {
     navigate("/dashboard");
   }
@@ -30,7 +28,6 @@ export default function Auth() {
     setIsSubmitting(true);
 
     try {
-      // Sign up with Supabase
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -49,7 +46,6 @@ export default function Auth() {
 
       console.log("Signup successful:", data);
 
-      // Manually create a profile if needed
       if (data.user) {
         const { error: profileError } = await supabase
           .from('profiles')
@@ -71,20 +67,17 @@ export default function Auth() {
           });
         } else {
           console.log("Profile created successfully");
-          // Refresh the profile in the session context
           await refreshProfile();
         }
       }
 
       if (data.session) {
-        // If auto-confirm is enabled, session will be available immediately
         toast({
           title: "Account created successfully",
           description: "You are now signed in.",
         });
         navigate("/dashboard");
       } else {
-        // This should rarely happen with auto-confirm enabled
         toast({
           title: "Account created",
           description: "Please check your email for confirmation.",

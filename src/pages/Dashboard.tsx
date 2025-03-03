@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from "react";
 import { useSession } from "@/context/SessionContext";
-import { supabase } from "../App";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Estimate, Invoice, Project } from "@/types";
 import { useNavigate } from "react-router-dom";

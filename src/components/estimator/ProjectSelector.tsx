@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from "react";
 import { useSession } from "@/context/SessionContext";
-import { supabase } from "../../App";
+import { supabase } from "@/integrations/supabase/client";
 import { Project } from "@/types";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -26,7 +25,6 @@ const ProjectSelector = ({ selectedProjectId, onSelectProject }: ProjectSelector
   const [newProjectDescription, setNewProjectDescription] = useState("");
   const [creating, setCreating] = useState(false);
 
-  // Fetch user's projects
   useEffect(() => {
     const fetchProjects = async () => {
       try {
@@ -55,7 +53,6 @@ const ProjectSelector = ({ selectedProjectId, onSelectProject }: ProjectSelector
     fetchProjects();
   }, [user, toast]);
 
-  // Create a new project
   const handleCreateProject = async () => {
     try {
       if (!newProjectName.trim()) {

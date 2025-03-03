@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabase } from "../App";
+import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/context/SessionContext";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";

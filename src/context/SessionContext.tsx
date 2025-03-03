@@ -1,7 +1,6 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
-import { supabase } from "../App";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 // Export the Profile type so it can be imported in other files
@@ -11,6 +10,8 @@ export type Profile = {
   name: string | null;
   email: string | null;
   phone: string | null;
+  created_at?: string;
+  updated_at?: string;
 };
 
 type SessionContextType = {
@@ -69,6 +70,7 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
               id: userId,
               name: userData?.name || user?.email?.split('@')[0] || null,
               phone: userData?.phone || null,
+              email: user?.email || null,
               role: "customer" // Default role for new profiles is customer
             }])
             .select();
@@ -108,7 +110,13 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
         });
       }
       
-      setProfile(data as Profile);
+      // Add email from user data if missing in profile
+      const profileWithEmail = {
+        ...data,
+        email: data.email || user?.email || null
+      };
+      
+      setProfile(profileWithEmail as Profile);
     } catch (error) {
       console.error("Error in fetchProfile function:", error);
     } finally {
