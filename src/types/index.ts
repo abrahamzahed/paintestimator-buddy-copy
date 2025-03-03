@@ -121,7 +121,7 @@ export interface Estimate {
   notes?: string;
   discount?: number;
   status?: string;
-  status_type?: 'active' | 'deleted' | 'closed' | 'archived';
+  status_type?: string; // Changed from union type to string to match DB
   created_at?: string;
   updated_at?: string;
 }

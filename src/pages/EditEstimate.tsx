@@ -32,7 +32,27 @@ export default function EditEstimate() {
 
         if (estimateError) throw estimateError;
         
-        setEstimate(estimateData);
+        // Convert to our Estimate type with proper typing
+        const typedEstimate: Estimate = {
+          id: estimateData.id,
+          lead_id: estimateData.lead_id,
+          project_id: estimateData.project_id,
+          project_name: estimateData.projects?.name,
+          details: estimateData.details,
+          labor_cost: estimateData.labor_cost,
+          material_cost: estimateData.material_cost,
+          total_cost: estimateData.total_cost,
+          estimated_hours: estimateData.estimated_hours,
+          estimated_paint_gallons: estimateData.estimated_paint_gallons,
+          notes: estimateData.notes,
+          discount: estimateData.discount,
+          status: estimateData.status,
+          status_type: estimateData.status_type,
+          created_at: estimateData.created_at,
+          updated_at: estimateData.updated_at
+        };
+        
+        setEstimate(typedEstimate);
 
         // Extract room details from the estimate with proper type handling
         if (estimateData.details && 
