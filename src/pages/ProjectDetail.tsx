@@ -1,5 +1,6 @@
+
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useSession } from "@/context/SessionContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -8,17 +9,30 @@ import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ChevronLeft, PlusCircle, FileText, DollarSign } from "lucide-react";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { ChevronLeft, PlusCircle, FileText, DollarSign, Trash2 } from "lucide-react";
 
 export default function ProjectDetail() {
   const { id } = useParams<{ id: string }>();
   const { user, profile, signOut } = useSession();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [project, setProject] = useState<Project | null>(null);
   const [estimates, setEstimates] = useState<Estimate[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("estimates");
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     const fetchProjectData = async () => {
@@ -78,6 +92,64 @@ export default function ProjectDetail() {
     fetchProjectData();
   }, [id, toast]);
 
+  const handleDeleteProject = async () => {
+    if (!id || !project) return;
+    
+    try {
+      setIsDeleting(true);
+      
+      // Check if there are any estimates in the project
+      if (estimates.length > 0) {
+        const estimateIds = estimates.map((estimate) => estimate.id);
+        
+        // Delete invoices related to estimates
+        if (invoices.length > 0) {
+          const { error: invoiceError } = await supabase
+            .from("invoices")
+            .delete()
+            .in("estimate_id", estimateIds);
+            
+          if (invoiceError) throw invoiceError;
+        }
+        
+        // Delete all estimates related to the project
+        const { error: estimateError } = await supabase
+          .from("estimates")
+          .delete()
+          .eq("project_id", id);
+          
+        if (estimateError) throw estimateError;
+      }
+      
+      // Delete the project
+      const { error: projectError } = await supabase
+        .from("projects")
+        .delete()
+        .eq("id", id);
+        
+      if (projectError) throw projectError;
+      
+      toast({
+        title: "Project deleted",
+        description: `"${project.name}" has been permanently deleted`,
+      });
+      
+      // Navigate back to dashboard
+      navigate("/dashboard");
+      
+    } catch (error) {
+      console.error("Error deleting project:", error);
+      toast({
+        title: "Failed to delete project",
+        description: "An error occurred while trying to delete the project",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteDialog(false);
+    }
+  };
+
   if (loading) {
     return (
       <DashboardLayout user={user} profile={profile} signOut={signOut}>
@@ -120,12 +192,23 @@ export default function ProjectDetail() {
               <p className="mt-2 text-muted-foreground">{project.description}</p>
             )}
           </div>
-          <Button asChild className="bg-paint hover:bg-paint-dark">
-            <Link to="/estimate">
-              <PlusCircle className="mr-2 h-4 w-4" />
-              New Estimate
-            </Link>
-          </Button>
+          <div className="flex gap-2 self-stretch md:self-auto">
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+              onClick={() => setShowDeleteDialog(true)}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete
+            </Button>
+            <Button asChild className="bg-paint hover:bg-paint-dark">
+              <Link to="/estimate">
+                <PlusCircle className="mr-2 h-4 w-4" />
+                New Estimate
+              </Link>
+            </Button>
+          </div>
         </div>
 
         <Tabs defaultValue="estimates" value={activeTab} onValueChange={setActiveTab}>
@@ -265,6 +348,27 @@ export default function ProjectDetail() {
           </TabsContent>
         </Tabs>
       </div>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Project</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{project.name}"? This action cannot be undone and will delete all estimates and invoices associated with this project.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteProject}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              {isDeleting ? "Deleting..." : "Delete Project"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 }
