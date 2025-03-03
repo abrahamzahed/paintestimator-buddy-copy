@@ -4,23 +4,22 @@ import { useParams, Link } from "react-router-dom";
 import { useSession } from "@/context/SessionContext";
 import { supabase } from "../App";
 import { useToast } from "@/hooks/use-toast";
-import { Project, Lead, Estimate, Invoice } from "@/types";
+import { Project, Estimate, Invoice } from "@/types";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ChevronLeft, PlusCircle } from "lucide-react";
+import { ChevronLeft, PlusCircle, FileText, DollarSign } from "lucide-react";
 
 export default function ProjectDetail() {
   const { id } = useParams<{ id: string }>();
   const { user, profile, signOut } = useSession();
   const { toast } = useToast();
   const [project, setProject] = useState<Project | null>(null);
-  const [leads, setLeads] = useState<Lead[]>([]);
   const [estimates, setEstimates] = useState<Estimate[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("leads");
+  const [activeTab, setActiveTab] = useState("estimates");
 
   useEffect(() => {
     const fetchProjectData = async () => {
@@ -37,42 +36,28 @@ export default function ProjectDetail() {
         if (projectError) throw projectError;
         setProject(projectData as Project);
 
-        // Fetch leads for this project
-        const { data: leadsData, error: leadsError } = await supabase
-          .from("leads")
+        // Fetch estimates directly by project ID
+        const { data: estimatesData, error: estimatesError } = await supabase
+          .from("estimates")
           .select("*")
           .eq("project_id", id)
           .order("created_at", { ascending: false });
 
-        if (leadsError) throw leadsError;
-        setLeads(leadsData || []);
+        if (estimatesError) throw estimatesError;
+        setEstimates(estimatesData || []);
 
-        // Fetch estimates for these leads
-        if (leadsData && leadsData.length > 0) {
-          const leadIds = leadsData.map(lead => lead.id);
+        // Fetch invoices for these estimates
+        if (estimatesData && estimatesData.length > 0) {
+          const estimateIds = estimatesData.map(estimate => estimate.id);
           
-          const { data: estimatesData, error: estimatesError } = await supabase
-            .from("estimates")
+          const { data: invoicesData, error: invoicesError } = await supabase
+            .from("invoices")
             .select("*")
-            .in("lead_id", leadIds)
+            .in("estimate_id", estimateIds)
             .order("created_at", { ascending: false });
 
-          if (estimatesError) throw estimatesError;
-          setEstimates(estimatesData || []);
-
-          // Fetch invoices for these estimates
-          if (estimatesData && estimatesData.length > 0) {
-            const estimateIds = estimatesData.map(estimate => estimate.id);
-            
-            const { data: invoicesData, error: invoicesError } = await supabase
-              .from("invoices")
-              .select("*")
-              .in("estimate_id", estimateIds)
-              .order("created_at", { ascending: false });
-
-            if (invoicesError) throw invoicesError;
-            setInvoices(invoicesData || []);
-          }
+          if (invoicesError) throw invoicesError;
+          setInvoices(invoicesData || []);
         }
       } catch (error) {
         console.error("Error fetching project data:", error);
@@ -121,9 +106,9 @@ export default function ProjectDetail() {
   return (
     <DashboardLayout user={user} profile={profile} signOut={signOut}>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg">
           <div>
-            <h1 className="text-2xl font-bold">{project.name}</h1>
+            <h1 className="text-2xl font-bold text-gray-800">{project.name}</h1>
             <p className="text-muted-foreground">
               Created on {new Date(project.created_at!).toLocaleDateString()}
             </p>
@@ -139,134 +124,138 @@ export default function ProjectDetail() {
           </Button>
         </div>
 
-        <Tabs defaultValue="leads" value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-4">
-            <TabsTrigger value="leads">Leads ({leads.length})</TabsTrigger>
-            <TabsTrigger value="estimates">Estimates ({estimates.length})</TabsTrigger>
-            <TabsTrigger value="invoices">Invoices ({invoices.length})</TabsTrigger>
+        <Tabs defaultValue="estimates" value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="mb-4 w-full md:w-auto bg-secondary/70 p-1 rounded-md">
+            <TabsTrigger value="estimates" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              Estimates ({estimates.length})
+            </TabsTrigger>
+            <TabsTrigger value="invoices" className="flex items-center gap-2">
+              <DollarSign className="h-4 w-4" />
+              Invoices ({invoices.length})
+            </TabsTrigger>
           </TabsList>
           
-          <TabsContent value="leads">
-            {leads.length > 0 ? (
+          <TabsContent value="estimates">
+            {estimates.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {leads.map((lead) => (
-                  <Card key={lead.id} className="hover:bg-secondary/20 transition-colors">
-                    <CardHeader>
-                      <CardTitle>{lead.name}</CardTitle>
+                {estimates.map((estimate) => (
+                  <Card key={estimate.id} className="hover:bg-secondary/20 transition-colors overflow-hidden border border-gray-100 shadow-sm">
+                    <div className={`h-2 w-full ${
+                      estimate.status === "pending" 
+                        ? "bg-yellow-400" 
+                        : estimate.status === "approved" 
+                        ? "bg-green-400"
+                        : "bg-gray-400"
+                    }`}></div>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-xl">Estimate #{estimate.id?.substring(0, 8)}</CardTitle>
+                      <CardDescription>
+                        {new Date(estimate.created_at!).toLocaleDateString()}
+                      </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <div className="space-y-2">
-                        <p>Email: {lead.email}</p>
-                        {lead.phone && <p>Phone: {lead.phone}</p>}
-                        {lead.address && <p>Address: {lead.address}</p>}
-                        <p>Service: {lead.service_type}</p>
-                        <p>Status: <span className="capitalize">{lead.status}</span></p>
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <p className="text-sm text-muted-foreground">Total</p>
+                            <p className="font-semibold">${estimate.total_cost.toFixed(2)}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-muted-foreground">Status</p>
+                            <span className={`px-2 py-1 rounded text-xs inline-block ${
+                              estimate.status === "pending" 
+                                ? "bg-yellow-100 text-yellow-800" 
+                                : estimate.status === "approved" 
+                                ? "bg-green-100 text-green-800"
+                                : "bg-gray-100 text-gray-800"
+                            }`}>
+                              {estimate.status}
+                            </span>
+                          </div>
+                        </div>
+                        <Button variant="outline" size="sm" asChild className="w-full">
+                          <Link to={`/estimate/${estimate.id}`}>
+                            View Details
+                          </Link>
+                        </Button>
                       </div>
                     </CardContent>
                   </Card>
                 ))}
               </div>
             ) : (
-              <div className="text-center py-6">
-                <p className="text-muted-foreground">No leads for this project yet</p>
-              </div>
-            )}
-          </TabsContent>
-          
-          <TabsContent value="estimates">
-            {estimates.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="py-3 px-4 text-left">Date</th>
-                      <th className="py-3 px-4 text-left">Total</th>
-                      <th className="py-3 px-4 text-left">Status</th>
-                      <th className="py-3 px-4 text-left">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {estimates.map((estimate) => (
-                      <tr key={estimate.id} className="border-b hover:bg-secondary/50">
-                        <td className="py-3 px-4">
-                          {new Date(estimate.created_at!).toLocaleDateString()}
-                        </td>
-                        <td className="py-3 px-4">${estimate.total_cost.toFixed(2)}</td>
-                        <td className="py-3 px-4">
-                          <span className={`px-2 py-1 rounded text-xs ${
-                            estimate.status === "pending" 
-                              ? "bg-yellow-100 text-yellow-800" 
-                              : estimate.status === "approved" 
-                              ? "bg-green-100 text-green-800"
-                              : "bg-gray-100 text-gray-800"
-                          }`}>
-                            {estimate.status}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4">
-                          <Button variant="ghost" size="sm" asChild>
-                            <Link to={`/estimate/${estimate.id}`}>
-                              View
-                            </Link>
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="text-center py-6">
-                <p className="text-muted-foreground">No estimates for this project yet</p>
+              <div className="text-center py-12 bg-secondary/30 rounded-lg">
+                <FileText className="mx-auto h-12 w-12 text-muted-foreground/70 mb-4" />
+                <p className="text-lg font-medium mb-2">No estimates yet</p>
+                <p className="text-muted-foreground mb-6">
+                  Create your first estimate for this project
+                </p>
+                <Button asChild className="bg-paint hover:bg-paint-dark">
+                  <Link to="/estimate">
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Get Estimate
+                  </Link>
+                </Button>
               </div>
             )}
           </TabsContent>
           
           <TabsContent value="invoices">
             {invoices.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="py-3 px-4 text-left">Date</th>
-                      <th className="py-3 px-4 text-left">Amount</th>
-                      <th className="py-3 px-4 text-left">Status</th>
-                      <th className="py-3 px-4 text-left">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {invoices.map((invoice) => (
-                      <tr key={invoice.id} className="border-b hover:bg-secondary/50">
-                        <td className="py-3 px-4">
-                          {new Date(invoice.created_at!).toLocaleDateString()}
-                        </td>
-                        <td className="py-3 px-4">${invoice.amount.toFixed(2)}</td>
-                        <td className="py-3 px-4">
-                          <span className={`px-2 py-1 rounded text-xs ${
-                            invoice.status === "unpaid" 
-                              ? "bg-yellow-100 text-yellow-800" 
-                              : invoice.status === "paid" 
-                              ? "bg-green-100 text-green-800"
-                              : "bg-gray-100 text-gray-800"
-                          }`}>
-                            {invoice.status}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4">
-                          <Button variant="ghost" size="sm" asChild>
-                            <Link to={`/invoice/${invoice.id}`}>
-                              View
-                            </Link>
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {invoices.map((invoice) => (
+                  <Card key={invoice.id} className="hover:bg-secondary/20 transition-colors overflow-hidden border border-gray-100 shadow-sm">
+                    <div className={`h-2 w-full ${
+                      invoice.status === "unpaid" 
+                        ? "bg-yellow-400" 
+                        : invoice.status === "paid" 
+                        ? "bg-green-400"
+                        : "bg-gray-400"
+                    }`}></div>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-xl">Invoice #{invoice.id?.substring(0, 8)}</CardTitle>
+                      <CardDescription>
+                        {new Date(invoice.created_at!).toLocaleDateString()}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <p className="text-sm text-muted-foreground">Amount</p>
+                            <p className="font-semibold">${invoice.amount.toFixed(2)}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-muted-foreground">Status</p>
+                            <span className={`px-2 py-1 rounded text-xs inline-block ${
+                              invoice.status === "unpaid" 
+                                ? "bg-yellow-100 text-yellow-800" 
+                                : invoice.status === "paid" 
+                                ? "bg-green-100 text-green-800"
+                                : "bg-gray-100 text-gray-800"
+                            }`}>
+                              {invoice.status}
+                            </span>
+                          </div>
+                        </div>
+                        <Button variant="outline" size="sm" asChild className="w-full">
+                          <Link to={`/invoice/${invoice.id}`}>
+                            View Details
+                          </Link>
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
             ) : (
-              <div className="text-center py-6">
-                <p className="text-muted-foreground">No invoices for this project yet</p>
+              <div className="text-center py-12 bg-secondary/30 rounded-lg">
+                <DollarSign className="mx-auto h-12 w-12 text-muted-foreground/70 mb-4" />
+                <p className="text-lg font-medium mb-2">No invoices yet</p>
+                <p className="text-muted-foreground">
+                  Invoices will appear here after estimates are approved
+                </p>
               </div>
             )}
           </TabsContent>

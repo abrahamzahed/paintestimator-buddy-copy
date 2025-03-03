@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useSession } from "@/context/SessionContext";
 import { supabase } from "../App";
 import { useToast } from "@/hooks/use-toast";
-import { Lead, Estimate, Invoice, Project } from "@/types";
+import { Estimate, Invoice, Project } from "@/types";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import AdminDashboardView from "@/components/dashboard/AdminDashboardView";
@@ -12,10 +12,9 @@ import CustomerDashboardView from "@/components/dashboard/CustomerDashboardView"
 export default function Dashboard() {
   const { user, profile, signOut, isAdmin } = useSession();
   const { toast } = useToast();
-  const [leads, setLeads] = useState<Lead[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [estimates, setEstimates] = useState<Estimate[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -34,16 +33,6 @@ export default function Dashboard() {
 
           if (projectsError) throw projectsError;
           setProjects(projectsData || []);
-
-          // Fetch leads
-          const { data: leadsData, error: leadsError } = await supabase
-            .from("leads")
-            .select("*")
-            .order("created_at", { ascending: false })
-            .limit(10);
-
-          if (leadsError) throw leadsError;
-          setLeads(leadsData || []);
 
           // Fetch estimates
           const { data: estimatesData, error: estimatesError } = await supabase
@@ -137,13 +126,14 @@ export default function Dashboard() {
     <DashboardLayout user={user} profile={profile} signOut={signOut}>
       {isAdmin ? (
         <AdminDashboardView 
-          leads={leads} 
+          projects={projects}
           estimates={estimates} 
           invoices={invoices} 
           handleAdminRedirect={handleAdminRedirect} 
         />
       ) : (
         <CustomerDashboardView 
+          projects={projects}
           estimates={estimates} 
           invoices={invoices} 
         />
