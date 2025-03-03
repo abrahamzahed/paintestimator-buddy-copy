@@ -1,14 +1,14 @@
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RoomDetails } from "@/types";
+import { RoomDetail } from "@/types";
 
 interface StepRoomDimensionsProps {
-  roomDetails: RoomDetails;
-  updateRoomDetails: (key: keyof RoomDetails, value: string | number | boolean) => void;
+  roomDetail: RoomDetail;
+  updateRoomDetail: (key: keyof RoomDetail, value: string | number | boolean) => void;
 }
 
-const StepRoomDimensions = ({ roomDetails, updateRoomDetails }: StepRoomDimensionsProps) => {
+const StepRoomDimensions = ({ roomDetail, updateRoomDetail }: StepRoomDimensionsProps) => {
   return (
     <>
       <p className="text-muted-foreground">
@@ -20,9 +20,9 @@ const StepRoomDimensions = ({ roomDetails, updateRoomDetails }: StepRoomDimensio
           <Input
             id="wallsCount"
             type="number"
-            value={roomDetails.wallsCount}
+            value={roomDetail.wallsCount}
             onChange={(e) =>
-              updateRoomDetails("wallsCount", parseInt(e.target.value) || 1)
+              updateRoomDetail("wallsCount", parseInt(e.target.value) || 1)
             }
             min={1}
             max={20}
@@ -33,9 +33,9 @@ const StepRoomDimensions = ({ roomDetails, updateRoomDetails }: StepRoomDimensio
           <Input
             id="wallHeight"
             type="number"
-            value={roomDetails.wallHeight}
+            value={roomDetail.wallHeight}
             onChange={(e) =>
-              updateRoomDetails("wallHeight", parseFloat(e.target.value) || 1)
+              updateRoomDetail("wallHeight", parseFloat(e.target.value) || 1)
             }
             min={1}
             step={0.1}
@@ -46,9 +46,9 @@ const StepRoomDimensions = ({ roomDetails, updateRoomDetails }: StepRoomDimensio
           <Input
             id="wallWidth"
             type="number"
-            value={roomDetails.wallWidth}
+            value={roomDetail.wallWidth}
             onChange={(e) =>
-              updateRoomDetails("wallWidth", parseFloat(e.target.value) || 1)
+              updateRoomDetail("wallWidth", parseFloat(e.target.value) || 1)
             }
             min={1}
             step={0.1}

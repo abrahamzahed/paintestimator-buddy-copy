@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { RoomDetails, RoomDetail, EstimateResult } from "../types";
-import { calculateMultiRoomEstimate, formatCurrency } from "../utils/estimateUtils";
+import { calculateMultiRoomEstimate, formatCurrency, calculateSingleRoomEstimate } from "../utils/estimateUtils";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import ProgressIndicator from "./estimator/ProgressIndicator";
@@ -53,7 +52,6 @@ const EstimateCalculator = ({ onEstimateComplete, initialUserData }: EstimateCal
     needFloorCovering: true
   });
 
-  // Update the estimate whenever room details change
   useEffect(() => {
     try {
       if (roomDetails.rooms.length > 0) {
@@ -170,7 +168,7 @@ const EstimateCalculator = ({ onEstimateComplete, initialUserData }: EstimateCal
                   ))}
                 </ul>
               </div>
-
+              
               <div className="rounded-lg border p-4 space-y-2">
                 <div className="flex justify-between">
                   <span>Labor Cost:</span>
@@ -225,7 +223,6 @@ const EstimateCalculator = ({ onEstimateComplete, initialUserData }: EstimateCal
         </FormStep>
       </div>
 
-      {/* Running Total Display */}
       <div className="mt-4 p-3 bg-foreground/5 rounded-lg">
         <div className="flex justify-between items-center">
           <span className="font-medium">Current Estimate:</span>

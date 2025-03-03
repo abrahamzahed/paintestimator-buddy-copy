@@ -1,23 +1,23 @@
 
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { RoomDetails } from "@/types";
+import { RoomDetail } from "@/types";
 
 interface StepWallConditionProps {
-  roomDetails: RoomDetails;
-  updateRoomDetails: (key: keyof RoomDetails, value: string | number | boolean) => void;
+  roomDetail: RoomDetail;
+  updateRoomDetail: (key: keyof RoomDetail, value: string | number | boolean) => void;
 }
 
-const StepWallCondition = ({ roomDetails, updateRoomDetails }: StepWallConditionProps) => {
+const StepWallCondition = ({ roomDetail, updateRoomDetail }: StepWallConditionProps) => {
   return (
     <>
       <p className="text-muted-foreground">
         This helps us determine the preparation work needed.
       </p>
       <RadioGroup
-        defaultValue={roomDetails.condition}
+        defaultValue={roomDetail.condition}
         onValueChange={(value: "good" | "average" | "poor") =>
-          updateRoomDetails("condition", value)
+          updateRoomDetail("condition", value)
         }
         className="space-y-4"
       >
