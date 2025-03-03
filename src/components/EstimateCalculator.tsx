@@ -9,12 +9,19 @@ import ProgressIndicator from "./estimator/ProgressIndicator";
 import FormStep from "./estimator/FormStep";
 import MultiRoomSelector from "./estimator/MultiRoomSelector";
 import { v4 as uuidv4 } from "uuid";
+import { useToast } from "@/hooks/use-toast";
 
 interface EstimateCalculatorProps {
   onEstimateComplete: (estimate: EstimateResult) => void;
+  initialUserData?: {
+    name?: string;
+    email?: string;
+    phone?: string;
+  };
 }
 
-const EstimateCalculator = ({ onEstimateComplete }: EstimateCalculatorProps) => {
+const EstimateCalculator = ({ onEstimateComplete, initialUserData }: EstimateCalculatorProps) => {
+  const { toast } = useToast();
   const [step, setStep] = useState(1);
   const TOTAL_STEPS = 3;
   const [currentEstimate, setCurrentEstimate] = useState<EstimateResult | null>(null);
@@ -55,6 +62,11 @@ const EstimateCalculator = ({ onEstimateComplete }: EstimateCalculatorProps) => 
       }
     } catch (error) {
       console.error("Error calculating estimate:", error);
+      toast({
+        title: "Error calculating estimate",
+        description: "Please check your inputs and try again",
+        variant: "destructive"
+      });
     }
   }, [roomDetails]);
 
@@ -141,14 +153,18 @@ const EstimateCalculator = ({ onEstimateComplete }: EstimateCalculatorProps) => 
               <div className="rounded-lg border p-4">
                 <h4 className="font-medium mb-2">Rooms Included ({roomDetails.rooms.length})</h4>
                 <ul className="divide-y">
-                  {roomDetails.rooms.map((room, index) => (
+                  {roomDetails.rooms.map((room) => (
                     <li key={room.id} className="py-2">
                       <div className="flex justify-between">
                         <span>{room.roomType.charAt(0).toUpperCase() + room.roomType.slice(1)} ({room.roomSize})</span>
-                        <span className="font-medium">${(currentEstimate.totalCost / roomDetails.rooms.length).toFixed(2)}</span>
+                        <span className="font-medium">{formatCurrency(calculateSingleRoomEstimate(room).totalCost)}</span>
                       </div>
                       <div className="text-sm text-muted-foreground">
                         {room.wallsCount} walls, {room.wallHeight}ft height, {room.paintType} paint
+                        {room.condition !== 'good' && `, ${room.condition} condition`}
+                        {room.includeCeiling && ', ceiling'}
+                        {room.includeBaseboards && ', baseboards'}
+                        {room.includeCrownMolding && ', crown molding'}
                       </div>
                     </li>
                   ))}
