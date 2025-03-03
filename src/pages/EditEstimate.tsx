@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSession } from "@/context/SessionContext";
@@ -33,15 +34,40 @@ export default function EditEstimate() {
         
         setEstimate(estimateData);
 
-        // Extract room details from the estimate
+        // Extract room details from the estimate with proper type handling
         if (estimateData.details && 
             typeof estimateData.details === 'object') {
           
           const details = estimateData.details;
-          const roomDetailsArray = details && 'roomDetails' in details ? details.roomDetails : null;
           
-          if (Array.isArray(roomDetailsArray)) {
-            setRoomDetails(roomDetailsArray as RoomDetail[]);
+          // Safely check if roomDetails exists and is an array
+          if (details && 'roomDetails' in details && Array.isArray(details.roomDetails)) {
+            // Cast properly with type verification
+            const roomDetailsArray = details.roomDetails as any[];
+            
+            // Map the JSON data to the expected RoomDetail type structure
+            const typedRoomDetails = roomDetailsArray.map(room => ({
+              id: room.id || '',
+              roomType: room.roomType || '',
+              roomSize: room.roomSize || 'average', // Provide default value
+              wallsCount: room.wallsCount || 4,
+              wallHeight: room.wallHeight || 8,
+              wallWidth: room.wallWidth || 10,
+              condition: room.condition || 'good',
+              paintType: room.paintType || 'standard',
+              includeCeiling: !!room.includeCeiling,
+              includeBaseboards: !!room.includeBaseboards,
+              baseboardsMethod: room.baseboardsMethod || 'brush',
+              includeCrownMolding: !!room.includeCrownMolding,
+              hasHighCeiling: !!room.hasHighCeiling,
+              includeCloset: !!room.includeCloset,
+              isEmptyHouse: !!room.isEmptyHouse,
+              needFloorCovering: room.needFloorCovering !== false, // Default to true
+              doorsCount: room.doorsCount || 0,
+              windowsCount: room.windowsCount || 0
+            }));
+            
+            setRoomDetails(typedRoomDetails);
           }
         }
 

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useSession } from "@/context/SessionContext";
@@ -13,6 +12,7 @@ import RoomDetailsList from "@/components/estimate-detail/RoomDetailsList";
 import LineItemsTable from "@/components/estimate-detail/LineItemsTable";
 import EstimateFooter from "@/components/estimate-detail/EstimateFooter";
 import DetailedSummaryDialog from "@/components/estimate-detail/DetailedSummaryDialog";
+import { Button } from "@/components/ui/button";
 
 export default function EstimateDetail() {
   const { id } = useParams<{ id: string }>();

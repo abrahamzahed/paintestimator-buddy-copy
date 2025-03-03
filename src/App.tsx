@@ -1,3 +1,4 @@
+
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -8,7 +9,7 @@ import EstimateDetail from "./pages/EstimateDetail";
 import EditEstimate from "./pages/EditEstimate";
 import ProjectDetail from "./pages/ProjectDetail";
 import NotFound from "./pages/NotFound";
-import ProtectedRoute from "./components/auth/ProtectedRoute";
+import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { SessionContextProvider } from "./context/SessionContext";
 import { Toaster } from "./components/ui/toaster";
 

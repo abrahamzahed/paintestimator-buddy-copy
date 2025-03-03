@@ -4,10 +4,10 @@ import { useSession } from "@/context/SessionContext";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  adminOnly?: boolean;
+  allowedRoles?: string[];
 }
 
-export const ProtectedRoute = ({ children, adminOnly = false }: ProtectedRouteProps) => {
+export const ProtectedRoute = ({ children, allowedRoles = [] }: ProtectedRouteProps) => {
   const { isLoading, user, isAdmin } = useSession();
 
   if (isLoading) {
@@ -18,8 +18,12 @@ export const ProtectedRoute = ({ children, adminOnly = false }: ProtectedRoutePr
     return <Navigate to="/auth" replace />;
   }
 
-  if (adminOnly && !isAdmin) {
-    return <Navigate to="/dashboard" replace />;
+  // Check roles if specified
+  if (allowedRoles.length > 0) {
+    // For "admin" role, we use the isAdmin flag from the session context
+    if (allowedRoles.includes("admin") && !isAdmin) {
+      return <Navigate to="/dashboard" replace />;
+    }
   }
 
   return <>{children}</>;
