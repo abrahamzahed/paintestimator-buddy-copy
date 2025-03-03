@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "@/context/SessionContext";
@@ -15,13 +14,14 @@ import ProjectSelector from "@/components/estimator/ProjectSelector";
 import { formatCurrency } from "@/utils/estimateUtils";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Link } from "react-router-dom";
+import { getTemporaryEstimate, clearTemporaryEstimate, getTemporaryProjectName } from "@/utils/estimateStorage";
 
 export default function EstimateForm() {
   const navigate = useNavigate();
   const { user, profile } = useSession();
   const { toast } = useToast();
   const [step, setStep] = useState(1);
-  const TOTAL_STEPS = 3; // Exactly 3 steps as requested
+  const TOTAL_STEPS = 3;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [estimateResult, setEstimateResult] = useState<EstimateResult | null>(null);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
@@ -35,7 +35,7 @@ export default function EstimateForm() {
     roomDetails: RoomDetail[];
     roomEstimates: Record<string, any>;
   } | null>(null);
-  
+
   const [leadData, setLeadData] = useState<Partial<Lead>>({
     user_id: user?.id,
     name: profile?.name || "",
@@ -58,11 +58,45 @@ export default function EstimateForm() {
     }
   }, [profile, user]);
 
+  useEffect(() => {
+    const tempProjectName = getTemporaryProjectName();
+    if (tempProjectName && user) {
+      const createProjectWithTempName = async () => {
+        try {
+          const { data, error } = await supabase
+            .from("projects")
+            .insert([
+              {
+                name: tempProjectName,
+                user_id: user.id,
+                status: "active"
+              },
+            ])
+            .select()
+            .single();
+
+          if (error) throw error;
+
+          setSelectedProjectId(data.id);
+          setSelectedProjectName(data.name);
+          toast({
+            title: "Project created",
+            description: `"${tempProjectName}" has been created from your estimate`,
+          });
+        } catch (error) {
+          console.error("Error creating project:", error);
+        }
+      };
+
+      createProjectWithTempName();
+    }
+  }, [user]);
+
   const handleEstimateComplete = async (estimate: EstimateResult, rooms: RoomDetail[], estimates: Record<string, any>) => {
     setEstimateResult(estimate);
     setRoomDetails(rooms);
     setRoomEstimates(estimates);
-    setStep(3); // Skip directly to final step
+    setStep(3);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -73,7 +107,7 @@ export default function EstimateForm() {
   const handleSelectProject = (projectId: string | null, projectName?: string) => {
     setSelectedProjectId(projectId);
     setSelectedProjectName(projectName);
-    setProjectError(null); // Clear error when a project is selected
+    setProjectError(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -82,7 +116,6 @@ export default function EstimateForm() {
     
     try {
       if (!user) {
-        // Store the estimate temporarily and open the login dialog
         setTempEstimate({
           estimateResult,
           roomDetails,
@@ -93,7 +126,6 @@ export default function EstimateForm() {
         return;
       }
 
-      // Skip project validation for logged-in users who have already selected a project
       if (!selectedProjectId) {
         setProjectError("Please select a project or create a new one");
         setIsSubmitting(false);
@@ -113,7 +145,7 @@ export default function EstimateForm() {
           email: leadData.email,
           phone: leadData.phone,
           address: leadData.address,
-          service_type: "interior", // Default to interior as service type was removed
+          service_type: "interior",
           description: "",
           room_count: estimateResult ? roomDetails.length : 1,
           square_footage: 0,
@@ -132,7 +164,6 @@ export default function EstimateForm() {
       if (estimateResult && createdLead) {
         console.log("Creating estimate with lead_id:", createdLead.id);
         
-        // Convert the complex RoomDetail objects to a simpler structure for JSON compatibility
         const simplifiedRoomDetails = roomDetails.map(room => ({
           id: room.id,
           roomType: room.roomType,
@@ -198,7 +229,6 @@ export default function EstimateForm() {
   };
 
   const handleNextStep = () => {
-    // Validate project selection before proceeding to step 2
     if (step === 1) {
       if (!selectedProjectId) {
         setProjectError("Please select a project or create a new one");
@@ -217,18 +247,14 @@ export default function EstimateForm() {
     }
   };
 
-  // This function will be called when the user signs in after creating an estimate
   const handlePostLoginEstimateSave = () => {
-    // We'll use the stored estimate data to submit the form after login
     if (tempEstimate && user) {
       setEstimateResult(tempEstimate.estimateResult);
       setRoomDetails(tempEstimate.roomDetails);
       setRoomEstimates(tempEstimate.roomEstimates);
       
-      // Close the dialog and submit the form
       setLoginDialogOpen(false);
       
-      // Delay submission slightly to ensure profile info is loaded
       setTimeout(() => {
         handleSubmit(new Event('submit') as any);
       }, 500);
@@ -291,7 +317,6 @@ export default function EstimateForm() {
             </div>
           </div>
 
-          {/* Step 1: Project Information */}
           {step === 1 && (
             <Card>
               <CardHeader>
@@ -369,7 +394,6 @@ export default function EstimateForm() {
             </Card>
           )}
 
-          {/* Step 2: Room Details */}
           {step === 2 && (
             <div className="animate-fade-in">
               <Card className="mb-4">
@@ -393,7 +417,6 @@ export default function EstimateForm() {
             </div>
           )}
 
-          {/* Step 3: Review and Submit */}
           {step === 3 && estimateResult && (
             <Card>
               <CardHeader>
@@ -403,7 +426,6 @@ export default function EstimateForm() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* Project Information Summary */}
                 <div className="border-b pb-4">
                   <h3 className="text-lg font-semibold mb-3">Project Information</h3>
                   <div className="grid grid-cols-2 gap-4">
@@ -426,7 +448,6 @@ export default function EstimateForm() {
                   </div>
                 </div>
                 
-                {/* Project Selection */}
                 {selectedProjectName && (
                   <div className="border-b pb-4">
                     <div className="flex items-start">
@@ -443,7 +464,6 @@ export default function EstimateForm() {
                   </div>
                 )}
                 
-                {/* Rooms Summary */}
                 <div className="border-b pb-4">
                   <h3 className="text-lg font-semibold mb-3">Rooms ({roomDetails.length})</h3>
                   <div className="space-y-4">
@@ -469,7 +489,6 @@ export default function EstimateForm() {
                   </div>
                 </div>
                 
-                {/* Cost Summary */}
                 <div>
                   <h3 className="text-lg font-semibold mb-3">Cost Summary</h3>
                   <div className="space-y-2">
@@ -508,7 +527,6 @@ export default function EstimateForm() {
                   </div>
                 </div>
 
-                {/* Show warning for users who are not logged in */}
                 {!user && (
                   <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg">
                     <div className="flex items-start">
@@ -545,7 +563,6 @@ export default function EstimateForm() {
         </div>
       </main>
 
-      {/* Login Dialog */}
       <Dialog open={loginDialogOpen} onOpenChange={setLoginDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>

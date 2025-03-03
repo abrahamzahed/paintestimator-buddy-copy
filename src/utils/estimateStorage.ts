@@ -7,6 +7,7 @@
 import { EstimateResult, RoomDetail } from "@/types";
 
 const STORAGE_KEY = 'paintpro_temp_estimate';
+const PROJECT_NAME_KEY = 'paintpro_temp_project_name';
 
 interface StoredEstimate {
   estimateResult: EstimateResult;
@@ -54,8 +55,17 @@ export const getTemporaryEstimate = (): StoredEstimate | null => {
 
 export const clearTemporaryEstimate = () => {
   localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(PROJECT_NAME_KEY);
 };
 
 export const hasSavedEstimate = (): boolean => {
   return getTemporaryEstimate() !== null;
+};
+
+export const saveTemporaryProjectName = (projectName: string) => {
+  localStorage.setItem(PROJECT_NAME_KEY, projectName);
+};
+
+export const getTemporaryProjectName = (): string | null => {
+  return localStorage.getItem(PROJECT_NAME_KEY);
 };

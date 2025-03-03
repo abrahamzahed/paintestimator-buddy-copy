@@ -3,16 +3,12 @@ import { Link, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import ChatInterface from "@/components/ChatInterface";
-import EstimateCalculator from "@/components/EstimateCalculator";
-import { EstimateResult } from "@/types";
+import HomeEstimator from "@/components/HomeEstimator";
 import { Button } from "@/components/ui/button";
 import { useSession } from "@/context/SessionContext";
 
 const Index = () => {
-  const {
-    user,
-    isLoading
-  } = useSession();
+  const { user, isLoading } = useSession();
   const navigate = useNavigate();
   const [showEstimateCalculator, setShowEstimateCalculator] = useState(false);
   const chatSectionRef = useRef<HTMLDivElement>(null);
@@ -24,13 +20,7 @@ const Index = () => {
       chatSectionRef.current?.scrollIntoView({
         behavior: "smooth"
       });
-    }
-  };
-
-  const handleEstimateComplete = (estimate: EstimateResult) => {
-    setShowEstimateCalculator(false);
-    if (user) {
-      navigate("/estimate");
+      setShowEstimateCalculator(true);
     }
   };
 
@@ -161,19 +151,12 @@ const Index = () => {
               </div>
             </div>
             
-            {showEstimateCalculator && <div className="mt-12 animate-fade-in">
+            {showEstimateCalculator && (
+              <div className="mt-12 animate-fade-in">
                 <h3 className="text-xl font-semibold mb-4">Get Your Free Estimate</h3>
-                <EstimateCalculator onEstimateComplete={handleEstimateComplete} />
-                
-                <div className="mt-8 text-center">
-                  <p className="mb-4 text-muted-foreground">
-                    For a more detailed estimate and to save your results, create an account:
-                  </p>
-                  <Button asChild className="bg-paint hover:bg-paint-dark">
-                    <Link to="/auth?tab=signup">Create Account</Link>
-                  </Button>
-                </div>
-              </div>}
+                <HomeEstimator />
+              </div>
+            )}
           </div>
         </div>
       </div>

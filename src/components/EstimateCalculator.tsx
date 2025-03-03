@@ -11,7 +11,7 @@ import EstimateSummary from "./estimator/EstimateSummary";
 import CurrentEstimatePanel from "./estimator/CurrentEstimatePanel";
 import EstimatorNavigation from "./estimator/EstimatorNavigation";
 import { useLocation } from "react-router-dom";
-import { saveTemporaryEstimate, getTemporaryEstimate } from "@/utils/estimateStorage";
+import { saveTemporaryEstimate, getTemporaryEstimate, getTemporaryProjectName } from "@/utils/estimateStorage";
 import { useSession } from "@/context/SessionContext";
 
 interface EstimateCalculatorProps {

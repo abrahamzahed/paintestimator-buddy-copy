@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSession } from "@/context/SessionContext";
@@ -9,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { getTemporaryEstimate, clearTemporaryEstimate, hasSavedEstimate } from "@/utils/estimateStorage";
+import { getTemporaryEstimate, clearTemporaryEstimate, hasSavedEstimate, getTemporaryProjectName } from "@/utils/estimateStorage";
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -23,12 +22,10 @@ export default function Auth() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState("sign-in");
 
-  // Parse query parameters
   const searchParams = new URLSearchParams(location.search);
   const returnUrl = searchParams.get("returnUrl") || "/dashboard";
   const saveEstimate = searchParams.get("saveEstimate") === "true";
   
-  // If saveEstimate is true, default to the sign-up tab
   useEffect(() => {
     if (saveEstimate) {
       setActiveTab("sign-up");
@@ -36,11 +33,9 @@ export default function Auth() {
   }, [saveEstimate]);
 
   useEffect(() => {
-    // If user is already logged in, navigate to the returnUrl or dashboard
     if (session && !isLoading) {
-      // If we have a saved estimate to process
       if (saveEstimate && hasSavedEstimate()) {
-        navigate("/estimate");
+        navigate("/estimate?saveEstimate=true");
       } else {
         navigate(returnUrl);
       }
@@ -71,7 +66,6 @@ export default function Auth() {
           description: "Please check your email to verify your account.",
         });
         
-        // Switch to sign-in tab after successful sign-up
         setActiveTab("sign-in");
       }
     } catch (error: any) {
@@ -103,7 +97,7 @@ export default function Auth() {
         description: "You have successfully signed in.",
       });
 
-      // Will automatically redirect due to the useEffect above
+      navigate("/dashboard");
     } catch (error: any) {
       console.error("Sign in error:", error);
       toast({
@@ -131,7 +125,7 @@ export default function Auth() {
             <CardTitle>Account Access</CardTitle>
             <CardDescription>
               Sign in to your account or create a new one
-              {saveEstimate && (
+              {saveEstimate && hasSavedEstimate() && (
                 <span className="block mt-2 text-paint">
                   Create an account to save your estimate
                 </span>
