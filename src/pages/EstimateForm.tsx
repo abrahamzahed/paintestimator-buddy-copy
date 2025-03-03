@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "@/context/SessionContext";
@@ -74,11 +73,24 @@ export default function EstimateForm() {
     setIsSubmitting(true);
     
     try {
+      // Ensure user is authenticated
+      if (!user) {
+        toast({
+          title: "Authentication required",
+          description: "Please log in to submit an estimate",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      console.log("Creating lead with user_id:", user.id);
+      
       // First create the lead
       const { data: createdLead, error: leadError } = await supabase
         .from("leads")
         .insert([{
-          user_id: user?.id,
+          user_id: user.id, // Ensure user_id is explicitly set
           project_id: selectedProjectId,
           project_name: selectedProjectName,
           name: leadData.name,
@@ -94,9 +106,16 @@ export default function EstimateForm() {
         .select("id")
         .single();
 
-      if (leadError) throw leadError;
+      if (leadError) {
+        console.error("Lead creation error:", leadError);
+        throw leadError;
+      }
+      
+      console.log("Lead created successfully:", createdLead);
       
       if (estimateResult && createdLead) {
+        console.log("Creating estimate with lead_id:", createdLead.id);
+        
         // Create estimate record
         const { error: estimateError } = await supabase
           .from("estimates")
@@ -115,7 +134,12 @@ export default function EstimateForm() {
             status: "pending"
           }]);
 
-        if (estimateError) throw estimateError;
+        if (estimateError) {
+          console.error("Estimate creation error:", estimateError);
+          throw estimateError;
+        }
+        
+        console.log("Estimate created successfully");
       }
 
       toast({
@@ -133,6 +157,16 @@ export default function EstimateForm() {
       });
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleGoBack = () => {
+    if (step === 2) {
+      // Go back to the estimator, not all the way to step 1
+      setShowEstimateCalculator(true);
+    } else {
+      setShowEstimateCalculator(false);
+      setStep(1);
     }
   };
 
@@ -361,9 +395,7 @@ export default function EstimateForm() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => {
-                    setShowEstimateCalculator(true);
-                  }}
+                  onClick={handleGoBack}
                 >
                   Previous
                 </Button>
