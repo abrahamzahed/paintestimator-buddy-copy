@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { Link } from 'react-router-dom';
 
 const Header = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -30,8 +31,10 @@ const Header = () => {
     >
       <div className="max-w-screen-xl mx-auto flex items-center justify-between">
         <div className="flex items-center space-x-1">
-          <div className="w-8 h-8 rounded-lg bg-paint animate-pulse-subtle"></div>
-          <span className="font-display text-xl font-semibold">PaintEstimator</span>
+          <Link to="/" className="flex items-center space-x-1">
+            <div className="w-8 h-8 rounded-lg bg-paint animate-pulse-subtle"></div>
+            <span className="font-display text-xl font-semibold">PaintEstimator</span>
+          </Link>
         </div>
         
         <nav className="hidden md:flex items-center space-x-8">

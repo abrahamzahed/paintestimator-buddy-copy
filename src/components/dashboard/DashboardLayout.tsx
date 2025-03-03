@@ -19,7 +19,7 @@ const DashboardLayout = ({ children, user, profile, signOut }: DashboardLayoutPr
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <h1 className="text-2xl font-bold text-paint">Paint Pro</h1>
+              <Link to="/" className="text-2xl font-bold text-paint">Paint Pro</Link>
               <nav className="hidden md:flex space-x-4">
                 <Link to="/dashboard" className="text-foreground hover:text-paint">Dashboard</Link>
                 <Link to="/estimate" className="text-foreground hover:text-paint">Get Estimate</Link>
