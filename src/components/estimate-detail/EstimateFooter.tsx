@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Estimate } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -83,37 +82,34 @@ const EstimateFooter = ({ estimate }: EstimateFooterProps) => {
   return (
     <div className="w-full flex justify-between items-center py-4">
       <div className="flex gap-2">
+        <Button variant="outline" size="sm">
+          <FileText className="h-4 w-4 mr-2" />
+          Download PDF
+        </Button>
+        
         {estimate?.status === "pending" && (
-          <>
-            <Button variant="outline" size="sm">Decline</Button>
-            <Button className="bg-green-600 hover:bg-green-700" size="sm">Approve Estimate</Button>
-          </>
+          <Button className="bg-green-600 hover:bg-green-700" size="sm">Approve Estimate</Button>
         )}
         {estimate?.status === "approved" && (
-          <p className="text-sm text-green-600">This estimate has been approved</p>
+          <p className="text-sm text-green-600 ml-4">This estimate has been approved</p>
         )}
         {estimate?.status === "declined" && (
-          <p className="text-sm text-red-600">This estimate has been declined</p>
-        )}
-        
-        {estimate?.status !== "approved" && (
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={handleEdit}>
-              <Edit className="h-4 w-4 mr-2" />
-              Edit
-            </Button>
-            <Button variant="destructive" size="sm" onClick={handleDeleteClick}>
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete
-            </Button>
-          </div>
+          <p className="text-sm text-red-600 ml-4">This estimate has been declined</p>
         )}
       </div>
       
-      <Button variant="outline" size="sm">
-        <FileText className="h-4 w-4 mr-2" />
-        Download PDF
-      </Button>
+      {estimate?.status !== "approved" && (
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={handleEdit}>
+            <Edit className="h-4 w-4 mr-2" />
+            Edit
+          </Button>
+          <Button variant="destructive" size="sm" onClick={handleDeleteClick}>
+            <Trash2 className="h-4 w-4 mr-2" />
+            Delete
+          </Button>
+        </div>
+      )}
 
       {/* Delete confirmation dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
