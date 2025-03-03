@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useSession } from "@/context/SessionContext";
@@ -25,7 +24,7 @@ export default function ProjectDetail() {
     const fetchProjectData = async () => {
       try {
         if (!id) return;
-
+        
         const { data: projectData, error: projectError } = await supabase
           .from("projects")
           .select("*")
@@ -33,8 +32,8 @@ export default function ProjectDetail() {
           .single();
 
         if (projectError) throw projectError;
-        setProject(projectData as Project);
-
+        setProject(projectData);
+        
         const { data: estimatesData, error: estimatesError } = await supabase
           .from("estimates")
           .select("*")
@@ -43,16 +42,15 @@ export default function ProjectDetail() {
 
         if (estimatesError) throw estimatesError;
         
-        // Transform data to match our Estimate interface
         const formattedEstimates = estimatesData?.map(est => ({
           ...est,
           details: est.details as Record<string, any>,
           discount: est.discount || 0,
           notes: est.notes || ""
-        })) || [];
+        })) as Estimate[];
         
         setEstimates(formattedEstimates);
-
+        
         if (estimatesData && estimatesData.length > 0) {
           const estimateIds = estimatesData.map(estimate => estimate.id);
           

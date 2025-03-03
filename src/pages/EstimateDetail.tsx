@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useSession } from "@/context/SessionContext";
@@ -46,21 +45,20 @@ export default function EstimateDetail() {
         
         setEstimate(formattedEstimate);
 
-        // Check if line_items table exists in Supabase
         try {
-          // Use a safer approach to check for line items
+          // Use the RPC function to get line items for this estimate
           const { data: itemsData, error: itemsError } = await supabase
             .rpc('get_line_items_for_estimate', { estimate_id: id });
 
           if (!itemsError && itemsData) {
+            // Cast the returned data to LineItem[] type
             setLineItems(itemsData as LineItem[]);
           } else {
-            // If RPC doesn't exist or there's an error, handle empty line items
-            console.log("No line items found or table doesn't exist:", itemsError);
+            console.log("No line items found or error:", itemsError);
             setLineItems([]);
           }
         } catch (error) {
-          console.log("Line items table may not exist:", error);
+          console.log("Error fetching line items:", error);
           setLineItems([]);
         }
 

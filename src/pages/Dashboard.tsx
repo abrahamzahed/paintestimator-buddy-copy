@@ -49,7 +49,7 @@ export default function Dashboard() {
             details: est.details as Record<string, any>,
             discount: est.discount || 0,
             notes: est.notes || ""
-          })) || [];
+          })) as Estimate[];
           
           setEstimates(formattedEstimates);
 
@@ -92,7 +92,7 @@ export default function Dashboard() {
               details: est.details as Record<string, any>,
               discount: est.discount || 0,
               notes: est.notes || ""
-            })) || [];
+            })) as Estimate[];
             
             setEstimates(formattedEstimates);
 

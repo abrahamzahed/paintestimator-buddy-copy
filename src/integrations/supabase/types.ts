@@ -13,12 +13,14 @@ export type Database = {
         Row: {
           created_at: string | null
           details: Json
+          discount: number | null
           estimated_hours: number
           estimated_paint_gallons: number | null
           id: string
           labor_cost: number
           lead_id: string
           material_cost: number
+          notes: string | null
           project_id: string | null
           status: string | null
           total_cost: number
@@ -27,12 +29,14 @@ export type Database = {
         Insert: {
           created_at?: string | null
           details: Json
+          discount?: number | null
           estimated_hours?: number
           estimated_paint_gallons?: number | null
           id?: string
           labor_cost?: number
           lead_id: string
           material_cost?: number
+          notes?: string | null
           project_id?: string | null
           status?: string | null
           total_cost?: number
@@ -41,12 +45,14 @@ export type Database = {
         Update: {
           created_at?: string | null
           details?: Json
+          discount?: number | null
           estimated_hours?: number
           estimated_paint_gallons?: number | null
           id?: string
           labor_cost?: number
           lead_id?: string
           material_cost?: number
+          notes?: string | null
           project_id?: string | null
           status?: string | null
           total_cost?: number
@@ -178,6 +184,41 @@ export type Database = {
           },
         ]
       }
+      line_items: {
+        Row: {
+          created_at: string | null
+          description: string
+          estimate_id: string
+          id: string
+          quantity: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string | null
+          description: string
+          estimate_id: string
+          id?: string
+          quantity?: number
+          unit_price?: number
+        }
+        Update: {
+          created_at?: string | null
+          description?: string
+          estimate_id?: string
+          id?: string
+          quantity?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "line_items_estimate_id_fkey"
+            columns: ["estimate_id"]
+            isOneToOne: false
+            referencedRelation: "estimates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pricing_rules: {
         Row: {
           base_price: number
@@ -217,6 +258,7 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string | null
+          email: string | null
           id: string
           name: string | null
           phone: string | null
@@ -225,6 +267,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          email?: string | null
           id: string
           name?: string | null
           phone?: string | null
@@ -233,6 +276,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          email?: string | null
           id?: string
           name?: string | null
           phone?: string | null
@@ -273,6 +317,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_line_items_for_estimate: {
+        Args: {
+          estimate_id: string
+        }
+        Returns: {
+          created_at: string | null
+          description: string
+          estimate_id: string
+          id: string
+          quantity: number
+          unit_price: number
+        }[]
+      }
       get_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string

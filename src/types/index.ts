@@ -141,7 +141,7 @@ export interface Profile {
   id: string;
   role: "admin" | "staff" | "customer";
   name: string | null;
-  email?: string | null; // Made email optional
+  email?: string | null;
   phone: string | null;
   created_at?: string;
   updated_at?: string;

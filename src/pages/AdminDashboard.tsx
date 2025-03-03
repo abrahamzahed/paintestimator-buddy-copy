@@ -41,7 +41,7 @@ export default function AdminDashboard() {
         const formattedProfiles = usersData?.map(profile => ({
           ...profile,
           email: profile.email || null
-        })) || [];
+        })) as Profile[];
         
         setUsers(formattedProfiles);
 
@@ -68,7 +68,7 @@ export default function AdminDashboard() {
           details: est.details as Record<string, any>,
           discount: est.discount || 0,
           notes: est.notes || ""
-        })) || [];
+        })) as Estimate[];
         
         setEstimates(formattedEstimates);
 
