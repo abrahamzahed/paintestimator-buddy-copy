@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useSession } from "@/context/SessionContext";
@@ -134,8 +135,8 @@ export default function ProjectDetail() {
       // Update local state
       setProject({...project, status: newStatus});
       
-      // If deleted, navigate back to dashboard
-      if (newStatus === "deleted" && !isAdmin) {
+      // If deleted or if the status was changed from archived, navigate back to dashboard
+      if (newStatus === "deleted" || (project.status === "archived" && newStatus === "active")) {
         navigate("/dashboard");
       }
       
