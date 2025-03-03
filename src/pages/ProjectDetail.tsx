@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useSession } from "@/context/SessionContext";
@@ -41,7 +42,16 @@ export default function ProjectDetail() {
           .order("created_at", { ascending: false });
 
         if (estimatesError) throw estimatesError;
-        setEstimates(estimatesData || []);
+        
+        // Transform data to match our Estimate interface
+        const formattedEstimates = estimatesData?.map(est => ({
+          ...est,
+          details: est.details as Record<string, any>,
+          discount: est.discount || 0,
+          notes: est.notes || ""
+        })) || [];
+        
+        setEstimates(formattedEstimates);
 
         if (estimatesData && estimatesData.length > 0) {
           const estimateIds = estimatesData.map(estimate => estimate.id);

@@ -41,7 +41,7 @@ function App() {
           // Add email to the profile data from the user
           const completeProfile = {
             ...profileData,
-            email: profileData.email || user.email
+            email: user.email // Use the email directly from the user auth data
           };
           setProfile(completeProfile as Profile);
         }

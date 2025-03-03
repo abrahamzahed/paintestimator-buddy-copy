@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useSession } from "@/context/SessionContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -41,7 +42,16 @@ export default function Dashboard() {
             .limit(10);
 
           if (estimatesError) throw estimatesError;
-          setEstimates(estimatesData || []);
+          
+          // Transform data to match our Estimate interface
+          const formattedEstimates = estimatesData?.map(est => ({
+            ...est,
+            details: est.details as Record<string, any>,
+            discount: est.discount || 0,
+            notes: est.notes || ""
+          })) || [];
+          
+          setEstimates(formattedEstimates);
 
           // Fetch invoices
           const { data: invoicesData, error: invoicesError } = await supabase
@@ -75,7 +85,16 @@ export default function Dashboard() {
               .order("created_at", { ascending: false });
 
             if (estimatesError) throw estimatesError;
-            setEstimates(estimatesData || []);
+            
+            // Transform data to match our Estimate interface
+            const formattedEstimates = estimatesData?.map(est => ({
+              ...est,
+              details: est.details as Record<string, any>,
+              discount: est.discount || 0,
+              notes: est.notes || ""
+            })) || [];
+            
+            setEstimates(formattedEstimates);
 
             // Fetch invoices for these estimates
             if (estimatesData && estimatesData.length > 0) {

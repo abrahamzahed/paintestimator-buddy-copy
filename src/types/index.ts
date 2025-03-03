@@ -1,4 +1,6 @@
 
+import { Json } from "@/integrations/supabase/types";
+
 export interface Message {
   id: string;
   role: "bot" | "user";
@@ -109,12 +111,12 @@ export interface Estimate {
   lead_id: string;
   project_id?: string;
   project_name?: string;
-  details: Record<string, any>;
+  details: Record<string, any> | Json;
   labor_cost: number;
   material_cost: number;
   total_cost: number;
   estimated_hours: number;
-  estimated_paint_gallons: number;
+  estimated_paint_gallons?: number;
   notes?: string;
   discount?: number;
   status?: string;
@@ -135,4 +137,12 @@ export interface Invoice {
   updated_at?: string;
 }
 
-export type { Profile } from "@/context/SessionContext";
+export interface Profile {
+  id: string;
+  role: "admin" | "staff" | "customer";
+  name: string | null;
+  email?: string | null; // Made email optional
+  phone: string | null;
+  created_at?: string;
+  updated_at?: string;
+}

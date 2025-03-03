@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/context/SessionContext";
@@ -35,7 +36,14 @@ export default function AdminDashboard() {
           .order("created_at", { ascending: false });
 
         if (usersError) throw usersError;
-        setUsers(usersData || []);
+        
+        // Transform profiles to include email field
+        const formattedProfiles = usersData?.map(profile => ({
+          ...profile,
+          email: profile.email || null
+        })) || [];
+        
+        setUsers(formattedProfiles);
 
         // Fetch leads
         const { data: leadsData, error: leadsError } = await supabase
@@ -53,7 +61,16 @@ export default function AdminDashboard() {
           .order("created_at", { ascending: false });
 
         if (estimatesError) throw estimatesError;
-        setEstimates(estimatesData || []);
+        
+        // Transform data to match our Estimate interface
+        const formattedEstimates = estimatesData?.map(est => ({
+          ...est,
+          details: est.details as Record<string, any>,
+          discount: est.discount || 0,
+          notes: est.notes || ""
+        })) || [];
+        
+        setEstimates(formattedEstimates);
 
         // Fetch pricing rules
         const { data: pricingData, error: pricingError } = await supabase

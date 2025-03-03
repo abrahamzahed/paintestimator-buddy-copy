@@ -8,7 +8,7 @@ export type Profile = {
   id: string;
   role: "admin" | "staff" | "customer";
   name: string | null;
-  email: string | null;
+  email?: string | null;
   phone: string | null;
   created_at?: string;
   updated_at?: string;
@@ -70,7 +70,6 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
               id: userId,
               name: userData?.name || user?.email?.split('@')[0] || null,
               phone: userData?.phone || null,
-              email: user?.email || null,
               role: "customer" // Default role for new profiles is customer
             }])
             .select();
@@ -86,7 +85,14 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
           }
           
           console.log("New profile created successfully:", newProfile?.[0]);
-          setProfile(newProfile?.[0] as Profile);
+          
+          // Add email from user to the profile object
+          const profileWithEmail = {
+            ...newProfile?.[0],
+            email: user?.email || null
+          };
+          
+          setProfile(profileWithEmail as Profile);
           return;
         }
         
@@ -113,7 +119,7 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
       // Add email from user data if missing in profile
       const profileWithEmail = {
         ...data,
-        email: data.email || user?.email || null
+        email: user?.email || null
       };
       
       setProfile(profileWithEmail as Profile);

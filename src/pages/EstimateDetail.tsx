@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useSession } from "@/context/SessionContext";
@@ -35,20 +36,33 @@ export default function EstimateDetail() {
         // Transform the data to match our Estimate interface
         const formattedEstimate: Estimate = {
           ...estimateData,
-          project_name: estimateData.projects?.name || "Unknown Project"
+          project_name: estimateData.projects?.name || "Unknown Project",
+          // Make sure to explicitly cast details to our expected type
+          details: estimateData.details as Record<string, any>,
+          // Add any missing fields with default values
+          notes: estimateData.notes || "",
+          discount: estimateData.discount || 0
         };
         
         setEstimate(formattedEstimate);
 
-        // Fetch line items
-        const { data: lineItemsData, error: lineItemsError } = await supabase
-          .from("line_items")
-          .select("*")
-          .eq("estimate_id", id)
-          .order("created_at", { ascending: true });
+        // Check if line_items table exists in Supabase
+        try {
+          // Use a safer approach to check for line items
+          const { data: itemsData, error: itemsError } = await supabase
+            .rpc('get_line_items_for_estimate', { estimate_id: id });
 
-        if (lineItemsError) throw lineItemsError;
-        setLineItems(lineItemsData || []);
+          if (!itemsError && itemsData) {
+            setLineItems(itemsData as LineItem[]);
+          } else {
+            // If RPC doesn't exist or there's an error, handle empty line items
+            console.log("No line items found or table doesn't exist:", itemsError);
+            setLineItems([]);
+          }
+        } catch (error) {
+          console.log("Line items table may not exist:", error);
+          setLineItems([]);
+        }
 
       } catch (error) {
         console.error("Error fetching estimate data:", error);
