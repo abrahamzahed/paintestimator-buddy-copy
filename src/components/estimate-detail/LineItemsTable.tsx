@@ -1,6 +1,7 @@
 
 import { LineItem } from "@/types";
 import { formatCurrency } from "@/utils/estimateUtils";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface LineItemsTableProps {
   lineItems: LineItem[];
@@ -11,31 +12,43 @@ const LineItemsTable = ({ lineItems }: LineItemsTableProps) => {
     return null;
   }
   
+  // Calculate the grand total for all line items
+  const grandTotal = lineItems.reduce(
+    (total, item) => total + (item.quantity || 0) * (item.unit_price || 0),
+    0
+  );
+  
   return (
-    <div className="mt-8">
-      <h3 className="font-semibold mb-4">Line Items</h3>
-      <div className="border rounded-md overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Unit Price</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {lineItems.map((item) => (
-              <tr key={item.id}>
-                <td className="px-4 py-3 text-sm text-gray-900">{item.description}</td>
-                <td className="px-4 py-3 text-sm text-gray-900 text-right">{item.quantity}</td>
-                <td className="px-4 py-3 text-sm text-gray-900 text-right">{formatCurrency(item.unit_price || 0)}</td>
-                <td className="px-4 py-3 text-sm text-gray-900 text-right">{formatCurrency((item.quantity || 0) * (item.unit_price || 0))}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+    <div>
+      <h3 className="font-semibold text-lg mb-4">Materials & Services</h3>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-[50%]">Description</TableHead>
+            <TableHead className="text-right">Quantity</TableHead>
+            <TableHead className="text-right">Unit Price</TableHead>
+            <TableHead className="text-right">Total</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {lineItems.map((item) => (
+            <TableRow key={item.id}>
+              <TableCell className="font-medium">{item.description}</TableCell>
+              <TableCell className="text-right">{item.quantity}</TableCell>
+              <TableCell className="text-right">{formatCurrency(item.unit_price || 0)}</TableCell>
+              <TableCell className="text-right">{formatCurrency((item.quantity || 0) * (item.unit_price || 0))}</TableCell>
+            </TableRow>
+          ))}
+          <TableRow>
+            <TableCell colSpan={3} className="text-right font-medium">
+              Subtotal
+            </TableCell>
+            <TableCell className="text-right font-medium">
+              {formatCurrency(grandTotal)}
+            </TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
     </div>
   );
 };
