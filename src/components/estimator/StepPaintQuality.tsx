@@ -1,23 +1,23 @@
 
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { RoomDetails } from "@/types";
+import { RoomDetail } from "@/types";
 
 interface StepPaintQualityProps {
-  roomDetails: RoomDetails;
-  updateRoomDetails: (key: keyof RoomDetails, value: string | number | boolean) => void;
+  roomDetail: RoomDetail;
+  updateRoomDetail: (key: keyof RoomDetail, value: string | number | boolean) => void;
 }
 
-const StepPaintQuality = ({ roomDetails, updateRoomDetails }: StepPaintQualityProps) => {
+const StepPaintQuality = ({ roomDetail, updateRoomDetail }: StepPaintQualityProps) => {
   return (
     <>
       <p className="text-muted-foreground">
         Higher quality paint lasts longer and provides better coverage.
       </p>
       <RadioGroup
-        defaultValue={roomDetails.paintType}
+        defaultValue={roomDetail.paintType}
         onValueChange={(value: "standard" | "premium" | "luxury") =>
-          updateRoomDetails("paintType", value)
+          updateRoomDetail("paintType", value)
         }
         className="space-y-4"
       >

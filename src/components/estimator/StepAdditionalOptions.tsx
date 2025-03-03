@@ -3,14 +3,14 @@ import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { RoomDetails } from "@/types";
+import { RoomDetail } from "@/types";
 
 interface StepAdditionalOptionsProps {
-  roomDetails: RoomDetails;
-  updateRoomDetails: (key: keyof RoomDetails, value: string | number | boolean) => void;
+  roomDetail: RoomDetail;
+  updateRoomDetail: (key: keyof RoomDetail, value: string | number | boolean) => void;
 }
 
-const StepAdditionalOptions = ({ roomDetails, updateRoomDetails }: StepAdditionalOptionsProps) => {
+const StepAdditionalOptions = ({ roomDetail, updateRoomDetail }: StepAdditionalOptionsProps) => {
   return (
     <>
       <p className="text-muted-foreground">
@@ -24,8 +24,8 @@ const StepAdditionalOptions = ({ roomDetails, updateRoomDetails }: StepAdditiona
           </Label>
           <Switch 
             id="includeCeiling" 
-            checked={roomDetails.includeCeiling}
-            onCheckedChange={(checked) => updateRoomDetails("includeCeiling", checked)}
+            checked={roomDetail.includeCeiling}
+            onCheckedChange={(checked) => updateRoomDetail("includeCeiling", checked)}
           />
         </div>
         
@@ -35,17 +35,17 @@ const StepAdditionalOptions = ({ roomDetails, updateRoomDetails }: StepAdditiona
           </Label>
           <Switch 
             id="includeBaseboards" 
-            checked={roomDetails.includeBaseboards}
-            onCheckedChange={(checked) => updateRoomDetails("includeBaseboards", checked)}
+            checked={roomDetail.includeBaseboards}
+            onCheckedChange={(checked) => updateRoomDetail("includeBaseboards", checked)}
           />
         </div>
         
-        {roomDetails.includeBaseboards && (
+        {roomDetail.includeBaseboards && (
           <div className="ml-6 mt-2">
             <RadioGroup
-              defaultValue={roomDetails.baseboardsMethod}
+              defaultValue={roomDetail.baseboardsMethod}
               onValueChange={(value: "brush" | "spray") => 
-                updateRoomDetails("baseboardsMethod", value)
+                updateRoomDetail("baseboardsMethod", value)
               }
               className="space-y-2"
             >
@@ -71,8 +71,8 @@ const StepAdditionalOptions = ({ roomDetails, updateRoomDetails }: StepAdditiona
           </Label>
           <Switch 
             id="includeCrownMolding" 
-            checked={roomDetails.includeCrownMolding}
-            onCheckedChange={(checked) => updateRoomDetails("includeCrownMolding", checked)}
+            checked={roomDetail.includeCrownMolding}
+            onCheckedChange={(checked) => updateRoomDetail("includeCrownMolding", checked)}
           />
         </div>
         
@@ -82,8 +82,8 @@ const StepAdditionalOptions = ({ roomDetails, updateRoomDetails }: StepAdditiona
           </Label>
           <Switch 
             id="hasHighCeiling" 
-            checked={roomDetails.hasHighCeiling}
-            onCheckedChange={(checked) => updateRoomDetails("hasHighCeiling", checked)}
+            checked={roomDetail.hasHighCeiling}
+            onCheckedChange={(checked) => updateRoomDetail("hasHighCeiling", checked)}
           />
         </div>
         
@@ -93,8 +93,8 @@ const StepAdditionalOptions = ({ roomDetails, updateRoomDetails }: StepAdditiona
           </Label>
           <Switch 
             id="includeCloset" 
-            checked={roomDetails.includeCloset}
-            onCheckedChange={(checked) => updateRoomDetails("includeCloset", checked)}
+            checked={roomDetail.includeCloset}
+            onCheckedChange={(checked) => updateRoomDetail("includeCloset", checked)}
           />
         </div>
         
@@ -103,9 +103,9 @@ const StepAdditionalOptions = ({ roomDetails, updateRoomDetails }: StepAdditiona
           <Input
             id="doorsCount"
             type="number"
-            value={roomDetails.doorsCount}
+            value={roomDetail.doorsCount}
             onChange={(e) =>
-              updateRoomDetails("doorsCount", parseInt(e.target.value) || 0)
+              updateRoomDetail("doorsCount", parseInt(e.target.value) || 0)
             }
             min={0}
           />
@@ -116,9 +116,9 @@ const StepAdditionalOptions = ({ roomDetails, updateRoomDetails }: StepAdditiona
           <Input
             id="windowsCount"
             type="number"
-            value={roomDetails.windowsCount}
+            value={roomDetail.windowsCount}
             onChange={(e) =>
-              updateRoomDetails("windowsCount", parseInt(e.target.value) || 0)
+              updateRoomDetail("windowsCount", parseInt(e.target.value) || 0)
             }
             min={0}
           />

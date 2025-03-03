@@ -1,14 +1,14 @@
 
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { RoomDetails } from "@/types";
+import { RoomDetail } from "@/types";
 
 interface StepRoomTypeProps {
-  roomDetails: RoomDetails;
-  updateRoomDetails: (key: keyof RoomDetails, value: string | number | boolean) => void;
+  roomDetail: RoomDetail;
+  updateRoomDetail: (key: keyof RoomDetail, value: string | number | boolean) => void;
 }
 
-const StepRoomType = ({ roomDetails, updateRoomDetails }: StepRoomTypeProps) => {
+const StepRoomType = ({ roomDetail, updateRoomDetail }: StepRoomTypeProps) => {
   const roomTypeOptions = [
     "Bedroom", 
     "Master Bedroom", 
@@ -26,8 +26,8 @@ const StepRoomType = ({ roomDetails, updateRoomDetails }: StepRoomTypeProps) => 
         Select the type of room you want to paint.
       </p>
       <RadioGroup
-        defaultValue={roomDetails.roomType}
-        onValueChange={(value) => updateRoomDetails("roomType", value)}
+        defaultValue={roomDetail.roomType}
+        onValueChange={(value) => updateRoomDetail("roomType", value)}
         className="grid grid-cols-2 gap-4"
       >
         {roomTypeOptions.map((room) => (
@@ -43,9 +43,9 @@ const StepRoomType = ({ roomDetails, updateRoomDetails }: StepRoomTypeProps) => 
       <div className="space-y-2 mt-4">
         <Label>Room Size</Label>
         <RadioGroup
-          defaultValue={roomDetails.roomSize}
+          defaultValue={roomDetail.roomSize}
           onValueChange={(value: "small" | "average" | "large") => 
-            updateRoomDetails("roomSize", value)
+            updateRoomDetail("roomSize", value)
           }
           className="grid grid-cols-3 gap-4"
         >
