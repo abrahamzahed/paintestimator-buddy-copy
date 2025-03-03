@@ -10,6 +10,9 @@ import { v4 as uuidv4 } from "uuid";
 import EstimateSummary from "./estimator/EstimateSummary";
 import CurrentEstimatePanel from "./estimator/CurrentEstimatePanel";
 import EstimatorNavigation from "./estimator/EstimatorNavigation";
+import { useLocation } from "react-router-dom";
+import { saveTemporaryEstimate, getTemporaryEstimate } from "@/utils/estimateStorage";
+import { useSession } from "@/context/SessionContext";
 
 interface EstimateCalculatorProps {
   onEstimateComplete: (estimate: EstimateResult, rooms: RoomDetail[], roomEstimates: Record<string, any>) => void;
@@ -29,10 +32,36 @@ const EstimateCalculator = ({
   submitButtonText = "Submit Request" 
 }: EstimateCalculatorProps) => {
   const { toast } = useToast();
+  const location = useLocation();
+  const { user } = useSession();
   const [step, setStep] = useState(1);
   const TOTAL_STEPS = 1; // Only one step within calculator - rooms configuration
   const [currentEstimate, setCurrentEstimate] = useState<EstimateResult | null>(null);
   const [roomEstimates, setRoomEstimates] = useState<Record<string, ReturnType<typeof calculateSingleRoomEstimate>>>({});
+  
+  const searchParams = new URLSearchParams(location.search);
+  const saveEstimate = searchParams.get("saveEstimate") === "true";
+  
+  // Try to load previously saved estimate if coming from auth page
+  useEffect(() => {
+    if (user && saveEstimate) {
+      const savedEstimate = getTemporaryEstimate();
+      if (savedEstimate) {
+        // Use the saved estimate data
+        setRoomDetails({
+          ...roomDetails,
+          rooms: savedEstimate.roomDetails
+        });
+        setRoomEstimates(savedEstimate.roomEstimates);
+        setCurrentEstimate(savedEstimate.estimateResult);
+        
+        toast({
+          title: "Estimate restored",
+          description: "Your previous estimate has been loaded"
+        });
+      }
+    }
+  }, [user, saveEstimate]);
   
   const [roomDetails, setRoomDetails] = useState<RoomDetails>({
     rooms: initialRoomDetails || [
@@ -87,6 +116,11 @@ const EstimateCalculator = ({
 
   const handleNextStep = () => {
     if (currentEstimate) {
+      if (!user) {
+        // For non-logged in users, save the estimate to localStorage
+        saveTemporaryEstimate(currentEstimate, roomDetails.rooms, roomEstimates);
+      }
+      
       onEstimateComplete(currentEstimate, roomDetails.rooms, roomEstimates);
     }
   };
@@ -103,6 +137,11 @@ const EstimateCalculator = ({
       e.preventDefault();
     }
     if (currentEstimate) {
+      if (!user) {
+        // For non-logged in users, save the estimate to localStorage
+        saveTemporaryEstimate(currentEstimate, roomDetails.rooms, roomEstimates);
+      }
+      
       onEstimateComplete(currentEstimate, roomDetails.rooms, roomEstimates);
     }
   };

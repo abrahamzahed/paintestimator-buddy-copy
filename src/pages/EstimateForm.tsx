@@ -10,9 +10,11 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useToast } from "@/hooks/use-toast";
 import EstimateCalculator from "@/components/EstimateCalculator";
 import { EstimateResult, Lead, RoomDetail } from "@/types";
-import { House, Send } from "lucide-react";
+import { House, Send, AlertTriangle, ExternalLink } from "lucide-react";
 import ProjectSelector from "@/components/estimator/ProjectSelector";
 import { formatCurrency } from "@/utils/estimateUtils";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Link } from "react-router-dom";
 
 export default function EstimateForm() {
   const navigate = useNavigate();
@@ -26,6 +28,13 @@ export default function EstimateForm() {
   const [selectedProjectName, setSelectedProjectName] = useState<string | undefined>(undefined);
   const [roomDetails, setRoomDetails] = useState<RoomDetail[]>([]);
   const [roomEstimates, setRoomEstimates] = useState<Record<string, any>>({});
+  const [projectError, setProjectError] = useState<string | null>(null);
+  const [loginDialogOpen, setLoginDialogOpen] = useState(false);
+  const [tempEstimate, setTempEstimate] = useState<{
+    estimateResult: EstimateResult | null;
+    roomDetails: RoomDetail[];
+    roomEstimates: Record<string, any>;
+  } | null>(null);
   
   const [leadData, setLeadData] = useState<Partial<Lead>>({
     user_id: user?.id,
@@ -64,6 +73,7 @@ export default function EstimateForm() {
   const handleSelectProject = (projectId: string | null, projectName?: string) => {
     setSelectedProjectId(projectId);
     setSelectedProjectName(projectName);
+    setProjectError(null); // Clear error when a project is selected
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -72,12 +82,22 @@ export default function EstimateForm() {
     
     try {
       if (!user) {
-        toast({
-          title: "Authentication required",
-          description: "Please log in to submit an estimate",
-          variant: "destructive",
+        // Store the estimate temporarily and open the login dialog
+        setTempEstimate({
+          estimateResult,
+          roomDetails,
+          roomEstimates
         });
+        setLoginDialogOpen(true);
         setIsSubmitting(false);
+        return;
+      }
+
+      // Skip project validation for logged-in users who have already selected a project
+      if (!selectedProjectId) {
+        setProjectError("Please select a project or create a new one");
+        setIsSubmitting(false);
+        setStep(1);
         return;
       }
 
@@ -178,6 +198,14 @@ export default function EstimateForm() {
   };
 
   const handleNextStep = () => {
+    // Validate project selection before proceeding to step 2
+    if (step === 1) {
+      if (!selectedProjectId) {
+        setProjectError("Please select a project or create a new one");
+        return;
+      }
+    }
+    
     if (step < TOTAL_STEPS) {
       setStep(step + 1);
     }
@@ -186,6 +214,24 @@ export default function EstimateForm() {
   const handlePrevStep = () => {
     if (step > 1) {
       setStep(step - 1);
+    }
+  };
+
+  // This function will be called when the user signs in after creating an estimate
+  const handlePostLoginEstimateSave = () => {
+    // We'll use the stored estimate data to submit the form after login
+    if (tempEstimate && user) {
+      setEstimateResult(tempEstimate.estimateResult);
+      setRoomDetails(tempEstimate.roomDetails);
+      setRoomEstimates(tempEstimate.roomEstimates);
+      
+      // Close the dialog and submit the form
+      setLoginDialogOpen(false);
+      
+      // Delay submission slightly to ensure profile info is loaded
+      setTimeout(() => {
+        handleSubmit(new Event('submit') as any);
+      }, 500);
     }
   };
 
@@ -306,7 +352,9 @@ export default function EstimateForm() {
 
                   <ProjectSelector 
                     selectedProjectId={selectedProjectId} 
-                    onSelectProject={handleSelectProject} 
+                    onSelectProject={handleSelectProject}
+                    required={true}
+                    error={projectError || undefined} 
                   />
                 </CardContent>
                 <CardFooter>
@@ -459,6 +507,21 @@ export default function EstimateForm() {
                     </div>
                   </div>
                 </div>
+
+                {/* Show warning for users who are not logged in */}
+                {!user && (
+                  <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg">
+                    <div className="flex items-start">
+                      <AlertTriangle className="h-5 w-5 text-amber-500 mr-2 mt-0.5" />
+                      <div>
+                        <h4 className="font-medium text-amber-800">Login required</h4>
+                        <p className="text-sm text-amber-700">
+                          You'll need to create an account or login to save this estimate.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </CardContent>
               <CardFooter className="flex justify-between">
                 <Button
@@ -481,6 +544,58 @@ export default function EstimateForm() {
           )}
         </div>
       </main>
+
+      {/* Login Dialog */}
+      <Dialog open={loginDialogOpen} onOpenChange={setLoginDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Login Required</DialogTitle>
+            <DialogDescription>
+              You need to create an account to save your estimate and access it later.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="space-y-4">
+              <div className="bg-secondary/40 p-4 rounded-lg">
+                <h4 className="font-medium mb-2">Estimate Summary</h4>
+                {tempEstimate?.estimateResult && (
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span>Rooms:</span>
+                      <span>{tempEstimate.roomDetails.length}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Total Estimate:</span>
+                      <span>{formatCurrency(tempEstimate.estimateResult.totalCost)}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <p className="text-center text-sm text-muted-foreground">
+                Your estimate has been calculated! Create an account to save it.
+              </p>
+            </div>
+          </div>
+          <DialogFooter className="flex-col sm:flex-row sm:justify-between gap-2">
+            <Button 
+              variant="outline" 
+              className="sm:w-auto w-full" 
+              onClick={() => setLoginDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button 
+              className="sm:w-auto w-full bg-paint hover:bg-paint-dark"
+              asChild
+            >
+              <Link to="/auth?returnUrl=/estimate&saveEstimate=true">
+                Create Account
+                <ExternalLink className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

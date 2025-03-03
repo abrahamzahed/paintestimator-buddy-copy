@@ -14,9 +14,16 @@ import { PlusCircle, Archive } from "lucide-react";
 interface ProjectSelectorProps {
   selectedProjectId: string | null;
   onSelectProject: (projectId: string | null, projectName?: string) => void;
+  required?: boolean;
+  error?: string;
 }
 
-const ProjectSelector = ({ selectedProjectId, onSelectProject }: ProjectSelectorProps) => {
+const ProjectSelector = ({ 
+  selectedProjectId, 
+  onSelectProject,
+  required = false,
+  error
+}: ProjectSelectorProps) => {
   const { user } = useSession();
   const { toast } = useToast();
   const [projects, setProjects] = useState<Project[]>([]);
@@ -109,7 +116,9 @@ const ProjectSelector = ({ selectedProjectId, onSelectProject }: ProjectSelector
 
   return (
     <div className="space-y-2">
-      <Label htmlFor="project">Project</Label>
+      <Label htmlFor="project" className={required ? "after:content-['*'] after:ml-0.5 after:text-red-500" : ""}>
+        Project
+      </Label>
       <div className="flex space-x-2">
         <Select
           value={selectedProjectId || ""}
@@ -118,7 +127,7 @@ const ProjectSelector = ({ selectedProjectId, onSelectProject }: ProjectSelector
             onSelectProject(value || null, selectedProject?.name);
           }}
         >
-          <SelectTrigger className="w-full">
+          <SelectTrigger className={`w-full ${error ? "border-red-500" : ""}`}>
             <SelectValue placeholder="Select a project" />
           </SelectTrigger>
           <SelectContent>
@@ -171,6 +180,7 @@ const ProjectSelector = ({ selectedProjectId, onSelectProject }: ProjectSelector
           </DialogContent>
         </Dialog>
       </div>
+      {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
     </div>
   );
 };

@@ -1,28 +1,51 @@
 
-import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useSession } from "@/context/SessionContext";
-import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
+import { getTemporaryEstimate, clearTemporaryEstimate, hasSavedEstimate } from "@/utils/estimateStorage";
 
 export default function Auth() {
   const navigate = useNavigate();
-  const { session, isLoading, refreshProfile } = useSession();
+  const location = useLocation();
   const { toast } = useToast();
+  const { session, isLoading } = useSession();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeTab, setActiveTab] = useState("sign-in");
 
-  if (session && !isLoading) {
-    navigate("/dashboard");
-  }
+  // Parse query parameters
+  const searchParams = new URLSearchParams(location.search);
+  const returnUrl = searchParams.get("returnUrl") || "/dashboard";
+  const saveEstimate = searchParams.get("saveEstimate") === "true";
+  
+  // If saveEstimate is true, default to the sign-up tab
+  useEffect(() => {
+    if (saveEstimate) {
+      setActiveTab("sign-up");
+    }
+  }, [saveEstimate]);
+
+  useEffect(() => {
+    // If user is already logged in, navigate to the returnUrl or dashboard
+    if (session && !isLoading) {
+      // If we have a saved estimate to process
+      if (saveEstimate && hasSavedEstimate()) {
+        navigate("/estimate");
+      } else {
+        navigate(returnUrl);
+      }
+    }
+  }, [session, isLoading, navigate, returnUrl, saveEstimate]);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,65 +57,30 @@ export default function Auth() {
         password,
         options: {
           data: {
-            name,
-            phone,
-            email // Explicitly add email to user metadata
+            name: name,
+            phone: phone || null,
           },
-          emailRedirectTo: `${window.location.origin}/dashboard`,
         },
       });
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
-      console.log("Signup successful:", data);
-
-      if (data.user) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .upsert([
-            {
-              id: data.user.id,
-              name,
-              phone,
-              email, // Ensure email is included here
-              role: 'customer',
-            }
-          ], { onConflict: 'id' });
-
-        if (profileError) {
-          console.error("Error creating profile:", profileError);
-          toast({
-            title: "Error creating profile",
-            description: profileError.message,
-            variant: "destructive",
-          });
-        } else {
-          console.log("Profile created successfully");
-          await refreshProfile();
-        }
-      }
-
-      if (data.session) {
+      if (data) {
         toast({
-          title: "Account created successfully",
-          description: "You are now signed in.",
+          title: "Account created!",
+          description: "Please check your email to verify your account.",
         });
-        navigate("/dashboard");
-      } else {
-        toast({
-          title: "Account created",
-          description: "Please check your email for confirmation.",
-        });
+        
+        // Switch to sign-in tab after successful sign-up
+        setActiveTab("sign-in");
       }
     } catch (error: any) {
+      console.error("Sign up error:", error);
       toast({
         title: "Error creating account",
-        description: error.message,
+        description: error.message || "Please try again.",
         variant: "destructive",
       });
-      console.error("Signup error:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -103,23 +91,24 @@ export default function Auth() {
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       toast({
-        title: "Signed in successfully",
+        title: "Welcome back!",
+        description: "You have successfully signed in.",
       });
-      navigate("/dashboard");
+
+      // Will automatically redirect due to the useEffect above
     } catch (error: any) {
+      console.error("Sign in error:", error);
       toast({
         title: "Error signing in",
-        description: error.message,
+        description: error.message || "Please check your credentials and try again.",
         variant: "destructive",
       });
     } finally {
@@ -128,131 +117,133 @@ export default function Auth() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-background to-secondary/20 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-secondary/30 px-4">
       <div className="w-full max-w-md">
-        <div className="mb-8 text-center">
-          <Link to="/">
-            <h1 className="text-4xl font-bold tracking-tight text-paint mb-2">Paint Pro</h1>
-          </Link>
-          <p className="text-muted-foreground">Professional painting services management</p>
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-paint">Paint Pro</h1>
+          <p className="text-muted-foreground mt-2">
+            Professional painting services tailored to your needs
+          </p>
         </div>
-        
-        <Tabs defaultValue="signin" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="signin">Sign In</TabsTrigger>
-            <TabsTrigger value="signup">Sign Up</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="signin">
-            <Card>
-              <CardHeader>
-                <CardTitle>Sign In</CardTitle>
-                <CardDescription>
-                  Enter your credentials to access your account
-                </CardDescription>
-              </CardHeader>
-              <form onSubmit={handleSignIn}>
-                <CardContent className="space-y-4">
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Account Access</CardTitle>
+            <CardDescription>
+              Sign in to your account or create a new one
+              {saveEstimate && (
+                <span className="block mt-2 text-paint">
+                  Create an account to save your estimate
+                </span>
+              )}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue={activeTab} value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="grid w-full grid-cols-2 mb-6">
+                <TabsTrigger value="sign-in">Sign In</TabsTrigger>
+                <TabsTrigger value="sign-up">Sign Up</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="sign-in">
+                <form onSubmit={handleSignIn} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="signin-email">Email</Label>
+                    <Label htmlFor="email-signin">Email</Label>
                     <Input
-                      id="signin-email"
+                      id="email-signin"
                       type="email"
-                      placeholder="your@email.com"
+                      placeholder="Your email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signin-password">Password</Label>
+                    <Label htmlFor="password-signin">Password</Label>
                     <Input
-                      id="signin-password"
+                      id="password-signin"
                       type="password"
+                      placeholder="Your password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
                     />
                   </div>
-                </CardContent>
-                <CardFooter>
                   <Button
                     type="submit"
                     className="w-full bg-paint hover:bg-paint-dark"
                     disabled={isSubmitting}
                   >
-                    {isSubmitting ? "Signing In..." : "Sign In"}
+                    {isSubmitting ? "Signing in..." : "Sign In"}
                   </Button>
-                </CardFooter>
-              </form>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="signup">
-            <Card>
-              <CardHeader>
-                <CardTitle>Create Account</CardTitle>
-                <CardDescription>
-                  Sign up for a new account to get your painting estimates
-                </CardDescription>
-              </CardHeader>
-              <form onSubmit={handleSignUp}>
-                <CardContent className="space-y-4">
+                </form>
+              </TabsContent>
+
+              <TabsContent value="sign-up">
+                <form onSubmit={handleSignUp} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="name">Full Name</Label>
+                    <Label htmlFor="name-signup">Full Name</Label>
                     <Input
-                      id="name"
-                      placeholder="John Doe"
+                      id="name-signup"
+                      placeholder="Your name"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signup-email">Email</Label>
+                    <Label htmlFor="email-signup">Email</Label>
                     <Input
-                      id="signup-email"
+                      id="email-signup"
                       type="email"
-                      placeholder="your@email.com"
+                      placeholder="Your email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="phone">Phone</Label>
+                    <Label htmlFor="phone-signup">Phone (Optional)</Label>
                     <Input
-                      id="phone"
-                      type="tel"
-                      placeholder="(123) 456-7890"
+                      id="phone-signup"
+                      placeholder="Your phone number"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signup-password">Password</Label>
+                    <Label htmlFor="password-signup">Password</Label>
                     <Input
-                      id="signup-password"
+                      id="password-signup"
                       type="password"
+                      placeholder="Choose a password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
+                      minLength={6}
                     />
                   </div>
-                </CardContent>
-                <CardFooter>
                   <Button
                     type="submit"
                     className="w-full bg-paint hover:bg-paint-dark"
                     disabled={isSubmitting}
                   >
-                    {isSubmitting ? "Creating Account..." : "Create Account"}
+                    {isSubmitting ? "Creating account..." : "Create Account"}
                   </Button>
-                </CardFooter>
-              </form>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                </form>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+          <CardFooter className="flex justify-center">
+            <Button 
+              variant="ghost" 
+              onClick={() => navigate("/")}
+              className="text-sm"
+            >
+              Return to Home
+            </Button>
+          </CardFooter>
+        </Card>
       </div>
     </div>
   );
