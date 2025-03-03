@@ -11,23 +11,15 @@ const Index = () => {
   const { user, isLoading } = useSession();
   const navigate = useNavigate();
   const [showEstimateCalculator, setShowEstimateCalculator] = useState(false);
-  const chatSectionRef = useRef<HTMLDivElement>(null);
+  const serviceSectionRef = useRef<HTMLDivElement>(null);
 
   const handleOpenChat = () => {
     if (user) {
       navigate("/estimate");
     } else {
-      chatSectionRef.current?.scrollIntoView({
+      serviceSectionRef.current?.scrollIntoView({
         behavior: "smooth"
       });
-      setShowEstimateCalculator(true);
-    }
-  };
-
-  const handleStartEstimate = () => {
-    if (user) {
-      navigate("/estimate");
-    } else {
       setShowEstimateCalculator(true);
     }
   };
@@ -134,25 +126,25 @@ const Index = () => {
         </div>
       </section>
       
-      <div ref={chatSectionRef} className="py-16 bg-background" id="services">
+      <div ref={serviceSectionRef} className="py-16 bg-background" id="services">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
             <h2 className="text-3xl font-bold mb-8 text-center">Our Services</h2>
             
-            <div className="flex justify-center">
-              <div className="glass rounded-xl p-6 shadow-lg px-[24px] py-[24px] mx-0 max-w-md">
-                <h3 className="text-xl font-semibold mb-4">Interior Painting</h3>
-                <p className="mb-4 text-muted-foreground">
-                  Transform your living spaces with expert interior painting services. We handle everything from color selection to flawless application.
-                </p>
-                <Button onClick={handleStartEstimate} className="w-full bg-paint hover:bg-paint-dark">
-                  Get Estimate
-                </Button>
+            {!showEstimateCalculator ? (
+              <div className="flex justify-center">
+                <div className="glass rounded-xl p-6 shadow-lg px-[24px] py-[24px] mx-0 max-w-md">
+                  <h3 className="text-xl font-semibold mb-4">Interior Painting</h3>
+                  <p className="mb-4 text-muted-foreground">
+                    Transform your living spaces with expert interior painting services. We handle everything from color selection to flawless application.
+                  </p>
+                  <Button onClick={() => setShowEstimateCalculator(true)} className="w-full bg-paint hover:bg-paint-dark">
+                    Get Estimate
+                  </Button>
+                </div>
               </div>
-            </div>
-            
-            {showEstimateCalculator && (
-              <div className="mt-12 animate-fade-in">
+            ) : (
+              <div className="mt-6 animate-fade-in">
                 <h3 className="text-xl font-semibold mb-4">Get Your Free Estimate</h3>
                 <HomeEstimator />
               </div>
@@ -169,7 +161,7 @@ const Index = () => {
               Contact us today to schedule a consultation or get your detailed estimate.
             </p>
             <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
-              <Button size="lg" className="bg-paint hover:bg-paint-dark" onClick={handleStartEstimate}>
+              <Button size="lg" className="bg-paint hover:bg-paint-dark" onClick={() => setShowEstimateCalculator(true)}>
                 Get Free Estimate
               </Button>
               <Button variant="outline" size="lg" asChild>
