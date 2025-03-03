@@ -1,19 +1,27 @@
+
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PlusCircle, House, FileText, DollarSign, ChevronRight } from "lucide-react";
+import { PlusCircle, House, FileText, DollarSign, ChevronRight, Archive, RefreshCw } from "lucide-react";
 import { Estimate, Invoice, Project } from "@/types";
+
 interface CustomerDashboardViewProps {
   projects: Project[];
+  archivedProjects: Project[];
   estimates: Estimate[];
   invoices: Invoice[];
 }
+
 const CustomerDashboardView = ({
   projects,
+  archivedProjects,
   estimates,
   invoices
 }: CustomerDashboardViewProps) => {
+  const [projectsView, setProjectsView] = useState<"active" | "archived">("active");
+  
   // Filter estimates by project
   const getEstimatesByProjectId = (projectId: string) => {
     return estimates.filter(estimate => estimate.project_id === projectId);
@@ -23,12 +31,12 @@ const CustomerDashboardView = ({
   const getInvoicesByEstimateId = (estimateId: string) => {
     return invoices.filter(invoice => invoice.estimate_id === estimateId);
   };
+  
   const totalEstimatesCount = estimates.length;
   const totalInvoicesCount = invoices.length;
+  const displayedProjects = projectsView === "active" ? projects : archivedProjects;
+  
   return <div>
-      {/* Welcome Banner */}
-      
-      
       {/* Metrics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <Card className="border-0 shadow-sm bg-blue-50">
@@ -43,6 +51,11 @@ const CustomerDashboardView = ({
           <CardContent>
             <p className="text-3xl font-bold">{projects.length}</p>
             <p className="text-sm text-muted-foreground mt-1">Active projects</p>
+            {archivedProjects.length > 0 && (
+              <p className="text-xs text-muted-foreground mt-1">
+                {archivedProjects.length} archived
+              </p>
+            )}
           </CardContent>
         </Card>
         
@@ -83,7 +96,8 @@ const CustomerDashboardView = ({
         </Card>
       </div>
 
-      {projects.length === 0 ? <div className="text-center py-12 bg-secondary/30 rounded-xl">
+      {projects.length === 0 && archivedProjects.length === 0 ? (
+        <div className="text-center py-12 bg-secondary/30 rounded-xl">
           <House className="mx-auto h-12 w-12 text-muted-foreground/70 mb-4" />
           <h3 className="text-xl font-medium mb-2">No projects yet</h3>
           <p className="text-muted-foreground mb-6">
@@ -95,7 +109,9 @@ const CustomerDashboardView = ({
               Get Estimate
             </Link>
           </Button>
-        </div> : <div className="space-y-6">
+        </div>
+      ) : (
+        <div className="space-y-6">
           <Tabs defaultValue="projects">
             <TabsList className="mb-4 w-full md:w-auto bg-secondary/70 p-1 rounded-md">
               <TabsTrigger value="projects" className="flex items-center gap-2">
@@ -113,43 +129,112 @@ const CustomerDashboardView = ({
             </TabsList>
             
             <TabsContent value="projects">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {projects.map(project => {
-              const projectEstimates = getEstimatesByProjectId(project.id!);
-              const projectEstimatesCount = projectEstimates.length;
-              const projectInvoicesCount = projectEstimates.reduce((count, estimate) => {
-                return count + getInvoicesByEstimateId(estimate.id!).length;
-              }, 0);
-              return <Card key={project.id} className="hover:bg-secondary/20 transition-colors border border-gray-100 shadow-sm overflow-hidden">
-                      <div className="h-2 w-full bg-paint"></div>
-                      <CardHeader className="pb-2">
-                        <CardTitle>{project.name}</CardTitle>
-                        <CardDescription>
-                          {new Date(project.created_at!).toLocaleDateString()}
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-2">
-                          <div className="grid grid-cols-2 gap-2 text-sm p-3 bg-secondary/30 rounded-md">
-                            <div className="flex flex-col">
-                              <span className="text-muted-foreground">Estimates</span>
-                              <span className="font-medium">{projectEstimatesCount}</span>
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="text-muted-foreground">Invoices</span>
-                              <span className="font-medium">{projectInvoicesCount}</span>
-                            </div>
-                          </div>
-                          <Button variant="ghost" size="sm" asChild className="w-full mt-4 hover:bg-secondary">
-                            <Link to={`/project/${project.id}`}>
-                              View Project Details <ChevronRight className="ml-2 h-4 w-4" />
-                            </Link>
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>;
-            })}
+              <div className="mb-4 flex justify-between items-center">
+                <div className="flex gap-2">
+                  <Button 
+                    variant={projectsView === "active" ? "default" : "outline"} 
+                    size="sm"
+                    onClick={() => setProjectsView("active")}
+                    className={projectsView === "active" ? "bg-paint hover:bg-paint-dark" : ""}
+                  >
+                    <House className="h-4 w-4 mr-2" />
+                    Active
+                  </Button>
+                  <Button 
+                    variant={projectsView === "archived" ? "default" : "outline"} 
+                    size="sm"
+                    onClick={() => setProjectsView("archived")}
+                    className={projectsView === "archived" ? "bg-gray-600 hover:bg-gray-700" : ""}
+                  >
+                    <Archive className="h-4 w-4 mr-2" />
+                    Archived
+                  </Button>
+                </div>
               </div>
+              
+              {displayedProjects.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {displayedProjects.map(project => {
+                    const projectEstimates = getEstimatesByProjectId(project.id!);
+                    const projectEstimatesCount = projectEstimates.length;
+                    const projectInvoicesCount = projectEstimates.reduce((count, estimate) => {
+                      return count + getInvoicesByEstimateId(estimate.id!).length;
+                    }, 0);
+                    
+                    return (
+                      <Card key={project.id} className="hover:bg-secondary/20 transition-colors border border-gray-100 shadow-sm overflow-hidden">
+                        <div className={`h-2 w-full ${projectsView === "active" ? "bg-paint" : "bg-gray-400"}`}></div>
+                        <CardHeader className="pb-2">
+                          <div className="flex justify-between">
+                            <CardTitle>{project.name}</CardTitle>
+                            {projectsView === "archived" && (
+                              <span className="px-2 py-1 text-xs bg-gray-200 text-gray-700 rounded-full flex items-center">
+                                <Archive className="h-3 w-3 mr-1" />
+                                Archived
+                              </span>
+                            )}
+                          </div>
+                          <CardDescription>
+                            {new Date(project.created_at!).toLocaleDateString()}
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-2">
+                            <div className="grid grid-cols-2 gap-2 text-sm p-3 bg-secondary/30 rounded-md">
+                              <div className="flex flex-col">
+                                <span className="text-muted-foreground">Estimates</span>
+                                <span className="font-medium">{projectEstimatesCount}</span>
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-muted-foreground">Invoices</span>
+                                <span className="font-medium">{projectInvoicesCount}</span>
+                              </div>
+                            </div>
+                            <Button variant="ghost" size="sm" asChild className="w-full mt-4 hover:bg-secondary">
+                              <Link to={`/project/${project.id}`}>
+                                View Project Details <ChevronRight className="ml-2 h-4 w-4" />
+                              </Link>
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-12 bg-secondary/30 rounded-lg">
+                  {projectsView === "active" ? (
+                    <>
+                      <House className="mx-auto h-12 w-12 text-muted-foreground/70 mb-4" />
+                      <p className="text-lg font-medium mb-2">No active projects</p>
+                      <p className="text-muted-foreground mb-6">
+                        Create a new project or check your archived projects
+                      </p>
+                      <Button asChild className="bg-paint hover:bg-paint-dark">
+                        <Link to="/estimate">
+                          <PlusCircle className="mr-2 h-4 w-4" />
+                          Get Estimate
+                        </Link>
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Archive className="mx-auto h-12 w-12 text-muted-foreground/70 mb-4" />
+                      <p className="text-lg font-medium mb-2">No archived projects</p>
+                      <p className="text-muted-foreground mb-6">
+                        You haven't archived any projects yet
+                      </p>
+                      <Button 
+                        variant="outline" 
+                        onClick={() => setProjectsView("active")}
+                      >
+                        <House className="mr-2 h-4 w-4" />
+                        View Active Projects
+                      </Button>
+                    </>
+                  )}
+                </div>
+              )}
             </TabsContent>
             
             <TabsContent value="estimates">
@@ -251,7 +336,9 @@ const CustomerDashboardView = ({
                 </div>}
             </TabsContent>
           </Tabs>
-        </div>}
+        </div>
+      )}
     </div>;
 };
+
 export default CustomerDashboardView;

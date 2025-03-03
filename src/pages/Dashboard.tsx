@@ -13,6 +13,7 @@ export default function Dashboard() {
   const { user, profile, signOut, isAdmin } = useSession();
   const { toast } = useToast();
   const [projects, setProjects] = useState<Project[]>([]);
+  const [archivedProjects, setArchivedProjects] = useState<Project[]>([]);
   const [estimates, setEstimates] = useState<Estimate[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -32,7 +33,13 @@ export default function Dashboard() {
             .limit(10);
 
           if (projectsError) throw projectsError;
-          setProjects(projectsData || []);
+          
+          // Separate active and archived projects
+          const active = projectsData?.filter(p => p.status === 'active') || [];
+          const archived = projectsData?.filter(p => p.status === 'archived') || [];
+          
+          setProjects(active);
+          setArchivedProjects(archived);
 
           // Fetch estimates
           const { data: estimatesData, error: estimatesError } = await supabase
@@ -64,25 +71,40 @@ export default function Dashboard() {
           setInvoices(invoicesData || []);
         } else {
           // Regular customer - only see their own data
-          // Fetch projects
-          const { data: projectsData, error: projectsError } = await supabase
+          // Fetch active projects
+          const { data: activeProjectsData, error: activeProjectsError } = await supabase
             .from("projects")
             .select("*")
             .eq("user_id", user?.id)
-            .is("status", null) // Only get non-deleted projects
+            .eq("status", "active")
             .order("created_at", { ascending: false });
 
-          if (projectsError) throw projectsError;
-          setProjects(projectsData || []);
+          if (activeProjectsError) throw activeProjectsError;
+          setProjects(activeProjectsData || []);
+          
+          // Fetch archived projects
+          const { data: archivedProjectsData, error: archivedProjectsError } = await supabase
+            .from("projects")
+            .select("*")
+            .eq("user_id", user?.id)
+            .eq("status", "archived")
+            .order("created_at", { ascending: false });
 
-          // For customers, fetch estimates directly by project IDs
-          if (projectsData && projectsData.length > 0) {
-            const projectIds = projectsData.map(project => project.id);
-            
+          if (archivedProjectsError) throw archivedProjectsError;
+          setArchivedProjects(archivedProjectsData || []);
+
+          // Get all project IDs (both active and archived)
+          const allProjectIds = [
+            ...(activeProjectsData?.map(p => p.id) || []),
+            ...(archivedProjectsData?.map(p => p.id) || [])
+          ];
+          
+          // For customers, fetch estimates for their projects
+          if (allProjectIds.length > 0) {
             const { data: estimatesData, error: estimatesError } = await supabase
               .from("estimates")
               .select("*")
-              .in("project_id", projectIds)
+              .in("project_id", allProjectIds)
               .is("status", null) // Only get non-deleted estimates
               .order("created_at", { ascending: false });
 
@@ -147,6 +169,7 @@ export default function Dashboard() {
       {isAdmin ? (
         <AdminDashboardView 
           projects={projects}
+          archivedProjects={archivedProjects}
           estimates={estimates} 
           invoices={invoices} 
           handleAdminRedirect={handleAdminRedirect} 
@@ -154,6 +177,7 @@ export default function Dashboard() {
       ) : (
         <CustomerDashboardView 
           projects={projects}
+          archivedProjects={archivedProjects}
           estimates={estimates} 
           invoices={invoices} 
         />

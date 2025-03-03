@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useSession } from "@/context/SessionContext";
@@ -18,11 +19,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ChevronLeft, PlusCircle, FileText, DollarSign, Trash2 } from "lucide-react";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ChevronLeft, PlusCircle, FileText, DollarSign, Trash2, Archive, RefreshCw, MoreVertical } from "lucide-react";
 
 export default function ProjectDetail() {
   const { id } = useParams<{ id: string }>();
-  const { user, profile, signOut } = useSession();
+  const { user, profile, signOut, isAdmin } = useSession();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [project, setProject] = useState<Project | null>(null);
@@ -31,23 +38,26 @@ export default function ProjectDetail() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("estimates");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [showArchiveDialog, setShowArchiveDialog] = useState(false);
+  const [showRestoreDialog, setShowRestoreDialog] = useState(false);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
   useEffect(() => {
     const fetchProjectData = async () => {
       try {
         if (!id) return;
         
+        // Don't filter by status so we can see archived projects as well
         const { data: projectData, error: projectError } = await supabase
           .from("projects")
           .select("*")
           .eq("id", id)
-          .is("status", null)
           .single();
 
         if (projectError) throw projectError;
         setProject(projectData);
         
+        // Only show estimates for this project that aren't deleted
         const { data: estimatesData, error: estimatesError } = await supabase
           .from("estimates")
           .select("*")
@@ -93,48 +103,55 @@ export default function ProjectDetail() {
     fetchProjectData();
   }, [id, toast]);
 
-  const handleDeleteProject = async () => {
+  const handleUpdateProjectStatus = async (newStatus: "active" | "archived" | "deleted") => {
     if (!id || !project) return;
     
     try {
-      setIsDeleting(true);
+      setIsUpdatingStatus(true);
       
-      // Update the project status to "deleted" instead of deleting it
+      // Update the project status
       const { error: projectError } = await supabase
         .from("projects")
-        .update({ status: "deleted" })
+        .update({ status: newStatus })
         .eq("id", id);
         
       if (projectError) throw projectError;
       
-      // Update related estimates to "deleted" status if they exist
-      if (estimates.length > 0) {
-        const { error: estimatesError } = await supabase
-          .from("estimates")
-          .update({ status: "deleted" })
-          .eq("project_id", id);
-          
-        if (estimatesError) throw estimatesError;
+      let toastMessage = "";
+      
+      if (newStatus === "deleted") {
+        toastMessage = `"${project.name}" has been deleted from your dashboard`;
+      } else if (newStatus === "archived") {
+        toastMessage = `"${project.name}" has been archived`;
+      } else if (newStatus === "active") {
+        toastMessage = `"${project.name}" has been restored to active status`;
       }
       
       toast({
-        title: "Project deleted",
-        description: `"${project.name}" has been removed from your dashboard`,
+        title: `Project ${newStatus}`,
+        description: toastMessage,
       });
       
-      // Navigate back to dashboard
-      navigate("/dashboard");
+      // Update local state
+      setProject({...project, status: newStatus});
+      
+      // If deleted, navigate back to dashboard
+      if (newStatus === "deleted" && !isAdmin) {
+        navigate("/dashboard");
+      }
       
     } catch (error) {
-      console.error("Error deleting project:", error);
+      console.error(`Error updating project status to ${newStatus}:`, error);
       toast({
-        title: "Failed to delete project",
-        description: "An error occurred while trying to delete the project",
+        title: `Failed to ${newStatus} project`,
+        description: "An error occurred while trying to update the project",
         variant: "destructive",
       });
     } finally {
-      setIsDeleting(false);
+      setIsUpdatingStatus(false);
       setShowDeleteDialog(false);
+      setShowArchiveDialog(false);
+      setShowRestoreDialog(false);
     }
   };
 
@@ -167,12 +184,39 @@ export default function ProjectDetail() {
     );
   }
 
+  // Don't show deleted projects to regular users
+  if (project.status === "deleted" && !isAdmin) {
+    return (
+      <DashboardLayout user={user} profile={profile} signOut={signOut}>
+        <div className="text-center py-12">
+          <h3 className="text-xl font-medium mb-2">Project not available</h3>
+          <p className="text-muted-foreground mb-6">
+            This project has been deleted and is no longer available.
+          </p>
+          <Button asChild>
+            <Link to="/dashboard">
+              <ChevronLeft className="mr-2 h-4 w-4" />
+              Back to Dashboard
+            </Link>
+          </Button>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout user={user} profile={profile} signOut={signOut}>
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">{project.name}</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-bold text-gray-800">{project.name}</h1>
+              {project.status === "archived" && (
+                <span className="px-2 py-1 text-xs bg-gray-200 text-gray-700 rounded-full">
+                  Archived
+                </span>
+              )}
+            </div>
             <p className="text-muted-foreground">
               Created on {new Date(project.created_at!).toLocaleDateString()}
             </p>
@@ -181,21 +225,49 @@ export default function ProjectDetail() {
             )}
           </div>
           <div className="flex gap-2 self-stretch md:self-auto">
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
-              onClick={() => setShowDeleteDialog(true)}
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete
-            </Button>
-            <Button asChild className="bg-paint hover:bg-paint-dark">
-              <Link to="/estimate">
-                <PlusCircle className="mr-2 h-4 w-4" />
-                New Estimate
-              </Link>
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <MoreVertical className="h-4 w-4 mr-2" />
+                  Actions
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {project.status === "active" ? (
+                  <DropdownMenuItem 
+                    className="text-amber-600"
+                    onClick={() => setShowArchiveDialog(true)}
+                  >
+                    <Archive className="h-4 w-4 mr-2" />
+                    Archive Project
+                  </DropdownMenuItem>
+                ) : project.status === "archived" ? (
+                  <DropdownMenuItem 
+                    className="text-green-600"
+                    onClick={() => setShowRestoreDialog(true)}
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Restore Project
+                  </DropdownMenuItem>
+                ) : null}
+                <DropdownMenuItem 
+                  className="text-red-600"
+                  onClick={() => setShowDeleteDialog(true)}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Project
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
+            {project.status === "active" && (
+              <Button asChild className="bg-paint hover:bg-paint-dark">
+                <Link to={`/estimate?projectId=${project.id}`}>
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  New Estimate
+                </Link>
+              </Button>
+            )}
           </div>
         </div>
 
@@ -266,12 +338,14 @@ export default function ProjectDetail() {
                 <p className="text-muted-foreground mb-6">
                   Create your first estimate for this project
                 </p>
-                <Button asChild className="bg-paint hover:bg-paint-dark">
-                  <Link to="/estimate">
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Get Estimate
-                  </Link>
-                </Button>
+                {project.status === "active" && (
+                  <Button asChild className="bg-paint hover:bg-paint-dark">
+                    <Link to={`/estimate?projectId=${project.id}`}>
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      Get Estimate
+                    </Link>
+                  </Button>
+                )}
               </div>
             )}
           </TabsContent>
@@ -337,22 +411,67 @@ export default function ProjectDetail() {
         </Tabs>
       </div>
 
+      {/* Delete Project Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Project</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{project.name}"? This will hide the project and its estimates from your dashboard, but the data will be preserved for administrative purposes.
+              Are you sure you want to delete "{project.name}"? This will remove the project from your dashboard. {isAdmin ? "As an admin, you will still be able to see it with deleted status." : ""}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isUpdatingStatus}>Cancel</AlertDialogCancel>
             <AlertDialogAction 
-              onClick={handleDeleteProject}
-              disabled={isDeleting}
+              onClick={() => handleUpdateProjectStatus("deleted")}
+              disabled={isUpdatingStatus}
               className="bg-red-600 hover:bg-red-700 text-white"
             >
-              {isDeleting ? "Deleting..." : "Delete Project"}
+              {isUpdatingStatus ? "Deleting..." : "Delete Project"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Archive Project Dialog */}
+      <AlertDialog open={showArchiveDialog} onOpenChange={setShowArchiveDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Archive Project</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to archive "{project.name}"? The project will be moved to your archives and can be restored later.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isUpdatingStatus}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => handleUpdateProjectStatus("archived")}
+              disabled={isUpdatingStatus}
+              className="bg-amber-600 hover:bg-amber-700 text-white"
+            >
+              {isUpdatingStatus ? "Archiving..." : "Archive Project"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Restore Project Dialog */}
+      <AlertDialog open={showRestoreDialog} onOpenChange={setShowRestoreDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Restore Project</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to restore "{project.name}" to active status?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isUpdatingStatus}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => handleUpdateProjectStatus("active")}
+              disabled={isUpdatingStatus}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              {isUpdatingStatus ? "Restoring..." : "Restore Project"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

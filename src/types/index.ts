@@ -63,7 +63,7 @@ export interface Project {
   name: string;
   user_id?: string;
   description?: string;
-  status?: string;
+  status?: "active" | "archived" | "deleted";
   created_at?: string;
   updated_at?: string;
 }

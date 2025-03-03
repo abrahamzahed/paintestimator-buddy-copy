@@ -2,11 +2,12 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { House, FileText, DollarSign, ChevronRight } from "lucide-react";
+import { House, FileText, DollarSign, ChevronRight, Archive } from "lucide-react";
 import { Project, Estimate, Invoice } from "@/types";
 
 interface AdminDashboardViewProps {
   projects: Project[];
+  archivedProjects: Project[];
   estimates: Estimate[];
   invoices: Invoice[];
   handleAdminRedirect: () => void;
@@ -14,15 +15,16 @@ interface AdminDashboardViewProps {
 
 const AdminDashboardView = ({
   projects,
+  archivedProjects,
   estimates,
   invoices,
   handleAdminRedirect,
 }: AdminDashboardViewProps) => {
-  // Count active and deleted projects
-  const activeProjects = projects.filter(p => p.status !== "deleted").length;
-  const totalProjects = projects.length;
+  // Count all projects including deleted ones
+  const activeProjects = projects.length;
+  const archivedProjectsCount = archivedProjects.length;
   
-  // Count active and deleted estimates
+  // Count estimates that aren't deleted
   const activeEstimates = estimates.filter(e => e.status !== "deleted").length;
   const totalEstimates = estimates.length;
 
@@ -32,11 +34,11 @@ const AdminDashboardView = ({
         <div className="bg-secondary/50 rounded-xl p-6 shadow-sm">
           <div className="flex justify-between items-start">
             <div>
-              <h3 className="font-semibold text-lg">Recent Projects</h3>
+              <h3 className="font-semibold text-lg">Active Projects</h3>
               <p className="text-3xl font-bold mt-2">{activeProjects}</p>
-              {activeProjects !== totalProjects && (
+              {archivedProjectsCount > 0 && (
                 <p className="text-xs text-muted-foreground mt-1">
-                  ({totalProjects - activeProjects} archived)
+                  ({archivedProjectsCount} archived)
                 </p>
               )}
             </div>

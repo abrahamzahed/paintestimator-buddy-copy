@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useSession } from "@/context/SessionContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, Archive } from "lucide-react";
 
 interface ProjectSelectorProps {
   selectedProjectId: string | null;
@@ -30,10 +31,12 @@ const ProjectSelector = ({ selectedProjectId, onSelectProject }: ProjectSelector
       try {
         if (!user) return;
 
+        // Fetch only active projects for selection
         const { data, error } = await supabase
           .from("projects")
           .select("*")
           .eq("user_id", user.id)
+          .eq("status", "active")
           .order("created_at", { ascending: false });
 
         if (error) throw error;
@@ -73,6 +76,7 @@ const ProjectSelector = ({ selectedProjectId, onSelectProject }: ProjectSelector
             name: newProjectName.trim(),
             description: newProjectDescription.trim() || null,
             user_id: user?.id,
+            status: "active" // Ensure new projects are created as active
           },
         ])
         .select()
