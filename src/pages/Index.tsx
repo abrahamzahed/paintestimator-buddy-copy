@@ -7,6 +7,7 @@ import EstimateCalculator from "@/components/EstimateCalculator";
 import { EstimateResult } from "@/types";
 import { Button } from "@/components/ui/button";
 import { useSession } from "@/context/SessionContext";
+
 const Index = () => {
   const {
     user,
@@ -15,6 +16,7 @@ const Index = () => {
   const navigate = useNavigate();
   const [showEstimateCalculator, setShowEstimateCalculator] = useState(false);
   const chatSectionRef = useRef<HTMLDivElement>(null);
+
   const handleOpenChat = () => {
     if (user) {
       navigate("/estimate");
@@ -24,12 +26,14 @@ const Index = () => {
       });
     }
   };
+
   const handleEstimateComplete = (estimate: EstimateResult) => {
     setShowEstimateCalculator(false);
     if (user) {
       navigate("/estimate");
     }
   };
+
   const handleStartEstimate = () => {
     if (user) {
       navigate("/estimate");
@@ -37,6 +41,7 @@ const Index = () => {
       setShowEstimateCalculator(true);
     }
   };
+
   return <div className="min-h-screen">
       <header className="border-b">
         <div className="container mx-auto px-4 py-4">
@@ -144,8 +149,8 @@ const Index = () => {
           <div className="max-w-4xl mx-auto">
             <h2 className="text-3xl font-bold mb-8 text-center">Our Services</h2>
             
-            <div className="grid gap-8 md:grid-cols-3">
-              <div className="glass rounded-xl p-6 shadow-lg px-[24px] py-[24px] mx-0">
+            <div className="flex justify-center">
+              <div className="glass rounded-xl p-6 shadow-lg px-[24px] py-[24px] mx-0 max-w-md">
                 <h3 className="text-xl font-semibold mb-4">Interior Painting</h3>
                 <p className="mb-4 text-muted-foreground">
                   Transform your living spaces with expert interior painting services. We handle everything from color selection to flawless application.
@@ -154,10 +159,6 @@ const Index = () => {
                   Get Estimate
                 </Button>
               </div>
-              
-              
-              
-              
             </div>
             
             {showEstimateCalculator && <div className="mt-12 animate-fade-in">
@@ -233,4 +234,5 @@ const Index = () => {
       </footer>
     </div>;
 };
+
 export default Index;
