@@ -81,7 +81,7 @@ const EstimateFooter = ({ estimate }: EstimateFooterProps) => {
   };
   
   return (
-    <div className="w-full flex justify-between items-center">
+    <div className="w-full flex justify-between items-center py-4">
       <div className="flex gap-2">
         {estimate?.status === "pending" && (
           <>
