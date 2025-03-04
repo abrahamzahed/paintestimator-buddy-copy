@@ -1,3 +1,4 @@
+
 import { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
@@ -17,10 +18,10 @@ const Index = () => {
     if (user) {
       navigate("/estimate");
     } else {
+      // Just scroll to the services section without showing the estimator
       serviceSectionRef.current?.scrollIntoView({
         behavior: "smooth"
       });
-      setShowEstimateCalculator(true);
     }
   };
 
@@ -161,7 +162,7 @@ const Index = () => {
               Contact us today to schedule a consultation or get your detailed estimate.
             </p>
             <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
-              <Button size="lg" className="bg-paint hover:bg-paint-dark" onClick={() => setShowEstimateCalculator(true)}>
+              <Button size="lg" className="bg-paint hover:bg-paint-dark" onClick={handleOpenChat}>
                 Get Free Estimate
               </Button>
               <Button variant="outline" size="lg" asChild>
