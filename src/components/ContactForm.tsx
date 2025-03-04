@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
+import { supabase } from "@/integrations/supabase/client";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface ContactFormProps {
   onClose: () => void;
@@ -18,11 +20,18 @@ const ContactForm = ({ onClose }: ContactFormProps) => {
     email: "",
     phone: "",
     address: "",
-    message: ""
+    message: "",
+    preferredContactMethod: "email",
+    bestTimeToCall: "",
+    preferredTimeline: "",
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSelectChange = (name: string, value: string) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
@@ -31,11 +40,46 @@ const ContactForm = ({ onClose }: ContactFormProps) => {
     setIsSubmitting(true);
     
     try {
-      // Here you would typically send the form data to your backend
-      console.log("Form submitted:", formData);
+      // Create a lead in the Supabase database
+      const { data, error } = await supabase
+        .from('leads')
+        .insert([
+          {
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            address: formData.address,
+            service_type: "interior",
+            description: formData.message,
+            status: "new"
+          }
+        ]);
+        
+      if (error) throw error;
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // If successful, create a basic estimate with the contact preferences
+      if (data) {
+        const { error: estimateError } = await supabase
+          .from('estimates')
+          .insert([
+            {
+              lead_id: data[0].id,
+              labor_cost: 0,
+              material_cost: 0,
+              total_cost: 0,
+              estimated_hours: 0,
+              preferred_contact_method: formData.preferredContactMethod,
+              best_time_to_call: formData.bestTimeToCall,
+              preferred_timeline: formData.preferredTimeline,
+              details: {
+                initialInquiry: true,
+                message: formData.message
+              }
+            }
+          ]);
+          
+        if (estimateError) console.error("Error creating estimate:", estimateError);
+      }
       
       toast({
         title: "Message sent!",
@@ -44,6 +88,7 @@ const ContactForm = ({ onClose }: ContactFormProps) => {
       
       onClose();
     } catch (error) {
+      console.error("Error sending message:", error);
       toast({
         title: "Error sending message",
         description: "Please try again later.",
@@ -102,6 +147,54 @@ const ContactForm = ({ onClose }: ContactFormProps) => {
           value={formData.address}
           onChange={handleChange}
         />
+      </div>
+      
+      <div className="space-y-2">
+        <Label htmlFor="preferredContactMethod">Preferred Contact Method</Label>
+        <Select 
+          value={formData.preferredContactMethod} 
+          onValueChange={(value) => handleSelectChange("preferredContactMethod", value)}
+        >
+          <SelectTrigger id="preferredContactMethod">
+            <SelectValue placeholder="Select contact method" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="email">Email</SelectItem>
+            <SelectItem value="phone">Phone</SelectItem>
+            <SelectItem value="text">Text Message</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      
+      {formData.preferredContactMethod === "phone" && (
+        <div className="space-y-2">
+          <Label htmlFor="bestTimeToCall">Best Time to Call</Label>
+          <Input
+            id="bestTimeToCall"
+            name="bestTimeToCall"
+            placeholder="Morning / Afternoon / Evening"
+            value={formData.bestTimeToCall}
+            onChange={handleChange}
+          />
+        </div>
+      )}
+      
+      <div className="space-y-2">
+        <Label htmlFor="preferredTimeline">When do you need this project completed?</Label>
+        <Select 
+          value={formData.preferredTimeline} 
+          onValueChange={(value) => handleSelectChange("preferredTimeline", value)}
+        >
+          <SelectTrigger id="preferredTimeline">
+            <SelectValue placeholder="Select timeline" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="asap">As soon as possible</SelectItem>
+            <SelectItem value="1month">Within 1 month</SelectItem>
+            <SelectItem value="3months">Within 3 months</SelectItem>
+            <SelectItem value="planning">Just planning/pricing now</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
       
       <div className="space-y-2">

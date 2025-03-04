@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useSession } from "@/context/SessionContext";
@@ -32,7 +31,6 @@ export default function EditEstimate() {
 
         if (estimateError) throw estimateError;
         
-        // Convert to our Estimate type with proper typing
         const typedEstimate: Estimate = {
           id: estimateData.id,
           lead_id: estimateData.lead_id,
@@ -54,22 +52,18 @@ export default function EditEstimate() {
         
         setEstimate(typedEstimate);
 
-        // Extract room details from the estimate with proper type handling
         if (estimateData.details && 
             typeof estimateData.details === 'object') {
           
           const details = estimateData.details;
           
-          // Safely check if roomDetails exists and is an array
           if (details && 'roomDetails' in details && Array.isArray(details.roomDetails)) {
-            // Cast properly with type verification
             const roomDetailsArray = details.roomDetails as any[];
             
-            // Map the JSON data to the expected RoomDetail type structure
             const typedRoomDetails = roomDetailsArray.map(room => ({
               id: room.id || '',
               roomType: room.roomType || '',
-              roomSize: room.roomSize || 'average', // Provide default value
+              roomSize: room.roomSize || 'average',
               wallsCount: room.wallsCount || 4,
               wallHeight: room.wallHeight || 8,
               wallWidth: room.wallWidth || 10,
@@ -82,7 +76,7 @@ export default function EditEstimate() {
               hasHighCeiling: !!room.hasHighCeiling,
               includeCloset: !!room.includeCloset,
               isEmptyHouse: !!room.isEmptyHouse,
-              needFloorCovering: room.needFloorCovering !== false, // Default to true
+              needFloorCovering: room.needFloorCovering !== false,
               doorsCount: room.doorsCount || 0,
               windowsCount: room.windowsCount || 0
             }));
@@ -116,7 +110,25 @@ export default function EditEstimate() {
     setIsSubmitting(true);
     
     try {
-      // Prepare simplified room details for JSON storage
+      const roomTypes = updatedRooms.map(room => room.roomType);
+      const roomSizes = updatedRooms.map(room => room.roomSize);
+      const wallCounts = updatedRooms.map(room => room.wallsCount);
+      const wallHeights = updatedRooms.map(room => room.wallHeight);
+      const wallWidths = updatedRooms.map(room => room.wallWidth);
+      const wallConditions = updatedRooms.map(room => room.condition);
+      const paintTypes = updatedRooms.map(room => room.paintType);
+      const includeCeilings = updatedRooms.map(room => room.includeCeiling);
+      const includeBaseboards = updatedRooms.map(room => room.includeBaseboards);
+      const baseboardsMethods = updatedRooms.map(room => room.baseboardsMethod);
+      const includeCrownMoldings = updatedRooms.map(room => room.includeCrownMolding);
+      const hasHighCeilings = updatedRooms.map(room => room.hasHighCeiling);
+      const includeClosets = updatedRooms.map(room => room.includeCloset);
+      const doorsCountPerRoom = updatedRooms.map(room => room.doorsCount);
+      const windowsCountPerRoom = updatedRooms.map(room => room.windowsCount);
+      
+      const isEmptyHouse = updatedRooms.some(room => room.isEmptyHouse);
+      const needsFloorCovering = updatedRooms.some(room => room.needFloorCovering);
+      
       const simplifiedRoomDetails = updatedRooms.map(room => ({
         id: room.id,
         roomType: room.roomType,
@@ -137,7 +149,6 @@ export default function EditEstimate() {
         windowsCount: room.windowsCount
       }));
       
-      // Update the estimate with new details
       const { error: updateError } = await supabase
         .from("estimates")
         .update({
@@ -151,8 +162,24 @@ export default function EditEstimate() {
           total_cost: updatedEstimate.totalCost,
           estimated_hours: updatedEstimate.timeEstimate,
           estimated_paint_gallons: updatedEstimate.paintCans,
-          // Keep status as is - updating the estimate doesn't change status
-          status: estimate.status 
+          status: estimate.status,
+          room_types: roomTypes,
+          room_sizes: roomSizes,
+          wall_counts: wallCounts,
+          wall_heights: wallHeights,
+          wall_widths: wallWidths,
+          wall_conditions: wallConditions,
+          paint_types: paintTypes,
+          include_ceilings: includeCeilings,
+          include_baseboards: includeBaseboards,
+          baseboards_methods: baseboardsMethods,
+          include_crown_moldings: includeCrownMoldings,
+          has_high_ceilings: hasHighCeilings,
+          include_closets: includeClosets,
+          doors_count_per_room: doorsCountPerRoom,
+          windows_count_per_room: windowsCountPerRoom,
+          is_empty_house: isEmptyHouse,
+          needs_floor_covering: needsFloorCovering
         })
         .eq("id", id);
 
@@ -163,7 +190,6 @@ export default function EditEstimate() {
         description: "Estimate has been updated successfully.",
       });
       
-      // Navigate back to the estimate detail page
       navigate(`/estimate/${id}`);
       
     } catch (error: any) {

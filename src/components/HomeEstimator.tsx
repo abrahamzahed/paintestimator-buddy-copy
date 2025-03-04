@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { RoomDetail, EstimateResult } from "@/types";
@@ -112,7 +111,52 @@ const HomeEstimator = () => {
       
       // If we're at the last step, save and open login dialog
       if (currentEstimate) {
-        saveTemporaryEstimate(currentEstimate, roomDetails.rooms, roomEstimates);
+        // Extract arrays of values from room details for temporary storage
+        const roomTypesList = roomDetails.rooms.map(room => room.roomType);
+        const roomSizesList = roomDetails.rooms.map(room => room.roomSize);
+        const wallsCountList = roomDetails.rooms.map(room => room.wallsCount);
+        const wallHeightList = roomDetails.rooms.map(room => room.wallHeight);
+        const wallWidthList = roomDetails.rooms.map(room => room.wallWidth);
+        const conditionList = roomDetails.rooms.map(room => room.condition);
+        const paintTypeList = roomDetails.rooms.map(room => room.paintType);
+        const includeCeilingList = roomDetails.rooms.map(room => room.includeCeiling);
+        const includeBaseboardsList = roomDetails.rooms.map(room => room.includeBaseboards);
+        const baseboardsMethodList = roomDetails.rooms.map(room => room.baseboardsMethod);
+        const includeCrownMoldingList = roomDetails.rooms.map(room => room.includeCrownMolding);
+        const hasHighCeilingList = roomDetails.rooms.map(room => room.hasHighCeiling);
+        const includeClosetList = roomDetails.rooms.map(room => room.includeCloset);
+        const isEmptyHouseList = roomDetails.rooms.map(room => room.isEmptyHouse);
+        const needFloorCoveringList = roomDetails.rooms.map(room => room.needFloorCovering);
+        const doorsCountList = roomDetails.rooms.map(room => room.doorsCount);
+        const windowsCountList = roomDetails.rooms.map(room => room.windowsCount);
+
+        // Save all the detailed information
+        const estimateData = {
+          ...currentEstimate,
+          roomDetails: roomDetails.rooms,
+          room_types: roomTypesList,
+          room_sizes: roomSizesList,
+          walls_count: wallsCountList,
+          wall_heights: wallHeightList,
+          wall_widths: wallWidthList,
+          conditions: conditionList,
+          paint_types: paintTypeList,
+          include_ceiling: includeCeilingList,
+          include_baseboards: includeBaseboardsList,
+          baseboards_methods: baseboardsMethodList,
+          include_crown_molding: includeCrownMoldingList,
+          has_high_ceiling: hasHighCeilingList,
+          include_closet: includeClosetList,
+          is_empty_house: isEmptyHouseList,
+          needs_floor_covering: needFloorCoveringList,
+          doors_counts: doorsCountList,
+          windows_counts: windowsCountList,
+          preferred_timeline: "",
+          preferred_contact_method: "",
+          best_time_to_call: ""
+        };
+        
+        saveTemporaryEstimate(estimateData, roomDetails.rooms, roomEstimates);
         saveTemporaryProjectName(projectName);
         setLoginDialogOpen(true);
       }

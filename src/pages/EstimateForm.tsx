@@ -164,6 +164,25 @@ export default function EstimateForm() {
       if (estimateResult && createdLead) {
         console.log("Creating estimate with lead_id:", createdLead.id);
         
+        const roomTypes = roomDetails.map(room => room.roomType);
+        const roomSizes = roomDetails.map(room => room.roomSize);
+        const wallCounts = roomDetails.map(room => room.wallsCount);
+        const wallHeights = roomDetails.map(room => room.wallHeight);
+        const wallWidths = roomDetails.map(room => room.wallWidth);
+        const wallConditions = roomDetails.map(room => room.condition);
+        const paintTypes = roomDetails.map(room => room.paintType);
+        const includeCeilings = roomDetails.map(room => room.includeCeiling);
+        const includeBaseboards = roomDetails.map(room => room.includeBaseboards);
+        const baseboardsMethods = roomDetails.map(room => room.baseboardsMethod);
+        const includeCrownMoldings = roomDetails.map(room => room.includeCrownMolding);
+        const hasHighCeilings = roomDetails.map(room => room.hasHighCeiling);
+        const includeClosets = roomDetails.map(room => room.includeCloset);
+        const doorsCountPerRoom = roomDetails.map(room => room.doorsCount);
+        const windowsCountPerRoom = roomDetails.map(room => room.windowsCount);
+        
+        const isEmptyHouse = roomDetails.some(room => room.isEmptyHouse);
+        const needsFloorCovering = roomDetails.some(room => room.needFloorCovering);
+        
         const simplifiedRoomDetails = roomDetails.map(room => ({
           id: room.id,
           roomType: room.roomType,
@@ -199,7 +218,27 @@ export default function EstimateForm() {
             total_cost: estimateResult.totalCost,
             estimated_hours: estimateResult.timeEstimate,
             estimated_paint_gallons: estimateResult.paintCans,
-            status: "pending"
+            status: "pending",
+            room_types: roomTypes,
+            room_sizes: roomSizes,
+            wall_counts: wallCounts,
+            wall_heights: wallHeights,
+            wall_widths: wallWidths,
+            wall_conditions: wallConditions,
+            paint_types: paintTypes,
+            include_ceilings: includeCeilings,
+            include_baseboards: includeBaseboards,
+            baseboards_methods: baseboardsMethods,
+            include_crown_moldings: includeCrownMoldings,
+            has_high_ceilings: hasHighCeilings,
+            include_closets: includeClosets,
+            doors_count_per_room: doorsCountPerRoom,
+            windows_count_per_room: windowsCountPerRoom,
+            is_empty_house: isEmptyHouse,
+            needs_floor_covering: needsFloorCovering,
+            preferred_timeline: leadData.preferredTimeline || null,
+            best_time_to_call: leadData.bestTimeToCall || null,
+            preferred_contact_method: leadData.preferredContactMethod || null
           });
 
         if (estimateError) {
