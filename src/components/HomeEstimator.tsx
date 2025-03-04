@@ -218,6 +218,18 @@ const HomeEstimator = () => {
                 onChange={(e) => setPhone(e.target.value)}
               />
             </div>
+
+            <div className="mt-4">
+              <Button 
+                className="w-full bg-paint hover:bg-paint-dark"
+                asChild
+              >
+                <Link to="/auth?returnUrl=/estimate&saveEstimate=true">
+                  Create an account to start your project
+                  <ExternalLink className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
           </div>
         </FormStep>
       </div>

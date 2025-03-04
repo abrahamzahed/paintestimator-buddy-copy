@@ -7,11 +7,14 @@ import ChatInterface from "@/components/ChatInterface";
 import HomeEstimator from "@/components/HomeEstimator";
 import { Button } from "@/components/ui/button";
 import { useSession } from "@/context/SessionContext";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import ContactForm from "@/components/ContactForm";
 
 const Index = () => {
   const { user, isLoading } = useSession();
   const navigate = useNavigate();
   const [showEstimateCalculator, setShowEstimateCalculator] = useState(false);
+  const [contactDialogOpen, setContactDialogOpen] = useState(false);
   const serviceSectionRef = useRef<HTMLDivElement>(null);
 
   const handleOpenChat = () => {
@@ -161,16 +164,13 @@ const Index = () => {
             <p className="text-lg text-muted-foreground mb-8">
               Contact us today to schedule a consultation or get your detailed estimate.
             </p>
-            <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
-              <Button size="lg" className="bg-paint hover:bg-paint-dark" onClick={handleOpenChat}>
-                Get Free Estimate
-              </Button>
-              <Button variant="outline" size="lg" asChild>
-                <Link to={user ? "/dashboard" : "/auth"}>
-                  {user ? "View Dashboard" : "Create Account"}
-                </Link>
-              </Button>
-            </div>
+            <Button 
+              size="lg" 
+              className="bg-paint hover:bg-paint-dark"
+              onClick={() => setContactDialogOpen(true)}
+            >
+              Contact Us
+            </Button>
           </div>
         </div>
       </div>
@@ -208,6 +208,18 @@ const Index = () => {
           </div>
         </div>
       </footer>
+
+      {/* Contact Dialog */}
+      <Dialog open={contactDialogOpen} onOpenChange={setContactDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Contact Us</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <ContactForm onClose={() => setContactDialogOpen(false)} />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>;
 };
 
