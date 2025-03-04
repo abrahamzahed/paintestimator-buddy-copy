@@ -85,42 +85,62 @@ const EstimateSection = ({ onEstimateComplete, onClose }: EstimateSectionProps) 
           
         // Save all the detailed estimate information
         if (leadData) {
+          // Convert RoomDetail to a JSON compatible object
+          const simplifiedRoomDetails = rooms.map(room => ({
+            id: room.id,
+            roomType: room.roomType,
+            roomSize: room.roomSize,
+            wallsCount: room.wallsCount,
+            wallHeight: room.wallHeight,
+            wallWidth: room.wallWidth,
+            condition: room.condition,
+            paintType: room.paintType,
+            includeCeiling: room.includeCeiling,
+            includeBaseboards: room.includeBaseboards,
+            baseboardsMethod: room.baseboardsMethod,
+            includeCrownMolding: room.includeCrownMolding,
+            hasHighCeiling: room.hasHighCeiling,
+            includeCloset: room.includeCloset,
+            isEmptyHouse: room.isEmptyHouse,
+            needFloorCovering: room.needFloorCovering,
+            doorsCount: room.doorsCount,
+            windowsCount: room.windowsCount
+          }));
+          
           await supabase
             .from('estimates')
-            .insert([
-              {
-                lead_id: leadData.id,
-                project_id: projectData?.id,
-                labor_cost: estimate.laborCost,
-                material_cost: estimate.materialCost,
-                total_cost: estimate.totalCost,
-                estimated_hours: estimate.timeEstimate,
-                estimated_paint_gallons: estimate.paintCans,
-                details: {
-                  rooms: rooms.length,
-                  roomDetails: rooms
-                },
-                // Save all the new detailed fields
-                room_types: roomTypes,
-                room_sizes: roomSizes,
-                wall_counts: wallCounts,
-                wall_heights: wallHeights,
-                wall_widths: wallWidths,
-                wall_conditions: wallConditions,
-                paint_types: paintTypes,
-                include_ceilings: includeCeilings,
-                include_baseboards: includeBaseboards,
-                baseboards_methods: baseboardsMethods,
-                include_crown_moldings: includeCrownMoldings,
-                has_high_ceilings: hasHighCeilings,
-                include_closets: includeClosets,
-                doors_count_per_room: doorsCountPerRoom,
-                windows_count_per_room: windowsCountPerRoom,
-                is_empty_house: isEmptyHouse,
-                needs_floor_covering: needsFloorCovering,
-                status: 'pending'
-              }
-            ]);
+            .insert({
+              lead_id: leadData.id,
+              project_id: projectData?.id,
+              labor_cost: estimate.laborCost,
+              material_cost: estimate.materialCost,
+              total_cost: estimate.totalCost,
+              estimated_hours: estimate.timeEstimate,
+              estimated_paint_gallons: estimate.paintCans,
+              details: {
+                rooms: rooms.length,
+                roomDetails: simplifiedRoomDetails
+              },
+              // Save all the new detailed fields
+              room_types: roomTypes,
+              room_sizes: roomSizes,
+              wall_counts: wallCounts,
+              wall_heights: wallHeights,
+              wall_widths: wallWidths,
+              wall_conditions: wallConditions,
+              paint_types: paintTypes,
+              include_ceilings: includeCeilings,
+              include_baseboards: includeBaseboards,
+              baseboards_methods: baseboardsMethods,
+              include_crown_moldings: includeCrownMoldings,
+              has_high_ceilings: hasHighCeilings,
+              include_closets: includeClosets,
+              doors_count_per_room: doorsCountPerRoom,
+              windows_count_per_room: windowsCountPerRoom,
+              is_empty_house: isEmptyHouse,
+              needs_floor_covering: needsFloorCovering,
+              status: 'pending'
+            });
         }
       }
     } catch (error) {

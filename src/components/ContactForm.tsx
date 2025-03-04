@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,30 +52,29 @@ const ContactForm = ({ onClose }: ContactFormProps) => {
             description: formData.message,
             status: "new"
           }
-        ]);
+        ])
+        .select();
         
       if (error) throw error;
       
       // If successful, create a basic estimate with the contact preferences
-      if (data) {
+      if (data && data.length > 0) {
         const { error: estimateError } = await supabase
           .from('estimates')
-          .insert([
-            {
-              lead_id: data[0].id,
-              labor_cost: 0,
-              material_cost: 0,
-              total_cost: 0,
-              estimated_hours: 0,
-              preferred_contact_method: formData.preferredContactMethod,
-              best_time_to_call: formData.bestTimeToCall,
-              preferred_timeline: formData.preferredTimeline,
-              details: {
-                initialInquiry: true,
-                message: formData.message
-              }
+          .insert({
+            lead_id: data[0].id,
+            labor_cost: 0,
+            material_cost: 0,
+            total_cost: 0,
+            estimated_hours: 0,
+            preferred_contact_method: formData.preferredContactMethod,
+            best_time_to_call: formData.bestTimeToCall,
+            preferred_timeline: formData.preferredTimeline,
+            details: {
+              initialInquiry: true,
+              message: formData.message
             }
-          ]);
+          });
           
         if (estimateError) console.error("Error creating estimate:", estimateError);
       }

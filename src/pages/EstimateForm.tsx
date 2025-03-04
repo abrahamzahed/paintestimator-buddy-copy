@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "@/context/SessionContext";
@@ -43,7 +44,11 @@ export default function EstimateForm() {
     phone: profile?.phone || "",
     address: "",
     description: "",
-    status: "new"
+    status: "new",
+    // Add the contact preference fields
+    preferredContactMethod: "email",
+    bestTimeToCall: "",
+    preferredTimeline: ""
   });
 
   useEffect(() => {
