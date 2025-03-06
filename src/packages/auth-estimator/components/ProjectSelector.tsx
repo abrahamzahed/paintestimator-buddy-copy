@@ -17,7 +17,7 @@ import {
   DialogHeader, 
   DialogTitle, 
   DialogTrigger 
-} from "@ui/components";
+} from "@/packages/ui";
 import { useToast } from "@/hooks/use-toast";
 import { PlusCircle } from "lucide-react";
 
