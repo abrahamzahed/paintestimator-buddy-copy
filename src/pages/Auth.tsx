@@ -9,6 +9,7 @@ import { getTemporaryEstimate, clearTemporaryEstimate, hasSavedEstimate, getTemp
 import { SignInForm } from "@/components/auth/SignInForm";
 import { SignUpForm } from "@/components/auth/SignUpForm";
 import { PasswordResetConfirmation } from "@/components/auth/PasswordResetConfirmation";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -16,6 +17,7 @@ export default function Auth() {
   const { session, isLoading } = useSession();
   const [activeTab, setActiveTab] = useState("sign-in");
   const [isRecoveryMode, setIsRecoveryMode] = useState(false);
+  const [processingRecovery, setProcessingRecovery] = useState(true);
 
   const searchParams = new URLSearchParams(location.search);
   const returnUrl = searchParams.get("returnUrl") || "/dashboard";
@@ -24,26 +26,52 @@ export default function Auth() {
   
   useEffect(() => {
     // Check if this is a password recovery URL
-    if (type === "recovery") {
-      setIsRecoveryMode(true);
-    } else if (saveEstimate) {
-      setActiveTab("sign-up");
-    }
+    const checkRecoveryMode = async () => {
+      if (type === "recovery") {
+        setIsRecoveryMode(true);
+        
+        // Sign out the user to ensure we don't automatically log in
+        // when processing the recovery token
+        await supabase.auth.signOut();
+        setProcessingRecovery(false);
+      } else {
+        setProcessingRecovery(false);
+        if (saveEstimate) {
+          setActiveTab("sign-up");
+        }
+      }
+    };
+    
+    checkRecoveryMode();
   }, [type, saveEstimate]);
 
   useEffect(() => {
-    if (session && !isLoading) {
+    if (session && !isLoading && !isRecoveryMode && !processingRecovery) {
       if (saveEstimate && hasSavedEstimate()) {
         navigate("/estimate?saveEstimate=true");
       } else {
         navigate(returnUrl);
       }
     }
-  }, [session, isLoading, navigate, returnUrl, saveEstimate]);
+  }, [session, isLoading, navigate, returnUrl, saveEstimate, isRecoveryMode, processingRecovery]);
 
   const handleSignUpSuccess = () => {
     setActiveTab("sign-in");
   };
+
+  if (processingRecovery) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-secondary/30 px-4">
+        <Card className="w-full max-w-md">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-center">
+              <p>Processing your request...</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-secondary/30 px-4">
