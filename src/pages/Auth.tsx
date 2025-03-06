@@ -8,22 +8,28 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getTemporaryEstimate, clearTemporaryEstimate, hasSavedEstimate, getTemporaryProjectName } from "@/utils/estimateStorage";
 import { SignInForm } from "@/components/auth/SignInForm";
 import { SignUpForm } from "@/components/auth/SignUpForm";
+import { PasswordResetConfirmation } from "@/components/auth/PasswordResetConfirmation";
 
 export default function Auth() {
   const navigate = useNavigate();
   const location = useLocation();
   const { session, isLoading } = useSession();
   const [activeTab, setActiveTab] = useState("sign-in");
+  const [isRecoveryMode, setIsRecoveryMode] = useState(false);
 
   const searchParams = new URLSearchParams(location.search);
   const returnUrl = searchParams.get("returnUrl") || "/dashboard";
   const saveEstimate = searchParams.get("saveEstimate") === "true";
+  const type = searchParams.get("type");
   
   useEffect(() => {
-    if (saveEstimate) {
+    // Check if this is a password recovery URL
+    if (type === "recovery") {
+      setIsRecoveryMode(true);
+    } else if (saveEstimate) {
       setActiveTab("sign-up");
     }
-  }, [saveEstimate]);
+  }, [type, saveEstimate]);
 
   useEffect(() => {
     if (session && !isLoading) {
@@ -53,8 +59,10 @@ export default function Auth() {
           <CardHeader>
             <CardTitle>Account Access</CardTitle>
             <CardDescription>
-              Sign in to your account or create a new one
-              {saveEstimate && hasSavedEstimate() && (
+              {isRecoveryMode
+                ? "Create a new password for your account"
+                : "Sign in to your account or create a new one"}
+              {saveEstimate && hasSavedEstimate() && !isRecoveryMode && (
                 <span className="block mt-2 text-paint">
                   Create an account to save your estimate
                 </span>
@@ -62,20 +70,24 @@ export default function Auth() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue={activeTab} value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="sign-in">Sign In</TabsTrigger>
-                <TabsTrigger value="sign-up">Sign Up</TabsTrigger>
-              </TabsList>
+            {isRecoveryMode ? (
+              <PasswordResetConfirmation />
+            ) : (
+              <Tabs defaultValue={activeTab} value={activeTab} onValueChange={setActiveTab}>
+                <TabsList className="grid w-full grid-cols-2 mb-6">
+                  <TabsTrigger value="sign-in">Sign In</TabsTrigger>
+                  <TabsTrigger value="sign-up">Sign Up</TabsTrigger>
+                </TabsList>
 
-              <TabsContent value="sign-in">
-                <SignInForm />
-              </TabsContent>
+                <TabsContent value="sign-in">
+                  <SignInForm />
+                </TabsContent>
 
-              <TabsContent value="sign-up">
-                <SignUpForm onSuccess={handleSignUpSuccess} />
-              </TabsContent>
-            </Tabs>
+                <TabsContent value="sign-up">
+                  <SignUpForm onSuccess={handleSignUpSuccess} />
+                </TabsContent>
+              </Tabs>
+            )}
           </CardContent>
           <CardFooter className="flex justify-center">
             <Button 
