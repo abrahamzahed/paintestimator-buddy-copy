@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { getTemporaryEstimate, clearTemporaryEstimate, hasSavedEstimate, getTemporaryProjectName } from "@/utils/estimateStorage";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -21,6 +22,9 @@ export default function Auth() {
   const [phone, setPhone] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState("sign-in");
+  const [resetEmail, setResetEmail] = useState("");
+  const [isResetEmailSent, setIsResetEmailSent] = useState(false);
+  const [resetDialogOpen, setResetDialogOpen] = useState(false);
 
   const searchParams = new URLSearchParams(location.search);
   const returnUrl = searchParams.get("returnUrl") || "/dashboard";
@@ -110,6 +114,34 @@ export default function Auth() {
     }
   };
 
+  const handlePasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: `${window.location.origin}/auth?type=recovery`,
+      });
+
+      if (error) throw error;
+
+      setIsResetEmailSent(true);
+      toast({
+        title: "Reset link sent",
+        description: "Check your email for the password reset link",
+      });
+    } catch (error: any) {
+      console.error("Password reset error:", error);
+      toast({
+        title: "Error sending reset link",
+        description: error.message || "Please try again",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-secondary/30 px-4">
       <div className="w-full max-w-md">
@@ -170,6 +202,60 @@ export default function Auth() {
                   >
                     {isSubmitting ? "Signing in..." : "Sign In"}
                   </Button>
+                  <div className="text-center mt-2">
+                    <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button variant="link" className="text-sm text-muted-foreground hover:text-paint">
+                          Forgot password?
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Reset your password</DialogTitle>
+                          <DialogDescription>
+                            Enter your email address and we'll send you a link to reset your password.
+                          </DialogDescription>
+                        </DialogHeader>
+                        {!isResetEmailSent ? (
+                          <form onSubmit={handlePasswordReset} className="space-y-4 mt-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="reset-email">Email</Label>
+                              <Input
+                                id="reset-email"
+                                type="email"
+                                placeholder="Your email"
+                                value={resetEmail}
+                                onChange={(e) => setResetEmail(e.target.value)}
+                                required
+                              />
+                            </div>
+                            <Button
+                              type="submit"
+                              className="w-full bg-paint hover:bg-paint-dark"
+                              disabled={isSubmitting}
+                            >
+                              {isSubmitting ? "Sending..." : "Send Reset Link"}
+                            </Button>
+                          </form>
+                        ) : (
+                          <div className="py-4">
+                            <p className="text-center mb-4">
+                              A password reset link has been sent to your email address.
+                            </p>
+                            <Button
+                              className="w-full"
+                              onClick={() => {
+                                setResetDialogOpen(false);
+                                setIsResetEmailSent(false);
+                              }}
+                            >
+                              Close
+                            </Button>
+                          </div>
+                        )}
+                      </DialogContent>
+                    </Dialog>
+                  </div>
                 </form>
               </TabsContent>
 
