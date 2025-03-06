@@ -1,9 +1,1 @@
-
-project_id = "pxwnldtwtbiwjlnwzlvt"
-
-[auth]
-disable_signup = false
-enable_email_signup = true
-enable_email_autoconfirm = true
-site_url = "https://preview--paintestimator-buddy.lovable.app"
-additional_redirect_urls = ["https://preview--paintestimator-buddy.lovable.app", "https://preview--paintestimator-buddy.lovable.app/dashboard", "http://localhost:5173", "http://localhost:5173/dashboard"]
+project_id = "fcdetfvnmguqqgiaovfe"
