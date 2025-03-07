@@ -170,7 +170,7 @@ export function PasswordResetConfirmation() {
         <Button
           type="submit"
           className="w-full bg-paint hover:bg-paint-dark"
-          disabled={isSubmitting || !accessToken}
+          disabled={isSubmitting || !accessToken || !newPassword || !confirmPassword}
         >
           {isSubmitting ? "Updating Password..." : "Update Password"}
         </Button>
