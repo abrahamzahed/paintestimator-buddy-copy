@@ -20,20 +20,20 @@ export function PasswordResetConfirmation() {
 
   // Extract the access token from the URL hash
   useEffect(() => {
-    const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    const token = hashParams.get("access_token");
-    
-    if (token) {
-      console.log("Access token found in URL");
-      setAccessToken(token);
+    const processHashParams = async () => {
+      // First, sign out any existing user to prevent profile loading errors
+      await supabase.auth.signOut();
       
-      // Set the session using the access token
-      const setSession = async () => {
+      // Get token from URL hash
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const token = hashParams.get("access_token");
+      
+      if (token) {
+        console.log("Access token found in URL");
+        setAccessToken(token);
+        
         try {
-          // First, prevent any current session from interfering
-          await supabase.auth.signOut();
-          
-          // Then set the session with just the access token
+          // Set the session with the access token
           const { data, error } = await supabase.auth.setSession({
             access_token: token,
             refresh_token: "",
@@ -47,26 +47,23 @@ export function PasswordResetConfirmation() {
               variant: "destructive",
             });
           } else {
-            console.log("Session set successfully");
+            console.log("Session set successfully", data);
           }
         } catch (error) {
-          console.error("Error in setSession:", error);
-        } finally {
-          setIsTokenProcessing(false);
+          console.error("Error in session handling:", error);
         }
-      };
-      
-      setSession();
-    } else {
-      console.log("No access token found in URL");
+      } else {
+        console.log("No access token found in URL");
+        toast({
+          title: "Invalid or expired recovery link",
+          description: "Please request a new password reset link.",
+          variant: "destructive",
+        });
+      }
       setIsTokenProcessing(false);
-      // If we're in recovery mode but no token, show an error
-      toast({
-        title: "Invalid or expired recovery link",
-        description: "Please request a new password reset link.",
-        variant: "destructive",
-      });
-    }
+    };
+    
+    processHashParams();
   }, [toast]);
 
   const handleResetPassword = async (e: React.FormEvent) => {

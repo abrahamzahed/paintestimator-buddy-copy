@@ -28,17 +28,16 @@ export default function Auth() {
     // Check if this is a password recovery URL
     const checkRecoveryMode = async () => {
       if (type === "recovery") {
+        console.log("Recovery mode detected, signing out any existing user");
         // Sign out the user immediately when in recovery mode
-        // This prevents the SessionContext from trying to load a profile
         await supabase.auth.signOut();
         setIsRecoveryMode(true);
-        setProcessingRecovery(false);
       } else {
-        setProcessingRecovery(false);
         if (saveEstimate) {
           setActiveTab("sign-up");
         }
       }
+      setProcessingRecovery(false);
     };
     
     checkRecoveryMode();
