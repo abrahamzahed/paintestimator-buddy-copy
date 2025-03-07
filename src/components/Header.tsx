@@ -35,7 +35,7 @@ const Header = () => {
         <div className="flex items-center space-x-1">
           <Link to="/" className="flex items-center space-x-1">
             <div className="w-8 h-8 rounded-lg bg-paint animate-pulse-subtle"></div>
-            <span className="font-display text-xl font-semibold">PaintEstimator</span>
+            <span className="font-display text-xl font-semibold">Paint Pro</span>
           </Link>
         </div>
         
@@ -65,9 +65,14 @@ const Header = () => {
               </Button>
             </>
           ) : (
-            <Button className="bg-paint hover:bg-paint-dark transition-all">
-              Get a Quote
-            </Button>
+            <>
+              <Button variant="outline" asChild>
+                <Link to="/auth">Sign In</Link>
+              </Button>
+              <Button className="bg-paint hover:bg-paint-dark transition-all" asChild>
+                <Link to="/auth?tab=signup">Create Account</Link>
+              </Button>
+            </>
           )}
         </div>
       </div>
