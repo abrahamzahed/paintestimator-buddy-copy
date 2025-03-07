@@ -3,9 +3,11 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
+import { useSession } from '@/context/use-session';
 
 const Header = () => {
   const [scrolled, setScrolled] = useState(false);
+  const { user, signOut } = useSession();
   
   // Track scroll position to change header style
   useEffect(() => {
@@ -49,10 +51,24 @@ const Header = () => {
           ))}
         </nav>
         
-        <div>
-          <Button className="bg-paint hover:bg-paint-dark transition-all">
-            Get a Quote
-          </Button>
+        <div className="flex items-center space-x-4">
+          {user ? (
+            <>
+              <Button variant="outline" asChild>
+                <Link to="/dashboard">Profile</Link>
+              </Button>
+              <Button 
+                className="bg-paint hover:bg-paint-dark transition-all"
+                onClick={signOut}
+              >
+                Sign Out
+              </Button>
+            </>
+          ) : (
+            <Button className="bg-paint hover:bg-paint-dark transition-all">
+              Get a Quote
+            </Button>
+          )}
         </div>
       </div>
     </header>

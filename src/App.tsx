@@ -10,7 +10,7 @@ import EditEstimate from "./pages/EditEstimate";
 import ProjectDetail from "./pages/ProjectDetail";
 import NotFound from "./pages/NotFound";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
-import { SessionContextProvider } from "./context/SessionContext";
+import { SessionContextProvider } from "./context/session-provider";
 import { Toaster } from "./components/ui/toaster";
 
 function App() {

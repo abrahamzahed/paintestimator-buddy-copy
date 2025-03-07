@@ -6,7 +6,7 @@ import Hero from "@/components/Hero";
 import ChatInterface from "@/components/ChatInterface";
 import HomeEstimator from "@/components/HomeEstimator";
 import { Button } from "@/components/ui/button";
-import { useSession } from "@/context/SessionContext";
+import { useSession } from "@/context/use-session";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import ContactForm from "@/components/ContactForm";
 
@@ -29,41 +29,7 @@ const Index = () => {
   };
 
   return <div className="min-h-screen">
-      <header className="border-b">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <h1 className="text-2xl font-bold text-paint">Paint Pro</h1>
-              <nav className="hidden md:flex space-x-4">
-                <Link to="/" className="text-foreground hover:text-paint">Home</Link>
-                <a href="#services" className="text-foreground hover:text-paint">Services</a>
-                <a href="#contact" className="text-foreground hover:text-paint">Contact</a>
-              </nav>
-            </div>
-            <div className="flex items-center space-x-4">
-              {isLoading ? (
-                // Show a loading state or nothing while authentication state is being determined
-                null
-              ) : user ? (
-                // User is logged in - show dashboard button
-                <Button asChild className="bg-paint hover:bg-paint-dark">
-                  <Link to="/dashboard">Dashboard</Link>
-                </Button>
-              ) : (
-                // User is not logged in - show sign in and sign up buttons
-                <>
-                  <Button variant="outline" asChild>
-                    <Link to="/auth?tab=signin">Sign In</Link>
-                  </Button>
-                  <Button asChild className="bg-paint hover:bg-paint-dark">
-                    <Link to="/auth?tab=signup">Sign Up</Link>
-                  </Button>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
+      <Header />
       
       <section className="relative min-h-[90vh] flex items-center">
         <div className="absolute inset-0 overflow-hidden -z-10">
@@ -198,8 +164,14 @@ const Index = () => {
               <ul className="space-y-2">
                 <li><Link to="/" className="text-muted-foreground hover:text-paint">Home</Link></li>
                 <li><a href="#services" className="text-muted-foreground hover:text-paint">Services</a></li>
-                <li><Link to="/auth" className="text-muted-foreground hover:text-paint">Sign In</Link></li>
-                <li><Link to="/auth?tab=signup" className="text-muted-foreground hover:text-paint">Create Account</Link></li>
+                {!user ? (
+                  <>
+                    <li><Link to="/auth" className="text-muted-foreground hover:text-paint">Sign In</Link></li>
+                    <li><Link to="/auth?tab=signup" className="text-muted-foreground hover:text-paint">Create Account</Link></li>
+                  </>
+                ) : (
+                  <li><Link to="/dashboard" className="text-muted-foreground hover:text-paint">Dashboard</Link></li>
+                )}
               </ul>
             </div>
             <div>

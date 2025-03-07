@@ -1,6 +1,6 @@
 
 import { Navigate } from "react-router-dom";
-import { useSession } from "@/context/SessionContext";
+import { useSession } from "@/context/use-session";
 import LoadingState from "@/components/estimate/LoadingState";
 
 interface ProtectedRouteProps {
