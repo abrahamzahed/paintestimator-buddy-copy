@@ -38,6 +38,12 @@ export function SignUpForm({ onSuccess }: SignUpFormProps) {
       errors.password = "Password must be at least 6 characters";
     }
     
+    if (!phone.trim()) {
+      errors.phone = "Phone number is required";
+    } else if (!/^\d{10}$/.test(phone.replace(/\D/g, ''))) {
+      errors.phone = "Please enter a valid 10-digit phone number";
+    }
+    
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -58,7 +64,7 @@ export function SignUpForm({ onSuccess }: SignUpFormProps) {
         options: {
           data: {
             name: name,
-            phone: phone || null,
+            phone: phone, // Ensure phone is always included
           },
         },
       });
@@ -128,13 +134,18 @@ export function SignUpForm({ onSuccess }: SignUpFormProps) {
         )}
       </div>
       <div className="space-y-2">
-        <Label htmlFor="phone-signup">Phone (Optional)</Label>
+        <Label htmlFor="phone-signup">Phone Number</Label>
         <Input
           id="phone-signup"
           placeholder="Your phone number"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
+          required
+          className={formErrors.phone ? "border-red-500" : ""}
         />
+        {formErrors.phone && (
+          <p className="text-destructive text-sm">{formErrors.phone}</p>
+        )}
       </div>
       <div className="space-y-2">
         <Label htmlFor="password-signup">Password</Label>
