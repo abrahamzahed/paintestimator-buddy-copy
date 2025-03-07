@@ -82,12 +82,14 @@ const EstimateFooter = ({ estimate }: EstimateFooterProps) => {
       setIsDeleting(false);
       setIsDeleteDialogOpen(false);
       
-      // Navigate using React Router instead of direct window location change
-      if (estimate.project_id) {
-        navigate(`/project/${estimate.project_id}`);
-      } else {
-        navigate("/dashboard");
-      }
+      // Add a short delay before navigating to prevent loading issues
+      setTimeout(() => {
+        if (estimate.project_id) {
+          navigate(`/project/${estimate.project_id}`);
+        } else {
+          navigate("/dashboard");
+        }
+      }, 500);
       
     } catch (error: any) {
       console.error("Error deleting estimate:", error);

@@ -100,7 +100,10 @@ export const useEstimateUpdate = (estimateId: string | undefined, estimate: Esti
         description: "Estimate has been updated successfully.",
       });
       
-      navigate(`/estimate/${estimateId}`);
+      // Add a delay before navigating to prevent loading issues
+      setTimeout(() => {
+        navigate(`/estimate/${estimateId}`);
+      }, 500);
       
     } catch (error: any) {
       console.error("Error updating estimate:", error);

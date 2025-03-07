@@ -1,6 +1,6 @@
 
 import { useParams } from "react-router-dom";
-import { useSession } from "@/context/SessionContext";
+import { useSession } from "@/context/use-session";
 import EstimateCalculator from "@/components/EstimateCalculator";
 import LoadingState from "@/components/estimate/LoadingState";
 import EditEstimateHeader from "@/components/estimate/EditEstimateHeader";
