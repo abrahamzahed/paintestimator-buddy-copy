@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { useSession } from "@/context/SessionContext";
+import { useSession } from "@/context/use-session";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Estimate, Invoice, Project } from "@/types";

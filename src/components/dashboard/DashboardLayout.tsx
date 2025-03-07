@@ -3,7 +3,7 @@ import React, { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { User } from "@supabase/supabase-js";
-import { Profile } from "@/context/SessionContext";
+import { Profile } from "@/context/session-types";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -22,7 +22,6 @@ const DashboardLayout = ({ children, user, profile, signOut }: DashboardLayoutPr
               <Link to="/" className="text-2xl font-bold text-paint">Paint Pro</Link>
               <nav className="hidden md:flex space-x-4">
                 <Link to="/dashboard" className="text-foreground hover:text-paint">Dashboard</Link>
-                {/* Removed the "Get Estimate" link */}
                 {profile?.role === "admin" && (
                   <Link to="/admin" className="text-foreground hover:text-paint">Admin</Link>
                 )}
@@ -41,7 +40,6 @@ const DashboardLayout = ({ children, user, profile, signOut }: DashboardLayoutPr
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        {/* Removed the welcome message block to allow customer dashboard to manage it */}
         {children}
       </main>
     </div>
