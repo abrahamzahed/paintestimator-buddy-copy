@@ -1,6 +1,7 @@
 
 import { Navigate } from "react-router-dom";
 import { useSession } from "@/context/SessionContext";
+import LoadingState from "@/components/estimate/LoadingState";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -11,7 +12,7 @@ export const ProtectedRoute = ({ children, allowedRoles = [] }: ProtectedRoutePr
   const { isLoading, user, isAdmin } = useSession();
 
   if (isLoading) {
-    return <div className="flex h-screen items-center justify-center">Loading...</div>;
+    return <LoadingState message="Loading your account information..." />;
   }
 
   if (!user) {

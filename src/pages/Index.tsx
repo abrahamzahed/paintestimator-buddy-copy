@@ -41,16 +41,22 @@ const Index = () => {
               </nav>
             </div>
             <div className="flex items-center space-x-4">
-              {!isLoading && (user ? <Button asChild className="bg-paint hover:bg-paint-dark">
+              {!isLoading && (
+                user ? (
+                  <Button asChild className="bg-paint hover:bg-paint-dark">
                     <Link to="/dashboard">Dashboard</Link>
-                  </Button> : <>
+                  </Button>
+                ) : (
+                  <>
                     <Button variant="outline" asChild>
                       <Link to="/auth?tab=signin">Sign In</Link>
                     </Button>
                     <Button asChild className="bg-paint hover:bg-paint-dark">
                       <Link to="/auth?tab=signup">Sign Up</Link>
                     </Button>
-                  </>)}
+                  </>
+                )
+              )}
             </div>
           </div>
         </div>

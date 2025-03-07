@@ -22,6 +22,7 @@ export default function Auth() {
   const [processingRecovery, setProcessingRecovery] = useState(true);
 
   const searchParams = new URLSearchParams(location.search);
+  const tab = searchParams.get("tab");
   const returnUrl = searchParams.get("returnUrl") || "/dashboard";
   const saveEstimate = searchParams.get("saveEstimate") === "true";
   const type = searchParams.get("type");
@@ -43,9 +44,9 @@ export default function Auth() {
             variant: "destructive",
           });
         }
-      } else if (type === "signin") {
+      } else if (type === "signin" || tab === "signin") {
         setActiveTab("sign-in");
-      } else if (type === "signup") {
+      } else if (type === "signup" || tab === "signup") {
         setActiveTab("sign-up");
       } else if (saveEstimate) {
         setActiveTab("sign-up");
@@ -55,7 +56,7 @@ export default function Auth() {
     };
     
     checkRecoveryMode();
-  }, [type, saveEstimate, toast]);
+  }, [type, saveEstimate, toast, tab]);
 
   // Only redirect if not in recovery mode
   useEffect(() => {
