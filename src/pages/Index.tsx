@@ -41,21 +41,24 @@ const Index = () => {
               </nav>
             </div>
             <div className="flex items-center space-x-4">
-              {!isLoading && (
-                user ? (
-                  <Button asChild className="bg-paint hover:bg-paint-dark">
-                    <Link to="/dashboard">Dashboard</Link>
+              {isLoading ? (
+                // Show a loading state or nothing while authentication state is being determined
+                null
+              ) : user ? (
+                // User is logged in - show dashboard button
+                <Button asChild className="bg-paint hover:bg-paint-dark">
+                  <Link to="/dashboard">Dashboard</Link>
+                </Button>
+              ) : (
+                // User is not logged in - show sign in and sign up buttons
+                <>
+                  <Button variant="outline" asChild>
+                    <Link to="/auth?tab=signin">Sign In</Link>
                   </Button>
-                ) : (
-                  <>
-                    <Button variant="outline" asChild>
-                      <Link to="/auth?tab=signin">Sign In</Link>
-                    </Button>
-                    <Button asChild className="bg-paint hover:bg-paint-dark">
-                      <Link to="/auth?tab=signup">Sign Up</Link>
-                    </Button>
-                  </>
-                )
+                  <Button asChild className="bg-paint hover:bg-paint-dark">
+                    <Link to="/auth?tab=signup">Sign Up</Link>
+                  </Button>
+                </>
               )}
             </div>
           </div>
