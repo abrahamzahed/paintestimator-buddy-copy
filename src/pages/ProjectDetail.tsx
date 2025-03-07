@@ -1,158 +1,36 @@
-import { useState, useEffect, useCallback } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+
+import { useState } from "react";
+import { useParams, Link } from "react-router-dom";
 import { useSession } from "@/context/SessionContext";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { Project, Estimate, Invoice } from "@/types";
-import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { 
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { ChevronLeft, PlusCircle, FileText, DollarSign, Trash2, Archive, RefreshCw, MoreVertical } from "lucide-react";
+import { ChevronLeft, FileText, DollarSign } from "lucide-react";
+import DashboardLayout from "@/components/dashboard/DashboardLayout";
+import ProjectHeader from "@/components/project/ProjectHeader";
+import EstimatesList from "@/components/project/EstimatesList";
+import InvoicesList from "@/components/project/InvoicesList";
+import StatusUpdateDialogs from "@/components/project/StatusUpdateDialogs";
+import { useProjectData } from "@/hooks/useProjectData";
 
 export default function ProjectDetail() {
   const { id } = useParams<{ id: string }>();
   const { user, profile, signOut, isAdmin } = useSession();
-  const { toast } = useToast();
-  const navigate = useNavigate();
-  const [project, setProject] = useState<Project | null>(null);
-  const [estimates, setEstimates] = useState<Estimate[]>([]);
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("estimates");
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [showArchiveDialog, setShowArchiveDialog] = useState(false);
-  const [showRestoreDialog, setShowRestoreDialog] = useState(false);
-  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
-
-  useEffect(() => {
-    const fetchProjectData = async () => {
-      try {
-        if (!id) return;
-        
-        const { data: projectData, error: projectError } = await supabase
-          .from("projects")
-          .select("*")
-          .eq("id", id)
-          .single();
-
-        if (projectError) throw projectError;
-        setProject(projectData);
-        
-        const { data: estimatesData, error: estimatesError } = await supabase
-          .from("estimates")
-          .select("*")
-          .eq("project_id", id)
-          .neq("status_type", "deleted") // Filter out deleted estimates
-          .order("created_at", { ascending: false });
-
-        if (estimatesError) throw estimatesError;
-        
-        const formattedEstimates = estimatesData?.map(est => ({
-          ...est,
-          details: est.details as Record<string, any>,
-          discount: est.discount || 0,
-          notes: est.notes || ""
-        })) as Estimate[];
-        
-        setEstimates(formattedEstimates);
-        
-        if (estimatesData && estimatesData.length > 0) {
-          const estimateIds = estimatesData.map(estimate => estimate.id);
-          
-          const { data: invoicesData, error: invoicesError } = await supabase
-            .from("invoices")
-            .select("*")
-            .in("estimate_id", estimateIds)
-            .order("created_at", { ascending: false });
-
-          if (invoicesError) throw invoicesError;
-          setInvoices(invoicesData || []);
-        }
-      } catch (error) {
-        console.error("Error fetching project data:", error);
-        toast({
-          title: "Error loading project",
-          description: "Please try again later",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProjectData();
-  }, [id, toast]);
-
-  const handleUpdateProjectStatus = async (newStatus: string) => {
-    if (!id || !project) return;
-    
-    try {
-      setIsUpdatingStatus(true);
-      
-      // First update the project status
-      const { error: projectError } = await supabase
-        .from("projects")
-        .update({ status: newStatus })
-        .eq("id", id);
-        
-      if (projectError) throw projectError;
-      
-      // Prepare toast message
-      let toastMessage = "";
-      
-      if (newStatus === "deleted") {
-        toastMessage = `"${project.name}" has been deleted from your dashboard`;
-      } else if (newStatus === "archived") {
-        toastMessage = `"${project.name}" has been archived`;
-      } else if (newStatus === "active") {
-        toastMessage = `"${project.name}" has been restored to active status`;
-      }
-      
-      // Show success message
-      toast({
-        title: `Project ${newStatus}`,
-        description: toastMessage,
-      });
-      
-      // Important: Close dialogs first
-      setShowDeleteDialog(false);
-      setShowArchiveDialog(false);
-      setShowRestoreDialog(false);
-      setIsUpdatingStatus(false);
-      
-      // Use navigate instead of direct window.location for smoother transition
-      navigate("/dashboard");
-      
-    } catch (error) {
-      console.error(`Error updating project status to ${newStatus}:`, error);
-      toast({
-        title: `Failed to ${newStatus} project`,
-        description: "An error occurred while trying to update the project",
-        variant: "destructive",
-      });
-      setIsUpdatingStatus(false);
-      setShowDeleteDialog(false);
-      setShowArchiveDialog(false);
-      setShowRestoreDialog(false);
-    }
-  };
+  
+  const {
+    project,
+    estimates,
+    invoices,
+    loading,
+    showDeleteDialog,
+    setShowDeleteDialog,
+    showArchiveDialog,
+    setShowArchiveDialog,
+    showRestoreDialog,
+    setShowRestoreDialog,
+    isUpdatingStatus,
+    handleUpdateProjectStatus
+  } = useProjectData(id);
 
   if (loading) {
     return (
@@ -205,69 +83,12 @@ export default function ProjectDetail() {
   return (
     <DashboardLayout user={user} profile={profile} signOut={signOut}>
       <div className="space-y-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg">
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold text-gray-800">{project.name}</h1>
-              {project.status === "archived" && (
-                <span className="px-2 py-1 text-xs bg-gray-200 text-gray-700 rounded-full">
-                  Archived
-                </span>
-              )}
-            </div>
-            <p className="text-muted-foreground">
-              Created on {new Date(project.created_at!).toLocaleDateString()}
-            </p>
-            {project.description && (
-              <p className="mt-2 text-muted-foreground">{project.description}</p>
-            )}
-          </div>
-          <div className="flex gap-2 self-stretch md:self-auto">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <MoreVertical className="h-4 w-4 mr-2" />
-                  Actions
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {project.status === "active" ? (
-                  <DropdownMenuItem 
-                    className="text-amber-600"
-                    onClick={() => setShowArchiveDialog(true)}
-                  >
-                    <Archive className="h-4 w-4 mr-2" />
-                    Archive Project
-                  </DropdownMenuItem>
-                ) : project.status === "archived" ? (
-                  <DropdownMenuItem 
-                    className="text-green-600"
-                    onClick={() => setShowRestoreDialog(true)}
-                  >
-                    <RefreshCw className="h-4 w-4 mr-2" />
-                    Restore Project
-                  </DropdownMenuItem>
-                ) : null}
-                <DropdownMenuItem 
-                  className="text-red-600"
-                  onClick={() => setShowDeleteDialog(true)}
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete Project
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            
-            {project.status === "active" && (
-              <Button asChild className="bg-paint hover:bg-paint-dark">
-                <Link to={`/estimate?projectId=${project.id}`}>
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  New Estimate
-                </Link>
-              </Button>
-            )}
-          </div>
-        </div>
+        <ProjectHeader 
+          project={project}
+          onDeleteClick={() => setShowDeleteDialog(true)}
+          onArchiveClick={() => setShowArchiveDialog(true)}
+          onRestoreClick={() => setShowRestoreDialog(true)}
+        />
 
         <Tabs defaultValue="estimates" value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-4 w-full md:w-auto bg-secondary/70 p-1 rounded-md">
@@ -282,195 +103,31 @@ export default function ProjectDetail() {
           </TabsList>
           
           <TabsContent value="estimates">
-            {estimates.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {estimates.map((estimate) => (
-                  <Card key={estimate.id} className="hover:bg-secondary/20 transition-colors overflow-hidden border border-gray-100 shadow-sm">
-                    <div className={`h-2 w-full ${
-                      estimate.status === "pending" 
-                        ? "bg-yellow-400" 
-                        : estimate.status === "approved" 
-                        ? "bg-green-400"
-                        : "bg-gray-400"
-                    }`}></div>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-xl">Estimate #{estimate.id?.substring(0, 8)}</CardTitle>
-                      <CardDescription>
-                        {new Date(estimate.created_at!).toLocaleDateString()}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        <div className="grid grid-cols-2 gap-2">
-                          <div>
-                            <p className="text-sm text-muted-foreground">Total</p>
-                            <p className="font-semibold">${estimate.total_cost.toFixed(2)}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm text-muted-foreground">Status</p>
-                            <span className={`px-2 py-1 rounded text-xs inline-block ${
-                              estimate.status === "pending" 
-                                ? "bg-yellow-100 text-yellow-800" 
-                                : estimate.status === "approved" 
-                                ? "bg-green-100 text-green-800"
-                                : "bg-gray-100 text-gray-800"
-                            }`}>
-                              {estimate.status}
-                            </span>
-                          </div>
-                        </div>
-                        <Button variant="outline" size="sm" asChild className="w-full">
-                          <Link to={`/estimate/${estimate.id}`}>
-                            View Details
-                          </Link>
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12 bg-secondary/30 rounded-lg">
-                <FileText className="mx-auto h-12 w-12 text-muted-foreground/70 mb-4" />
-                <p className="text-lg font-medium mb-2">No estimates yet</p>
-                <p className="text-muted-foreground mb-6">
-                  Create your first estimate for this project
-                </p>
-                {project.status === "active" && (
-                  <Button asChild className="bg-paint hover:bg-paint-dark">
-                    <Link to={`/estimate?projectId=${project.id}`}>
-                      <PlusCircle className="mr-2 h-4 w-4" />
-                      Get Estimate
-                    </Link>
-                  </Button>
-                )}
-              </div>
-            )}
+            <EstimatesList 
+              estimates={estimates} 
+              projectId={project.id} 
+              projectStatus={project.status || 'active'} 
+            />
           </TabsContent>
           
           <TabsContent value="invoices">
-            {invoices.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {invoices.map((invoice) => (
-                  <Card key={invoice.id} className="hover:bg-secondary/20 transition-colors overflow-hidden border border-gray-100 shadow-sm">
-                    <div className={`h-2 w-full ${
-                      invoice.status === "unpaid" 
-                        ? "bg-yellow-400" 
-                        : invoice.status === "paid" 
-                        ? "bg-green-400"
-                        : "bg-gray-400"
-                    }`}></div>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-xl">Invoice #{invoice.id?.substring(0, 8)}</CardTitle>
-                      <CardDescription>
-                        {new Date(invoice.created_at!).toLocaleDateString()}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        <div className="grid grid-cols-2 gap-2">
-                          <div>
-                            <p className="text-sm text-muted-foreground">Amount</p>
-                            <p className="font-semibold">${invoice.amount.toFixed(2)}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm text-muted-foreground">Status</p>
-                            <span className={`px-2 py-1 rounded text-xs inline-block ${
-                              invoice.status === "unpaid" 
-                                ? "bg-yellow-100 text-yellow-800" 
-                                : invoice.status === "paid" 
-                                ? "bg-green-100 text-green-800"
-                                : "bg-gray-100 text-gray-800"
-                            }`}>
-                              {invoice.status}
-                            </span>
-                          </div>
-                        </div>
-                        <Button variant="outline" size="sm" asChild className="w-full">
-                          <Link to={`/invoice/${invoice.id}`}>
-                            View Details
-                          </Link>
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12 bg-secondary/30 rounded-lg">
-                <DollarSign className="mx-auto h-12 w-12 text-muted-foreground/70 mb-4" />
-                <p className="text-lg font-medium mb-2">No invoices yet</p>
-                <p className="text-muted-foreground">
-                  Invoices will appear here after estimates are approved
-                </p>
-              </div>
-            )}
+            <InvoicesList invoices={invoices} />
           </TabsContent>
         </Tabs>
       </div>
 
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Project</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete "{project.name}"? This will remove the project from your dashboard. {isAdmin ? "As an admin, you will still be able to see it with deleted status." : ""}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isUpdatingStatus}>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={() => handleUpdateProjectStatus("deleted")}
-              disabled={isUpdatingStatus}
-              className="bg-red-600 hover:bg-red-700 text-white"
-            >
-              {isUpdatingStatus ? "Deleting..." : "Delete Project"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AlertDialog open={showArchiveDialog} onOpenChange={setShowArchiveDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Archive Project</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to archive "{project.name}"? The project will be moved to your archives and can be restored later.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isUpdatingStatus}>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={() => handleUpdateProjectStatus("archived")}
-              disabled={isUpdatingStatus}
-              className="bg-amber-600 hover:bg-amber-700 text-white"
-            >
-              {isUpdatingStatus ? "Archiving..." : "Archive Project"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AlertDialog open={showRestoreDialog} onOpenChange={setShowRestoreDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Restore Project</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to restore "{project.name}" to active status?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isUpdatingStatus}>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={() => handleUpdateProjectStatus("active")}
-              disabled={isUpdatingStatus}
-              className="bg-green-600 hover:bg-green-700 text-white"
-            >
-              {isUpdatingStatus ? "Restoring..." : "Restore Project"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <StatusUpdateDialogs
+        projectName={project.name}
+        isAdmin={isAdmin}
+        showDeleteDialog={showDeleteDialog}
+        showArchiveDialog={showArchiveDialog}
+        showRestoreDialog={showRestoreDialog}
+        isUpdatingStatus={isUpdatingStatus}
+        onDeleteDialogChange={setShowDeleteDialog}
+        onArchiveDialogChange={setShowArchiveDialog}
+        onRestoreDialogChange={setShowRestoreDialog}
+        onUpdateStatus={handleUpdateProjectStatus}
+      />
     </DashboardLayout>
   );
 }
