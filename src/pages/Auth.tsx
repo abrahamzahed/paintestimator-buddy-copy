@@ -28,11 +28,10 @@ export default function Auth() {
     // Check if this is a password recovery URL
     const checkRecoveryMode = async () => {
       if (type === "recovery") {
-        setIsRecoveryMode(true);
-        
-        // Sign out the user to ensure we don't automatically log in
-        // when processing the recovery token
+        // Sign out the user immediately when in recovery mode
+        // This prevents the SessionContext from trying to load a profile
         await supabase.auth.signOut();
+        setIsRecoveryMode(true);
         setProcessingRecovery(false);
       } else {
         setProcessingRecovery(false);
@@ -45,6 +44,7 @@ export default function Auth() {
     checkRecoveryMode();
   }, [type, saveEstimate]);
 
+  // Only redirect if not in recovery mode
   useEffect(() => {
     if (session && !isLoading && !isRecoveryMode && !processingRecovery) {
       if (saveEstimate && hasSavedEstimate()) {

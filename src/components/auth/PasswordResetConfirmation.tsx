@@ -16,6 +16,7 @@ export function PasswordResetConfirmation() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [passwordError, setPasswordError] = useState("");
   const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [isTokenProcessing, setIsTokenProcessing] = useState(true);
 
   // Extract the access token from the URL hash
   useEffect(() => {
@@ -28,26 +29,37 @@ export function PasswordResetConfirmation() {
       
       // Set the session using the access token
       const setSession = async () => {
-        const { data, error } = await supabase.auth.setSession({
-          access_token: token,
-          refresh_token: "",
-        });
-        
-        if (error) {
-          console.error("Error setting session:", error);
-          toast({
-            title: "Authentication error",
-            description: "There was a problem authenticating your request. Please try again.",
-            variant: "destructive",
+        try {
+          // First, prevent any current session from interfering
+          await supabase.auth.signOut();
+          
+          // Then set the session with just the access token
+          const { data, error } = await supabase.auth.setSession({
+            access_token: token,
+            refresh_token: "",
           });
-        } else {
-          console.log("Session set successfully");
+          
+          if (error) {
+            console.error("Error setting session:", error);
+            toast({
+              title: "Authentication error",
+              description: "There was a problem authenticating your request. Please try again.",
+              variant: "destructive",
+            });
+          } else {
+            console.log("Session set successfully");
+          }
+        } catch (error) {
+          console.error("Error in setSession:", error);
+        } finally {
+          setIsTokenProcessing(false);
         }
       };
       
       setSession();
     } else {
       console.log("No access token found in URL");
+      setIsTokenProcessing(false);
       // If we're in recovery mode but no token, show an error
       toast({
         title: "Invalid or expired recovery link",
@@ -102,6 +114,19 @@ export function PasswordResetConfirmation() {
       setIsSubmitting(false);
     }
   };
+
+  if (isTokenProcessing) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center">
+          <h2 className="text-2xl font-semibold">Processing Your Request</h2>
+          <p className="text-muted-foreground mt-2">
+            Please wait while we verify your password reset link...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
