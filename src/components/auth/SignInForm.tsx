@@ -19,12 +19,23 @@ export function SignInForm({ onSuccess }: SignInFormProps) {
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
+  const [formError, setFormError] = useState("");
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError("");
     setIsSubmitting(true);
 
     try {
+      // Basic validation
+      if (!email.trim()) {
+        throw new Error("Email is required");
+      }
+      
+      if (!password) {
+        throw new Error("Password is required");
+      }
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -44,6 +55,16 @@ export function SignInForm({ onSuccess }: SignInFormProps) {
       }
     } catch (error: any) {
       console.error("Sign in error:", error);
+      
+      // Set specific error message based on error type
+      if (error.message.includes("Invalid login credentials")) {
+        setFormError("Invalid email or password. Please try again.");
+      } else if (error.message.includes("Email not confirmed")) {
+        setFormError("Please confirm your email before signing in.");
+      } else {
+        setFormError(error.message || "An error occurred during sign in. Please try again.");
+      }
+      
       toast({
         title: "Error signing in",
         description: error.message || "Please check your credentials and try again.",
@@ -66,6 +87,7 @@ export function SignInForm({ onSuccess }: SignInFormProps) {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            className={formError && !email.trim() ? "border-red-500" : ""}
           />
         </div>
         <div className="space-y-2">
@@ -77,8 +99,14 @@ export function SignInForm({ onSuccess }: SignInFormProps) {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            className={formError && !password ? "border-red-500" : ""}
           />
         </div>
+        
+        {formError && (
+          <p className="text-destructive text-sm">{formError}</p>
+        )}
+        
         <Button
           type="submit"
           className="w-full bg-paint hover:bg-paint-dark"
@@ -91,6 +119,7 @@ export function SignInForm({ onSuccess }: SignInFormProps) {
             variant="link" 
             className="text-sm text-muted-foreground hover:text-paint"
             onClick={() => setResetDialogOpen(true)}
+            type="button"
           >
             Forgot password?
           </Button>

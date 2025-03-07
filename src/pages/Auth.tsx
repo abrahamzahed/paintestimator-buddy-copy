@@ -10,11 +10,13 @@ import { SignInForm } from "@/components/auth/SignInForm";
 import { SignUpForm } from "@/components/auth/SignUpForm";
 import { PasswordResetConfirmation } from "@/components/auth/PasswordResetConfirmation";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Auth() {
   const navigate = useNavigate();
   const location = useLocation();
   const { session, isLoading } = useSession();
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("sign-in");
   const [isRecoveryMode, setIsRecoveryMode] = useState(false);
   const [processingRecovery, setProcessingRecovery] = useState(true);
@@ -29,33 +31,64 @@ export default function Auth() {
     const checkRecoveryMode = async () => {
       if (type === "recovery") {
         console.log("Recovery mode detected, signing out any existing user");
-        // Sign out the user immediately when in recovery mode
-        await supabase.auth.signOut();
-        setIsRecoveryMode(true);
-      } else {
-        if (saveEstimate) {
-          setActiveTab("sign-up");
+        try {
+          // Sign out the user immediately when in recovery mode to prevent profile loading
+          await supabase.auth.signOut();
+          setIsRecoveryMode(true);
+        } catch (error) {
+          console.error("Error signing out user in recovery mode:", error);
+          toast({
+            title: "Error processing recovery",
+            description: "There was a problem preparing for password reset. Please try again.",
+            variant: "destructive",
+          });
         }
+      } else if (type === "signin") {
+        setActiveTab("sign-in");
+      } else if (type === "signup") {
+        setActiveTab("sign-up");
+      } else if (saveEstimate) {
+        setActiveTab("sign-up");
       }
+      
       setProcessingRecovery(false);
     };
     
     checkRecoveryMode();
-  }, [type, saveEstimate]);
+  }, [type, saveEstimate, toast]);
 
   // Only redirect if not in recovery mode
   useEffect(() => {
-    if (session && !isLoading && !isRecoveryMode && !processingRecovery) {
-      if (saveEstimate && hasSavedEstimate()) {
-        navigate("/estimate?saveEstimate=true");
-      } else {
-        navigate(returnUrl);
+    const handleSessionRedirect = async () => {
+      if (session && !isLoading && !isRecoveryMode && !processingRecovery) {
+        try {
+          console.log("Valid session detected, redirecting to:", saveEstimate ? "/estimate?saveEstimate=true" : returnUrl);
+          
+          if (saveEstimate && hasSavedEstimate()) {
+            navigate("/estimate?saveEstimate=true");
+          } else {
+            navigate(returnUrl);
+          }
+        } catch (error) {
+          console.error("Error during redirect:", error);
+          toast({
+            title: "Navigation error",
+            description: "There was a problem redirecting you. Please try again.",
+            variant: "destructive",
+          });
+        }
       }
-    }
-  }, [session, isLoading, navigate, returnUrl, saveEstimate, isRecoveryMode, processingRecovery]);
+    };
+    
+    handleSessionRedirect();
+  }, [session, isLoading, navigate, returnUrl, saveEstimate, isRecoveryMode, processingRecovery, toast]);
 
   const handleSignUpSuccess = () => {
     setActiveTab("sign-in");
+    toast({
+      title: "Account created",
+      description: "Please check your email to verify your account."
+    });
   };
 
   if (processingRecovery) {

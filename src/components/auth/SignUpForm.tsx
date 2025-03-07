@@ -17,9 +17,38 @@ export function SignUpForm({ onSuccess }: SignUpFormProps) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+  const validateForm = () => {
+    const errors: Record<string, string> = {};
+    
+    if (!name.trim()) {
+      errors.name = "Name is required";
+    }
+    
+    if (!email.trim()) {
+      errors.email = "Email is required";
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      errors.email = "Email is invalid";
+    }
+    
+    if (!password) {
+      errors.password = "Password is required";
+    } else if (password.length < 6) {
+      errors.password = "Password must be at least 6 characters";
+    }
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+    
     setIsSubmitting(true);
 
     try {
@@ -48,11 +77,20 @@ export function SignUpForm({ onSuccess }: SignUpFormProps) {
       }
     } catch (error: any) {
       console.error("Sign up error:", error);
-      toast({
-        title: "Error creating account",
-        description: error.message || "Please try again.",
-        variant: "destructive",
-      });
+      
+      // Specific error handling for common cases
+      if (error.message.includes("already registered")) {
+        setFormErrors({
+          ...formErrors,
+          email: "This email is already registered. Please sign in instead."
+        });
+      } else {
+        toast({
+          title: "Error creating account",
+          description: error.message || "Please try again.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -68,7 +106,11 @@ export function SignUpForm({ onSuccess }: SignUpFormProps) {
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
+          className={formErrors.name ? "border-red-500" : ""}
         />
+        {formErrors.name && (
+          <p className="text-destructive text-sm">{formErrors.name}</p>
+        )}
       </div>
       <div className="space-y-2">
         <Label htmlFor="email-signup">Email</Label>
@@ -79,7 +121,11 @@ export function SignUpForm({ onSuccess }: SignUpFormProps) {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
+          className={formErrors.email ? "border-red-500" : ""}
         />
+        {formErrors.email && (
+          <p className="text-destructive text-sm">{formErrors.email}</p>
+        )}
       </div>
       <div className="space-y-2">
         <Label htmlFor="phone-signup">Phone (Optional)</Label>
@@ -100,7 +146,11 @@ export function SignUpForm({ onSuccess }: SignUpFormProps) {
           onChange={(e) => setPassword(e.target.value)}
           required
           minLength={6}
+          className={formErrors.password ? "border-red-500" : ""}
         />
+        {formErrors.password && (
+          <p className="text-destructive text-sm">{formErrors.password}</p>
+        )}
       </div>
       <Button
         type="submit"

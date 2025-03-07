@@ -21,11 +21,14 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [profileError, setProfileError] = useState<Error | null>(null);
   const { toast } = useToast();
 
   const fetchProfile = async (userId: string) => {
     try {
       console.log("Fetching profile for user:", userId);
+      setProfileError(null);
+      
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
@@ -34,45 +37,52 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
 
       if (error) {
         console.error("Error fetching profile:", error);
+        
         // If no profile exists, create one
         if (error.code === 'PGRST116') {
           console.log("No profile found, creating new profile");
           const userData = user?.user_metadata;
           
-          // Create profile with customer role by default and include email
-          console.log("User metadata:", userData);
-          
-          const { data: newProfile, error: createError } = await supabase
-            .from("profiles")
-            .insert([{
-              id: userId,
-              name: userData?.name || user?.email?.split('@')[0] || null,
-              phone: userData?.phone || null,
-              role: "customer", // Default role for new profiles is customer
-              email: user?.email || null // Ensure email is always included
-            }])
-            .select();
+          try {
+            // Create profile with customer role by default and include email
+            console.log("User metadata:", userData);
             
-          if (createError) {
-            console.error("Error creating profile:", createError);
+            const { data: newProfile, error: createError } = await supabase
+              .from("profiles")
+              .insert([{
+                id: userId,
+                name: userData?.name || user?.email?.split('@')[0] || null,
+                phone: userData?.phone || null,
+                role: "customer", // Default role for new profiles is customer
+                email: user?.email || null // Ensure email is always included
+              }])
+              .select();
+              
+            if (createError) {
+              console.error("Error creating profile:", createError);
+              throw createError;
+            }
+            
+            console.log("New profile created successfully:", newProfile?.[0]);
+            setProfile(newProfile?.[0] as Profile);
+            return;
+          } catch (createError: any) {
+            console.error("Error in profile creation:", createError);
+            setProfileError(new Error(createError.message || "Failed to create profile"));
             toast({
               title: "Profile creation failed",
               description: "We couldn't create your profile. Please try refreshing the page.",
               variant: "destructive",
             });
-            throw createError;
           }
-          
-          console.log("New profile created successfully:", newProfile?.[0]);
-          setProfile(newProfile?.[0] as Profile);
-          return;
+        } else {
+          setProfileError(new Error(error.message));
+          toast({
+            title: "Error loading profile",
+            description: "Please try refreshing the page or contact support.",
+            variant: "destructive",
+          });
         }
-        
-        toast({
-          title: "Error loading profile",
-          description: "Please try refreshing the page or contact support.",
-          variant: "destructive",
-        });
         throw error;
       }
 
@@ -81,6 +91,7 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
       // Verify profile data integrity
       if (!data || !data.id) {
         console.error("Profile data is incomplete:", data);
+        setProfileError(new Error("Profile data is incomplete"));
         toast({
           title: "Profile data issue",
           description: "Your profile information appears to be incomplete. Please contact support.",
@@ -91,17 +102,21 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
       // If email is missing in the profile but exists in auth, update the profile
       if ((!data.email || data.email === '') && user?.email) {
         console.log("Email missing or empty in profile, updating with:", user.email);
-        const { error: updateError } = await supabase
-          .from("profiles")
-          .update({ email: user.email })
-          .eq("id", userId);
-          
-        if (updateError) {
+        try {
+          const { error: updateError } = await supabase
+            .from("profiles")
+            .update({ email: user.email })
+            .eq("id", userId);
+            
+          if (updateError) {
+            console.error("Error updating profile email:", updateError);
+          } else {
+            // Update the local data with the email
+            data.email = user.email;
+            console.log("Profile email updated successfully:", data.email);
+          }
+        } catch (updateError: any) {
           console.error("Error updating profile email:", updateError);
-        } else {
-          // Update the local data with the email
-          data.email = user.email;
-          console.log("Profile email updated successfully:", data.email);
         }
       }
       
@@ -124,26 +139,35 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
 
   useEffect(() => {
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log("Initial session check:", session?.user?.id);
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchProfile(session.user.id);
-      } else {
-        setIsLoading(false);
-      }
-    });
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log("Auth state changed:", event, session?.user?.id);
+    const initializeSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        console.log("Initial session check:", session?.user?.id || "No session");
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          fetchProfile(session.user.id);
+          await fetchProfile(session.user.id);
+        } else {
+          setIsLoading(false);
+        }
+      } catch (error) {
+        console.error("Error getting initial session:", error);
+        setIsLoading(false);
+      }
+    };
+    
+    initializeSession();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log("Auth state changed:", event, session?.user?.id || "No user");
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          await fetchProfile(session.user.id);
         } else {
           setProfile(null);
           setIsLoading(false);

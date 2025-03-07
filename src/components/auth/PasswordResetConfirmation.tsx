@@ -22,7 +22,12 @@ export function PasswordResetConfirmation() {
   useEffect(() => {
     const processHashParams = async () => {
       // First, sign out any existing user to prevent profile loading errors
-      await supabase.auth.signOut();
+      try {
+        await supabase.auth.signOut();
+        console.log("Signed out any existing user before processing password reset");
+      } catch (error) {
+        console.error("Error signing out before password reset:", error);
+      }
       
       // Get token from URL hash
       const hashParams = new URLSearchParams(window.location.hash.substring(1));
@@ -43,28 +48,36 @@ export function PasswordResetConfirmation() {
             console.error("Error setting session:", error);
             toast({
               title: "Authentication error",
-              description: "There was a problem authenticating your request. Please try again.",
+              description: "There was a problem verifying your password reset link. Please try requesting a new one.",
               variant: "destructive",
             });
+            navigate("/auth", { replace: true });
           } else {
-            console.log("Session set successfully", data);
+            console.log("Session set successfully for password reset", data);
           }
         } catch (error) {
           console.error("Error in session handling:", error);
+          toast({
+            title: "Authentication error",
+            description: "There was a problem processing your request. Please try again.",
+            variant: "destructive",
+          });
+          navigate("/auth", { replace: true });
         }
       } else {
         console.log("No access token found in URL");
         toast({
-          title: "Invalid or expired recovery link",
+          title: "Invalid recovery link",
           description: "Please request a new password reset link.",
           variant: "destructive",
         });
+        navigate("/auth", { replace: true });
       }
       setIsTokenProcessing(false);
     };
     
     processHashParams();
-  }, [toast]);
+  }, [toast, navigate]);
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
