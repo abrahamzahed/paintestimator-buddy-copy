@@ -55,7 +55,7 @@ const Header = () => {
           {user ? (
             <>
               <Button variant="outline" asChild>
-                <Link to="/dashboard">Dashboard</Link>
+                <Link to="/dashboard">Profile</Link>
               </Button>
               <Button 
                 className="bg-paint hover:bg-paint-dark transition-all"
