@@ -82,18 +82,11 @@ const EstimateFooter = ({ estimate }: EstimateFooterProps) => {
       setIsDeleting(false);
       setIsDeleteDialogOpen(false);
       
-      // Force sync with React state updates
-      await new Promise(resolve => {
-        setTimeout(() => {
-          resolve(true);
-        }, 0);
-      });
-      
-      // Use direct window location change to force a clean navigation
+      // Navigate using React Router instead of direct window location change
       if (estimate.project_id) {
-        window.location.href = `/project/${estimate.project_id}`;
+        navigate(`/project/${estimate.project_id}`);
       } else {
-        window.location.href = "/dashboard";
+        navigate("/dashboard");
       }
       
     } catch (error: any) {
@@ -108,8 +101,10 @@ const EstimateFooter = ({ estimate }: EstimateFooterProps) => {
     }
   };
   
-  // Check if project is active to enable editing functionality
+  // Fix: Simplify logic to show edit/delete buttons for any active estimate
+  // in an active project
   const isProjectActive = projectStatus === "active";
+  const canModify = isProjectActive && estimate?.status_type === "active";
   
   return (
     <div className="w-full flex justify-between items-center py-4">
@@ -133,7 +128,8 @@ const EstimateFooter = ({ estimate }: EstimateFooterProps) => {
         )}
       </div>
       
-      {estimate?.status !== "approved" && isProjectActive && estimate?.status_type === "active" && (
+      {/* Fix: Show edit/delete buttons for active estimates in active projects */}
+      {canModify && (
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={handleEdit}>
             <Edit className="h-4 w-4 mr-2" />

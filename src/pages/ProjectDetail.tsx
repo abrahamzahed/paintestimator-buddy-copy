@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useSession } from "@/context/SessionContext";
@@ -132,22 +131,14 @@ export default function ProjectDetail() {
         description: toastMessage,
       });
       
-      // Use a zero-timeout to move navigation to the next event loop
-      // after all state updates have been processed
+      // Important: Close dialogs first
       setShowDeleteDialog(false);
       setShowArchiveDialog(false);
       setShowRestoreDialog(false);
+      setIsUpdatingStatus(false);
       
-      // Force sync with React state updates
-      await new Promise(resolve => {
-        setTimeout(() => {
-          setIsUpdatingStatus(false);
-          resolve(true);
-        }, 0);
-      });
-      
-      // Navigate after state updates have been processed
-      window.location.href = "/dashboard";
+      // Use navigate instead of direct window.location for smoother transition
+      navigate("/dashboard");
       
     } catch (error) {
       console.error(`Error updating project status to ${newStatus}:`, error);
