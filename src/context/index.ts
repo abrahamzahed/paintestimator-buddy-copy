@@ -1,4 +1,5 @@
 
-export { useSession } from "./use-session";
-export { SessionContextProvider } from "./session-provider";
-export type { Profile } from "./session-types";
+// Re-export everything from the session provider for backward compatibility
+export * from './session-provider';
+export * from './use-session';
+export * from './session-types';

@@ -1,7 +1,6 @@
-
 import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { useSession } from "@/context/SessionContext";
+import { useSession } from "@/context/use-session";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChevronLeft, FileText, DollarSign } from "lucide-react";

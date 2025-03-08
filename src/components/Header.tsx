@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -9,7 +8,6 @@ const Header = () => {
   const [scrolled, setScrolled] = useState(false);
   const { user, signOut } = useSession();
   
-  // Track scroll position to change header style
   useEffect(() => {
     const handleScroll = () => {
       const isScrolled = window.scrollY > 20;
