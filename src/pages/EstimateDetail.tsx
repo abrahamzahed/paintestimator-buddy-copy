@@ -1,6 +1,6 @@
 
 import { useParams } from "react-router-dom";
-import { useSession } from "@/context/SessionContext";
+import { useSession } from "@/context/use-session";
 import { EstimateResult } from "@/types";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import LoadingState from "@/components/estimate/LoadingState";
