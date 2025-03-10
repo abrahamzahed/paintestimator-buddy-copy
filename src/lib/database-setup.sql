@@ -222,3 +222,8 @@ CREATE POLICY "Allow read access for all users" ON paint_types FOR SELECT USING 
 CREATE POLICY "Allow read access for all users" ON volume_discounts FOR SELECT USING (true);
 CREATE POLICY "Allow read access for all users" ON special_conditions FOR SELECT USING (true);
 CREATE POLICY "Allow read access for all users" ON extras FOR SELECT USING (true);
+
+-- Add RLS policy for leads table to allow inserting by anonymous users
+-- This is needed for the free estimator functionality
+CREATE POLICY "Allow insert for anonymous users" ON public.leads FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow read for all users" ON public.leads FOR SELECT USING (true);
