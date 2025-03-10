@@ -1,21 +1,26 @@
 
 import { useState, useEffect } from "react";
-import { RoomDetails, RoomDetail, EstimateResult } from "../types";
+import { RoomDetails as OldRoomDetail, RoomDetail, EstimateResult } from "../types";
 import { calculateMultiRoomEstimate, calculateSingleRoomEstimate } from "../utils/estimateUtils";
 import ProgressIndicator from "./estimator/ProgressIndicator";
 import FormStep from "./estimator/FormStep";
 import MultiRoomSelector from "./estimator/MultiRoomSelector";
 import { useToast } from "@/hooks/use-toast";
 import { v4 as uuidv4 } from "uuid";
-import EstimateSummary from "./estimator/EstimateSummary";
 import CurrentEstimatePanel from "./estimator/CurrentEstimatePanel";
 import EstimatorNavigation from "./estimator/EstimatorNavigation";
 import { useLocation } from "react-router-dom";
 import { saveTemporaryEstimate, getTemporaryEstimate, getTemporaryProjectName } from "@/utils/estimateStorage";
 import { useSession } from "@/context/SessionContext";
+import DynamicEstimatorForm from "./DynamicEstimatorForm";
+import { RoomDetails, EstimatorSummary } from "@/types/estimator";
 
 interface EstimateCalculatorProps {
-  onEstimateComplete: (estimate: EstimateResult, rooms: RoomDetail[], roomEstimates: Record<string, any>) => void;
+  onEstimateComplete: (
+    estimate: EstimateResult, 
+    rooms: RoomDetail[], 
+    roomEstimates: Record<string, any>
+  ) => void;
   initialUserData?: {
     name?: string;
     email?: string;
@@ -23,13 +28,15 @@ interface EstimateCalculatorProps {
   };
   initialRoomDetails?: RoomDetail[];
   submitButtonText?: string;
+  useDynamicEstimator?: boolean;
 }
 
 const EstimateCalculator = ({ 
   onEstimateComplete, 
   initialUserData,
   initialRoomDetails,
-  submitButtonText = "Submit Request" 
+  submitButtonText = "Submit Request",
+  useDynamicEstimator = false
 }: EstimateCalculatorProps) => {
   const { toast } = useToast();
   const location = useLocation();
@@ -63,7 +70,7 @@ const EstimateCalculator = ({
     }
   }, [user, saveEstimate]);
   
-  const [roomDetails, setRoomDetails] = useState<RoomDetails>({
+  const [roomDetails, setRoomDetails] = useState<OldRoomDetails>({
     rooms: initialRoomDetails || [
       {
         id: uuidv4(),
@@ -91,28 +98,30 @@ const EstimateCalculator = ({
   });
 
   useEffect(() => {
-    try {
-      if (roomDetails.rooms.length > 0) {
-        const estimates: Record<string, ReturnType<typeof calculateSingleRoomEstimate>> = {};
-        
-        for (const room of roomDetails.rooms) {
-          estimates[room.id] = calculateSingleRoomEstimate(room);
+    if (!useDynamicEstimator) {
+      try {
+        if (roomDetails.rooms.length > 0) {
+          const estimates: Record<string, ReturnType<typeof calculateSingleRoomEstimate>> = {};
+          
+          for (const room of roomDetails.rooms) {
+            estimates[room.id] = calculateSingleRoomEstimate(room);
+          }
+          
+          setRoomEstimates(estimates);
+          
+          const estimate = calculateMultiRoomEstimate(roomDetails);
+          setCurrentEstimate(estimate);
         }
-        
-        setRoomEstimates(estimates);
-        
-        const estimate = calculateMultiRoomEstimate(roomDetails);
-        setCurrentEstimate(estimate);
+      } catch (error) {
+        console.error("Error calculating estimate:", error);
+        toast({
+          title: "Error calculating estimate",
+          description: "Please check your inputs and try again",
+          variant: "destructive"
+        });
       }
-    } catch (error) {
-      console.error("Error calculating estimate:", error);
-      toast({
-        title: "Error calculating estimate",
-        description: "Please check your inputs and try again",
-        variant: "destructive"
-      });
     }
-  }, [roomDetails, toast]);
+  }, [roomDetails, toast, useDynamicEstimator]);
 
   const handleNextStep = () => {
     if (currentEstimate) {
@@ -132,6 +141,23 @@ const EstimateCalculator = ({
     });
   };
 
+  const handleDynamicEstimateComplete = (estimate: EstimatorSummary, rooms: RoomDetails[]) => {
+    // Convert from the dynamic estimator format to our standard format
+    const convertedEstimate: EstimateResult = {
+      roomPrice: estimate.subtotal, 
+      laborCost: estimate.finalTotal * 0.7, // Approximation: 70% labor
+      materialCost: estimate.finalTotal * 0.3, // Approximation: 30% materials
+      totalCost: estimate.finalTotal,
+      timeEstimate: estimate.finalTotal / 75, // Rough approximation
+      paintCans: Math.ceil(estimate.finalTotal / 250), // Rough approximation
+      additionalCosts: {},
+      discounts: { volumeDiscount: estimate.volumeDiscount }
+    };
+    
+    // We don't have individual room estimates in the same format, so we'll pass an empty object
+    onEstimateComplete(convertedEstimate, [], {});
+  };
+
   const handleSubmit = (e?: React.FormEvent) => {
     if (e) {
       e.preventDefault();
@@ -145,6 +171,14 @@ const EstimateCalculator = ({
       onEstimateComplete(currentEstimate, roomDetails.rooms, roomEstimates);
     }
   };
+
+  if (useDynamicEstimator) {
+    return (
+      <div className="glass rounded-xl p-6 shadow-lg animate-scale-in relative">
+        <DynamicEstimatorForm onEstimateComplete={handleDynamicEstimateComplete} />
+      </div>
+    );
+  }
 
   return (
     <div className="glass rounded-xl p-6 shadow-lg animate-scale-in relative">

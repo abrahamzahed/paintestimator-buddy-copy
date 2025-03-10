@@ -9,9 +9,14 @@ import { supabase } from "@/integrations/supabase/client";
 interface EstimateSectionProps {
   onEstimateComplete: (estimate: EstimateResult) => void;
   onClose: () => void;
+  useDynamicEstimator?: boolean;
 }
 
-const EstimateSection = ({ onEstimateComplete, onClose }: EstimateSectionProps) => {
+const EstimateSection = ({ 
+  onEstimateComplete, 
+  onClose,
+  useDynamicEstimator = true // Default to the new estimator
+}: EstimateSectionProps) => {
   const { profile } = useSession();
   
   const initialUserData = profile ? {
@@ -163,6 +168,7 @@ const EstimateSection = ({ onEstimateComplete, onClose }: EstimateSectionProps) 
       <EstimateCalculator 
         onEstimateComplete={handleEstimateComplete} 
         initialUserData={initialUserData}
+        useDynamicEstimator={useDynamicEstimator}
       />
     </div>
   );
