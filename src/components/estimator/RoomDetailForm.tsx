@@ -101,6 +101,9 @@ export default function RoomDetailForm({
     addon => addon.name.toLowerCase() === 'paint ceiling'
   );
 
+  // Determine if millwork priming option should be disabled
+  const millworkPrimingDisabled = baseboardType === 'none' && numberOfDoors === 0 && numberOfWindows === 0;
+
   return (
     <div className="p-4 border rounded-md space-y-4">
       <div className="flex justify-between items-center">
@@ -212,12 +215,13 @@ export default function RoomDetailForm({
             <span>Walls & Ceilings: Two Different Colors (+10%)</span>
           </label>
 
-          <label className="flex items-center space-x-2">
+          <label className={`flex items-center space-x-2 ${millworkPrimingDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}>
             <input
               type="checkbox"
               checked={millworkPrimingNeeded}
               onChange={(e) => onUpdate({ millworkPrimingNeeded: e.target.checked })}
               className="rounded text-blue-600"
+              disabled={millworkPrimingDisabled}
             />
             <span>Millwork/Doors Need Priming (+50%)</span>
           </label>
