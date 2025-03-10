@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -173,7 +174,7 @@ export default function DynamicEstimatorForm({ onEstimateComplete }: DynamicEsti
         else if (room.numberOfDoors <= 19) perDoor = 40;
         else perDoor = 35;
       } else {
-        perWindow = 75;
+        // Fix: Removed incorrect assignment to 'perWindow'
         if (room.numberOfDoors <= 10) perDoor = 75;
         else if (room.numberOfDoors <= 19) perDoor = 65;
         else perDoor = 50;
