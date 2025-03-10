@@ -1,4 +1,3 @@
-
 export type RoomSize = 'small' | 'average' | 'large';
 export type DoorPaintingMethod = 'none' | 'brush' | 'spray';
 export type WindowPaintingMethod = 'none' | 'brush' | 'spray';
@@ -28,6 +27,10 @@ export interface RoomDetails {
   repairs: RepairType;
   baseboardInstallationLf: number;
   baseboardType: BaseboardType;
+  
+  // New closet fields
+  walkInClosetCount: number;
+  regularClosetCount: number;
 }
 
 export interface RoomCost {
