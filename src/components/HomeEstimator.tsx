@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "@/context/SessionContext";
@@ -8,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import DynamicEstimatorForm from "./DynamicEstimatorForm";
-import { RoomDetails, EstimatorSummary } from "@/types/estimator";
+import { RoomDetails, EstimatorSummary, RoomDetail } from "@/types/estimator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import CurrentEstimatePanel from "./estimator/CurrentEstimatePanel";
@@ -19,11 +20,13 @@ const HomeEstimator = () => {
   const { user } = useSession();
   const { toast } = useToast();
   
+  // User information state
   const [projectName, setProjectName] = useState("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   
+  // Form validation state
   const [errors, setErrors] = useState({
     projectName: "",
     name: "",
@@ -31,6 +34,7 @@ const HomeEstimator = () => {
     phone: ""
   });
 
+  // Estimator state
   const [currentEstimate, setCurrentEstimate] = useState<EstimatorSummary | null>(null);
   const [roomDetails, setRoomDetails] = useState<RoomDetails[]>([]);
   const [estimateSubmitted, setEstimateSubmitted] = useState(false);
@@ -38,6 +42,7 @@ const HomeEstimator = () => {
   const [estimateResult, setEstimateResult] = useState<EstimateResult | null>(null);
   const [showEstimator, setShowEstimator] = useState(false);
   
+  // If user is logged in, redirect to formal estimate page
   useEffect(() => {
     if (user) {
       navigate('/estimate');
@@ -103,10 +108,11 @@ const HomeEstimator = () => {
     setCurrentEstimate(estimate);
     setRoomDetails(rooms);
     
+    // Create estimate result object for saving to database
     const estimateResult: EstimateResult = {
       roomPrice: estimate.subtotal,
-      laborCost: estimate.finalTotal * 0.7,
-      materialCost: estimate.finalTotal * 0.3,
+      laborCost: estimate.finalTotal * 0.7, // Approximate labor as 70% of total
+      materialCost: estimate.finalTotal * 0.3, // Approximate materials as 30% of total
       totalCost: estimate.finalTotal,
       timeEstimate: calculateTimeEstimate(rooms),
       paintCans: calculatePaintCans(rooms),
@@ -119,10 +125,12 @@ const HomeEstimator = () => {
   };
   
   const calculateTimeEstimate = (rooms: RoomDetails[]): number => {
+    // Basic calculation - 4 hours per room on average
     return rooms.length * 4;
   };
   
   const calculatePaintCans = (rooms: RoomDetails[]): number => {
+    // Basic calculation - 1.5 gallons per room on average
     return Math.ceil(rooms.length * 1.5);
   };
   
@@ -130,6 +138,7 @@ const HomeEstimator = () => {
     setIsSubmitting(true);
     
     try {
+      // Create lead record in the database
       const { data, error } = await supabase
         .from("leads")
         .insert([
@@ -141,6 +150,7 @@ const HomeEstimator = () => {
             service_type: "interior",
             status: "new",
             room_count: rooms.length,
+            // Store complete estimate details as JSON
             description: JSON.stringify({
               estimateResult: estimate,
               rooms: rooms,
@@ -155,6 +165,7 @@ const HomeEstimator = () => {
         throw error;
       }
       
+      // Save data in local storage as backup and for retrieval after signup
       saveTemporaryEstimate(estimate, rooms, {});
       saveTemporaryProjectName(projectName);
       

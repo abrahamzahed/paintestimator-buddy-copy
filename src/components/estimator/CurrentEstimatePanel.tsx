@@ -1,6 +1,5 @@
 
-import { EstimateResult } from "@/types";
-import { EstimatorSummary } from "@/types/estimator";
+import { EstimateResult, EstimatorSummary } from "@/types";
 import { formatCurrency } from "@/utils/estimateUtils";
 
 interface CurrentEstimatePanelProps {
