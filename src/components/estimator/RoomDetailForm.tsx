@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useMemo } from 'react';
@@ -42,8 +41,6 @@ interface RoomDetailFormProps {
   repairs: RoomDetails['repairs'];
   baseboardInstallationLf: number;
   baseboardType: RoomDetails['baseboardType'];
-  walkInClosetCount: number;
-  regularClosetCount: number;
 
   onUpdate: (updates: Partial<RoomDetails>) => void;
   onRemove: () => void;
@@ -76,8 +73,6 @@ export default function RoomDetailForm({
   repairs,
   baseboardInstallationLf,
   baseboardType,
-  walkInClosetCount,
-  regularClosetCount,
 
   onUpdate,
   onRemove
@@ -309,36 +304,6 @@ export default function RoomDetailForm({
                   <SelectItem value="spray">Spray</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div>
-        <label className="block text-sm font-medium mb-1">Closet</label>
-        <div className="p-3 border rounded-md bg-gray-50 space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label htmlFor="walkInClosetCount">Walk-in Closet Count</Label>
-              <Input
-                id="walkInClosetCount"
-                type="number"
-                min="0"
-                value={walkInClosetCount}
-                onChange={(e) => handleUpdate({ walkInClosetCount: parseInt(e.target.value) || 0 })}
-                className="w-full"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="regularClosetCount">Regular Closet Count</Label>
-              <Input
-                id="regularClosetCount"
-                type="number"
-                min="0"
-                value={regularClosetCount}
-                onChange={(e) => handleUpdate({ regularClosetCount: parseInt(e.target.value) || 0 })}
-                className="w-full"
-              />
             </div>
           </div>
         </div>
