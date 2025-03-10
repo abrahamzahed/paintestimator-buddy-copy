@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "@/context/SessionContext";
@@ -7,7 +6,6 @@ import { saveTemporaryEstimate, saveTemporaryProjectName } from "@/utils/estimat
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Link } from "react-router-dom";
 import { CheckCircle } from "lucide-react";
 import DynamicEstimatorForm from "./DynamicEstimatorForm";
 import { RoomDetails, EstimatorSummary } from "@/types/estimator";
@@ -107,7 +105,18 @@ const HomeEstimator = () => {
     setRoomDetails(rooms);
     
     try {
-      // Create a lead in Supabase
+      // Create a lead in Supabase with all details in the JSON format
+      const detailsJson = JSON.stringify({
+        estimateSummary: estimate,
+        roomDetails: rooms,
+        userInfo: {
+          name,
+          email,
+          phone,
+          projectName
+        }
+      });
+      
       const { data: leadData, error } = await supabase
         .from('leads')
         .insert([
@@ -115,21 +124,10 @@ const HomeEstimator = () => {
             name: name,
             email: email,
             phone: phone,
-            service_type: 'interior',
-            room_count: rooms.length,
             project_name: projectName,
             status: 'new',
             description: 'Lead from free estimator',
-            details: {
-              estimateSummary: estimate,
-              roomDetails: rooms,
-              userInfo: {
-                name,
-                email,
-                phone,
-                projectName
-              }
-            }
+            details: detailsJson
           }
         ])
         .select()
