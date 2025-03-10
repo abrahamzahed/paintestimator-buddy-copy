@@ -73,11 +73,13 @@ const DynamicEstimatorForm = ({ onEstimateComplete, initialUserData }: DynamicEs
       const baseboardInstallCost = room.baseboardInstallationLf * 7;
       
       // Extra surcharge if only painting specialty items
-      const onlyExtraSurcharge = (room.doorPaintingMethod !== "none" || 
+      // Fix the type error by checking if there are specialty items AND basePrice is standard small (200)
+      const onlySpecialtyItems = (room.doorPaintingMethod !== "none" || 
                                  room.windowPaintingMethod !== "none" || 
                                  room.fireplaceMethod !== "none" || 
-                                 room.hasStairRailing) && 
-                                 basePrice === 0 ? 
+                                 room.hasStairRailing);
+                                 
+      const onlyExtraSurcharge = onlySpecialtyItems && basePrice === 200 ? 
                                  (doorCost + windowCost + fireplaceCost + railingCost) * 0.4 : 0;
       
       const totalBeforeVolume = basePrice + paintUpcharge + addonCost + highCeilingCost + 
