@@ -54,9 +54,3 @@ export interface EstimatorSummary {
   volumeDiscount: number;
   finalTotal: number;
 }
-
-export interface UserData {
-  name: string;
-  email: string;
-  phone?: string;
-}
