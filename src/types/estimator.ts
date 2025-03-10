@@ -1,46 +1,52 @@
 
-// Types for the dynamic estimator
+export type RoomSize = 'small' | 'average' | 'large';
+export type DoorPaintingMethod = 'none' | 'brush' | 'spray';
+export type WindowPaintingMethod = 'none' | 'brush' | 'spray';
+export type FireplaceMethod = 'none' | 'brush' | 'spray';
+export type RepairType = 'none' | 'minimal' | 'extensive';
+export type BaseboardType = 'none' | 'brush' | 'spray';
 
 export interface RoomDetails {
   id: string;
   roomTypeId: string;
-  size: 'small' | 'average' | 'large';
+  size: RoomSize;
   addons: string[];
   hasHighCeiling: boolean;
   paintType: string | null;
   isEmpty: boolean;
   noFloorCovering: boolean;
-
-  // New fields
-  doorPaintingMethod: 'none' | 'brush' | 'spray';
+  
+  // Added fields
+  doorPaintingMethod: DoorPaintingMethod;
   numberOfDoors: number;
-  windowPaintingMethod: 'none' | 'brush' | 'spray';
+  windowPaintingMethod: WindowPaintingMethod;
   numberOfWindows: number;
-  fireplaceMethod: 'none' | 'brush' | 'spray';
+  fireplaceMethod: FireplaceMethod;
   hasStairRailing: boolean;
   twoColors: boolean;
   millworkPrimingNeeded: boolean;
-  repairs: 'none' | 'minimal' | 'extensive';
+  repairs: RepairType;
   baseboardInstallationLf: number;
+  baseboardType: BaseboardType;
 }
 
 export interface RoomCost {
   basePrice: number;
   paintUpcharge: number;
   addonCost: number;
+  baseboardCost: number;
   highCeilingCost: number;
-  discountEmptyHouse: number;
-  discountNoFloor: number;
-  twoColorCost: number;
-  millworkPrimingCost: number;
   doorCost: number;
   windowCost: number;
   fireplaceCost: number;
   railingCost: number;
+  discountEmptyHouse: number;
+  discountNoFloor: number;
+  twoColorCost: number;
+  millworkPrimingCost: number;
   repairsCost: number;
   baseboardInstallCost: number;
-  onlyExtraSurcharge: number; // e.g., +40% if only painting doors
-
+  onlyExtraSurcharge: number;
   totalBeforeVolume: number;
 }
 

@@ -40,6 +40,7 @@ interface RoomDetailFormProps {
   millworkPrimingNeeded: boolean;
   repairs: RoomDetails['repairs'];
   baseboardInstallationLf: number;
+  baseboardType: RoomDetails['baseboardType'];
 
   onUpdate: (updates: Partial<RoomDetails>) => void;
   onRemove: () => void;
@@ -70,6 +71,7 @@ export default function RoomDetailForm({
   millworkPrimingNeeded,
   repairs,
   baseboardInstallationLf,
+  baseboardType,
 
   onUpdate,
   onRemove
@@ -155,6 +157,20 @@ export default function RoomDetailForm({
               {pt.fixed_upcharge ? ` (+$${pt.fixed_upcharge.toFixed(2)})` : ''}
             </option>
           ))}
+        </select>
+      </div>
+
+      {/* Baseboard Type */}
+      <div>
+        <label className="block text-sm font-medium mb-1">Baseboard Selection</label>
+        <select
+          value={baseboardType || 'none'}
+          onChange={(e) => onUpdate({ baseboardType: e.target.value as RoomDetails['baseboardType'] })}
+          className="w-full p-2 border rounded-md"
+        >
+          <option value="none">No Baseboards</option>
+          <option value="brush">Brushed Baseboards (+25%)</option>
+          <option value="spray">Sprayed Baseboards (+50%)</option>
         </select>
       </div>
 

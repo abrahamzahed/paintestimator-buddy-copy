@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -152,7 +153,15 @@ export default function DynamicEstimatorForm({ onEstimateComplete }: DynamicEsti
       }
     });
 
-    // 4) High Ceiling from DB
+    // 4) Baseboard type costs
+    let baseboardCost = 0;
+    if (room.baseboardType === 'brush') {
+      baseboardCost = basePrice * 0.25; // 25% of base price
+    } else if (room.baseboardType === 'spray') {
+      baseboardCost = basePrice * 0.5; // 50% of base price
+    }
+
+    // 5) High Ceiling from DB
     let highCeilingCost = 0;
     if (room.hasHighCeiling) {
       const ceilingAddon = roomAddons.find(a =>
@@ -256,6 +265,7 @@ export default function DynamicEstimatorForm({ onEstimateComplete }: DynamicEsti
       basePrice +
       paintUpcharge +
       addonCost +
+      baseboardCost +
       highCeilingCost +
       doorCost +
       windowCost +
@@ -301,6 +311,7 @@ export default function DynamicEstimatorForm({ onEstimateComplete }: DynamicEsti
       basePrice,
       paintUpcharge,
       addonCost,
+      baseboardCost,
       highCeilingCost,
       discountEmptyHouse,
       discountNoFloor,
@@ -317,12 +328,7 @@ export default function DynamicEstimatorForm({ onEstimateComplete }: DynamicEsti
     };
   };
 
-  /**
-   * Summation and final discounts
-   * - volume discount (+ possible extra)
-   * - discount cap at 37.5%
-   * - min $400
-   */
+  /** Summation and final discounts */
   const { roomCosts, subtotal, volumeDiscount, finalTotal } = useMemo(() => {
     const roomCosts = formState.rooms.map(calculateRoomCost);
 
@@ -399,7 +405,8 @@ export default function DynamicEstimatorForm({ onEstimateComplete }: DynamicEsti
       twoColors: false,
       millworkPrimingNeeded: false,
       repairs: 'none',
-      baseboardInstallationLf: 0
+      baseboardInstallationLf: 0,
+      baseboardType: 'none'
     };
     setFormState(prev => ({ ...prev, rooms: [...prev.rooms, newRoom] }));
   };
@@ -496,6 +503,7 @@ export default function DynamicEstimatorForm({ onEstimateComplete }: DynamicEsti
             millworkPrimingNeeded={room.millworkPrimingNeeded}
             repairs={room.repairs}
             baseboardInstallationLf={room.baseboardInstallationLf}
+            baseboardType={room.baseboardType}
             
             onUpdate={(updates) => updateRoom(room.id, updates)}
             onRemove={() => removeRoom(room.id)}
@@ -529,6 +537,9 @@ export default function DynamicEstimatorForm({ onEstimateComplete }: DynamicEsti
                     )}
                     {rc.addonCost > 0 && (
                       <div>Add-Ons: +${rc.addonCost.toFixed(2)}</div>
+                    )}
+                    {rc.baseboardCost > 0 && (
+                      <div>Baseboards ({room.baseboardType}): +${rc.baseboardCost.toFixed(2)}</div>
                     )}
                     {rc.highCeilingCost > 0 && (
                       <div>High Ceiling: +${rc.highCeilingCost.toFixed(2)}</div>
