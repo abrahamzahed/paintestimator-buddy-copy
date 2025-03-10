@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useMemo } from 'react';
@@ -102,17 +101,13 @@ export default function RoomDetailForm({
     addon => addon.name.toLowerCase() === 'paint ceiling'
   );
 
-  // Determine if millwork priming option should be disabled
   const millworkPrimingDisabled = baseboardType === 'none' && numberOfDoors === 0 && numberOfWindows === 0;
 
-  // Enhanced onUpdate handler to handle the special case for millwork priming
   const handleUpdate = (updates: Partial<RoomDetails>) => {
-    // Check if updates would cause millwork priming to be disabled
     const updatedBaseboardType = updates.baseboardType !== undefined ? updates.baseboardType : baseboardType;
     const updatedDoorCount = updates.numberOfDoors !== undefined ? updates.numberOfDoors : numberOfDoors;
     const updatedWindowCount = updates.numberOfWindows !== undefined ? updates.numberOfWindows : numberOfWindows;
     
-    // If millwork priming is currently checked and the updates would disable it, uncheck it
     if (millworkPrimingNeeded && 
         updatedBaseboardType === 'none' && 
         updatedDoorCount === 0 && 
@@ -298,14 +293,13 @@ export default function RoomDetailForm({
             <div className="space-y-1">
               <Label htmlFor="doorPaintMethod">Paint Method</Label>
               <Select 
-                value={doorPaintingMethod} 
+                value={doorPaintingMethod === "none" ? "spray" : doorPaintingMethod} 
                 onValueChange={(value) => handleUpdate({ doorPaintingMethod: value as RoomDetails['doorPaintingMethod'] })}
               >
                 <SelectTrigger id="doorPaintMethod" className="w-full">
                   <SelectValue placeholder="Select method" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">None</SelectItem>
                   <SelectItem value="brush">Brush</SelectItem>
                   <SelectItem value="spray">Spray</SelectItem>
                 </SelectContent>
@@ -333,14 +327,13 @@ export default function RoomDetailForm({
             <div className="space-y-1">
               <Label htmlFor="windowPaintMethod">Paint Method</Label>
               <Select 
-                value={windowPaintingMethod} 
+                value={windowPaintingMethod === "none" ? "spray" : windowPaintingMethod} 
                 onValueChange={(value) => handleUpdate({ windowPaintingMethod: value as RoomDetails['windowPaintingMethod'] })}
               >
                 <SelectTrigger id="windowPaintMethod" className="w-full">
                   <SelectValue placeholder="Select method" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">None</SelectItem>
                   <SelectItem value="brush">Brush</SelectItem>
                   <SelectItem value="spray">Spray</SelectItem>
                 </SelectContent>
