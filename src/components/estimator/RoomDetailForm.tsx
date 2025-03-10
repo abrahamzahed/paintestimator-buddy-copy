@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useMemo } from 'react';
@@ -104,6 +105,27 @@ export default function RoomDetailForm({
   // Determine if millwork priming option should be disabled
   const millworkPrimingDisabled = baseboardType === 'none' && numberOfDoors === 0 && numberOfWindows === 0;
 
+  // Enhanced onUpdate handler to handle the special case for millwork priming
+  const handleUpdate = (updates: Partial<RoomDetails>) => {
+    // Check if updates would cause millwork priming to be disabled
+    const updatedBaseboardType = updates.baseboardType !== undefined ? updates.baseboardType : baseboardType;
+    const updatedDoorCount = updates.numberOfDoors !== undefined ? updates.numberOfDoors : numberOfDoors;
+    const updatedWindowCount = updates.numberOfWindows !== undefined ? updates.numberOfWindows : numberOfWindows;
+    
+    // If millwork priming is currently checked and the updates would disable it, uncheck it
+    if (millworkPrimingNeeded && 
+        updatedBaseboardType === 'none' && 
+        updatedDoorCount === 0 && 
+        updatedWindowCount === 0) {
+      onUpdate({
+        ...updates,
+        millworkPrimingNeeded: false
+      });
+    } else {
+      onUpdate(updates);
+    }
+  };
+
   return (
     <div className="p-4 border rounded-md space-y-4">
       <div className="flex justify-between items-center">
@@ -119,7 +141,7 @@ export default function RoomDetailForm({
         <label className="block text-sm font-medium mb-1">Room Type</label>
         <select
           value={roomTypeId}
-          onChange={(e) => onUpdate({ roomTypeId: e.target.value })}
+          onChange={(e) => handleUpdate({ roomTypeId: e.target.value })}
           className="w-full p-2 border rounded-md"
         >
           {roomTypes.map(type => (
@@ -134,7 +156,7 @@ export default function RoomDetailForm({
         <label className="block text-sm font-medium mb-1">Size</label>
         <select
           value={size}
-          onChange={(e) => onUpdate({ size: e.target.value as RoomDetails['size'] })}
+          onChange={(e) => handleUpdate({ size: e.target.value as RoomDetails['size'] })}
           className="w-full p-2 border rounded-md"
         >
           <option value="small">Small</option>
@@ -147,7 +169,7 @@ export default function RoomDetailForm({
         <label className="block text-sm font-medium mb-1">Paint Selection</label>
         <select
           value={paintType || ''}
-          onChange={(e) => onUpdate({ paintType: e.target.value || null })}
+          onChange={(e) => handleUpdate({ paintType: e.target.value || null })}
           className="w-full p-2 border rounded-md"
         >
           <option value="">Standard Paint (no upcharge)</option>
@@ -165,7 +187,7 @@ export default function RoomDetailForm({
         <label className="block text-sm font-medium mb-1">Baseboard Selection</label>
         <select
           value={baseboardType || 'none'}
-          onChange={(e) => onUpdate({ baseboardType: e.target.value as RoomDetails['baseboardType'] })}
+          onChange={(e) => handleUpdate({ baseboardType: e.target.value as RoomDetails['baseboardType'] })}
           className="w-full p-2 border rounded-md"
         >
           <option value="none">No Baseboards</option>
@@ -182,7 +204,7 @@ export default function RoomDetailForm({
               <input
                 type="checkbox"
                 checked={isEmpty}
-                onChange={(e) => onUpdate({ isEmpty: e.target.checked })}
+                onChange={(e) => handleUpdate({ isEmpty: e.target.checked })}
                 className="rounded text-blue-600"
               />
               <span>
@@ -196,7 +218,7 @@ export default function RoomDetailForm({
               <input
                 type="checkbox"
                 checked={noFloorCovering}
-                onChange={(e) => onUpdate({ noFloorCovering: e.target.checked })}
+                onChange={(e) => handleUpdate({ noFloorCovering: e.target.checked })}
                 className="rounded text-blue-600"
               />
               <span>
@@ -209,7 +231,7 @@ export default function RoomDetailForm({
             <input
               type="checkbox"
               checked={twoColors}
-              onChange={(e) => onUpdate({ twoColors: e.target.checked })}
+              onChange={(e) => handleUpdate({ twoColors: e.target.checked })}
               className="rounded text-blue-600"
             />
             <span>Walls & Ceilings: Two Different Colors (+10%)</span>
@@ -219,7 +241,7 @@ export default function RoomDetailForm({
             <input
               type="checkbox"
               checked={millworkPrimingNeeded}
-              onChange={(e) => onUpdate({ millworkPrimingNeeded: e.target.checked })}
+              onChange={(e) => handleUpdate({ millworkPrimingNeeded: e.target.checked })}
               className="rounded text-blue-600"
               disabled={millworkPrimingDisabled}
             />
@@ -235,7 +257,7 @@ export default function RoomDetailForm({
             <input
               type="checkbox"
               checked={hasHighCeiling}
-              onChange={(e) => onUpdate({ hasHighCeiling: e.target.checked })}
+              onChange={(e) => handleUpdate({ hasHighCeiling: e.target.checked })}
               className="rounded text-blue-600"
             />
             <span>High Ceiling (+$600)</span>
@@ -249,7 +271,7 @@ export default function RoomDetailForm({
                 const newAddons = e.target.checked
                   ? [...addons, ceilingPaintAddon?.id || '']
                   : addons.filter(id => id !== ceilingPaintAddon?.id);
-                onUpdate({ addons: newAddons });
+                handleUpdate({ addons: newAddons });
               }}
               className="rounded text-blue-600"
             />
@@ -269,7 +291,7 @@ export default function RoomDetailForm({
                 type="number"
                 min="0"
                 value={numberOfDoors}
-                onChange={(e) => onUpdate({ numberOfDoors: parseInt(e.target.value) || 0 })}
+                onChange={(e) => handleUpdate({ numberOfDoors: parseInt(e.target.value) || 0 })}
                 className="w-full"
               />
             </div>
@@ -277,7 +299,7 @@ export default function RoomDetailForm({
               <Label htmlFor="doorPaintMethod">Paint Method</Label>
               <Select 
                 value={doorPaintingMethod} 
-                onValueChange={(value) => onUpdate({ doorPaintingMethod: value as RoomDetails['doorPaintingMethod'] })}
+                onValueChange={(value) => handleUpdate({ doorPaintingMethod: value as RoomDetails['doorPaintingMethod'] })}
               >
                 <SelectTrigger id="doorPaintMethod" className="w-full">
                   <SelectValue placeholder="Select method" />
@@ -304,7 +326,7 @@ export default function RoomDetailForm({
                 type="number"
                 min="0"
                 value={numberOfWindows}
-                onChange={(e) => onUpdate({ numberOfWindows: parseInt(e.target.value) || 0 })}
+                onChange={(e) => handleUpdate({ numberOfWindows: parseInt(e.target.value) || 0 })}
                 className="w-full"
               />
             </div>
@@ -312,7 +334,7 @@ export default function RoomDetailForm({
               <Label htmlFor="windowPaintMethod">Paint Method</Label>
               <Select 
                 value={windowPaintingMethod} 
-                onValueChange={(value) => onUpdate({ windowPaintingMethod: value as RoomDetails['windowPaintingMethod'] })}
+                onValueChange={(value) => handleUpdate({ windowPaintingMethod: value as RoomDetails['windowPaintingMethod'] })}
               >
                 <SelectTrigger id="windowPaintMethod" className="w-full">
                   <SelectValue placeholder="Select method" />
@@ -332,7 +354,7 @@ export default function RoomDetailForm({
         <label className="block text-sm font-medium mb-1">Fireplace Mantel</label>
         <select
           value={fireplaceMethod}
-          onChange={(e) => onUpdate({ fireplaceMethod: e.target.value as RoomDetails['fireplaceMethod'] })}
+          onChange={(e) => handleUpdate({ fireplaceMethod: e.target.value as RoomDetails['fireplaceMethod'] })}
           className="w-full p-2 border rounded-md"
         >
           <option value="none">No Mantel</option>
@@ -347,7 +369,7 @@ export default function RoomDetailForm({
           <input
             type="checkbox"
             checked={hasStairRailing}
-            onChange={(e) => onUpdate({ hasStairRailing: e.target.checked })}
+            onChange={(e) => handleUpdate({ hasStairRailing: e.target.checked })}
             className="rounded text-blue-600"
           />
           <span>Staircase Railing to Paint</span>
@@ -358,7 +380,7 @@ export default function RoomDetailForm({
         <label className="block text-sm font-medium mb-1 mt-4">Repairs</label>
         <select
           value={repairs}
-          onChange={(e) => onUpdate({ repairs: e.target.value as RoomDetails['repairs'] })}
+          onChange={(e) => handleUpdate({ repairs: e.target.value as RoomDetails['repairs'] })}
           className="w-full p-2 border rounded-md"
         >
           <option value="none">No Repairs</option>
@@ -372,7 +394,7 @@ export default function RoomDetailForm({
         <input
           type="number"
           value={baseboardInstallationLf}
-          onChange={(e) => onUpdate({ baseboardInstallationLf: parseFloat(e.target.value) || 0 })}
+          onChange={(e) => handleUpdate({ baseboardInstallationLf: parseFloat(e.target.value) || 0 })}
           className="w-full p-2 border rounded-md"
           placeholder="Linear feet of new baseboards"
         />
@@ -391,7 +413,7 @@ export default function RoomDetailForm({
                     const newAddons = e.target.checked
                       ? [...addons, addon.id]
                       : addons.filter(id => id !== addon.id);
-                    onUpdate({ addons: newAddons });
+                    handleUpdate({ addons: newAddons });
                   }}
                   className="rounded text-blue-600"
                 />
