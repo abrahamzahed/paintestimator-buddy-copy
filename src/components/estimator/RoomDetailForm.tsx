@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useMemo } from 'react';
@@ -15,12 +14,10 @@ import { RoomDetails } from '@/types/estimator';
 interface RoomDetailFormProps {
   roomId: string;
   roomTypes: RoomType[];
-  roomSizes: RoomSize[];
   roomAddons: RoomAddon[];
   paintTypes: PaintType[];
   specialConditions: SpecialCondition[];
 
-  // Current values for this room:
   roomTypeId: string;
   size: RoomDetails['size'];
   addons: string[];
@@ -29,7 +26,6 @@ interface RoomDetailFormProps {
   isEmpty: boolean;
   noFloorCovering: boolean;
 
-  // New fields:
   doorPaintingMethod: RoomDetails['doorPaintingMethod'];
   numberOfDoors: number;
   windowPaintingMethod: RoomDetails['windowPaintingMethod'];
@@ -79,7 +75,6 @@ export default function RoomDetailForm({
 
   const currentRoomType = roomTypes.find(rt => rt.id === roomTypeId);
 
-  // Filter out baseboard add-ons or anything else you don't want to appear
   const filteredAddons = useMemo(() => {
     return roomAddons
       .filter(addon => 
@@ -91,7 +86,6 @@ export default function RoomDetailForm({
       );
   }, [roomAddons, roomTypeId]);
 
-  // Retrieve special conditions for labeling
   const emptyHouseCondition = specialConditions.find(
     sc => sc.name.toLowerCase() === 'empty house'
   );
@@ -99,9 +93,12 @@ export default function RoomDetailForm({
     sc => sc.name.toLowerCase() === 'no floor covering needed'
   );
 
+  const ceilingPaintAddon = roomAddons.find(
+    addon => addon.name.toLowerCase() === 'paint ceiling'
+  );
+
   return (
     <div className="p-4 border rounded-md space-y-4">
-      {/* Header */}
       <div className="flex justify-between items-center">
         <h4 className="text-lg font-medium">
           {currentRoomType?.name || 'Room'}
@@ -111,7 +108,6 @@ export default function RoomDetailForm({
         </button>
       </div>
 
-      {/* Room Type */}
       <div>
         <label className="block text-sm font-medium mb-1">Room Type</label>
         <select
@@ -127,7 +123,6 @@ export default function RoomDetailForm({
         </select>
       </div>
 
-      {/* Room Size */}
       <div>
         <label className="block text-sm font-medium mb-1">Size</label>
         <select
@@ -141,7 +136,6 @@ export default function RoomDetailForm({
         </select>
       </div>
 
-      {/* Paint Type */}
       <div>
         <label className="block text-sm font-medium mb-1">Paint Selection</label>
         <select
@@ -160,7 +154,6 @@ export default function RoomDetailForm({
         </select>
       </div>
 
-      {/* Baseboard Type */}
       <div>
         <label className="block text-sm font-medium mb-1">Baseboard Selection</label>
         <select
@@ -174,12 +167,10 @@ export default function RoomDetailForm({
         </select>
       </div>
 
-      {/* Basic Checkboxes */}
       <div className="space-y-2">
         <label className="block text-sm font-medium">Room Discounts & Options</label>
         <div className="space-y-2 p-3 border rounded-md bg-gray-50">
 
-          {/* Empty House */}
           {emptyHouseCondition && (
             <label className="flex items-center space-x-2">
               <input
@@ -194,7 +185,6 @@ export default function RoomDetailForm({
             </label>
           )}
           
-          {/* No Floor Covering */}
           {noFloorCondition && (
             <label className="flex items-center space-x-2">
               <input
@@ -209,7 +199,6 @@ export default function RoomDetailForm({
             </label>
           )}
 
-          {/* Two Colors */}
           <label className="flex items-center space-x-2">
             <input
               type="checkbox"
@@ -220,7 +209,6 @@ export default function RoomDetailForm({
             <span>Walls & Ceilings: Two Different Colors (+10%)</span>
           </label>
 
-          {/* Millwork Priming */}
           <label className="flex items-center space-x-2">
             <input
               type="checkbox"
@@ -234,10 +222,9 @@ export default function RoomDetailForm({
         </div>
       </div>
 
-      {/* High Ceiling */}
       <div className="space-y-2">
         <label className="block text-sm font-medium">Ceiling Options</label>
-        <div className="p-3 border rounded-md bg-gray-50">
+        <div className="p-3 border rounded-md bg-gray-50 space-y-2">
           <label className="flex items-center space-x-2">
             <input
               type="checkbox"
@@ -245,12 +232,26 @@ export default function RoomDetailForm({
               onChange={(e) => onUpdate({ hasHighCeiling: e.target.checked })}
               className="rounded text-blue-600"
             />
-            <span>High Ceiling</span>
+            <span>High Ceiling (+$600)</span>
+          </label>
+          
+          <label className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              checked={addons.includes(ceilingPaintAddon?.id || '')}
+              onChange={(e) => {
+                const newAddons = e.target.checked
+                  ? [...addons, ceilingPaintAddon?.id || '']
+                  : addons.filter(id => id !== ceilingPaintAddon?.id);
+                onUpdate({ addons: newAddons });
+              }}
+              className="rounded text-blue-600"
+            />
+            <span>Paint Ceiling (+40%)</span>
           </label>
         </div>
       </div>
 
-      {/* Doors */}
       <div>
         <label className="block text-sm font-medium mb-1">Door Painting</label>
         <div className="p-3 border rounded-md bg-gray-50 space-y-2">
@@ -275,7 +276,6 @@ export default function RoomDetailForm({
         </div>
       </div>
 
-      {/* Windows */}
       <div>
         <label className="block text-sm font-medium mb-1">Windows</label>
         <div className="p-3 border rounded-md bg-gray-50 space-y-2">
@@ -300,7 +300,6 @@ export default function RoomDetailForm({
         </div>
       </div>
 
-      {/* Fireplace */}
       <div>
         <label className="block text-sm font-medium mb-1">Fireplace Mantel</label>
         <select
@@ -314,7 +313,6 @@ export default function RoomDetailForm({
         </select>
       </div>
 
-      {/* Stair Railing */}
       <div className="mt-4 space-y-2">
         <label className="block text-sm font-medium">Stair Railing</label>
         <label className="flex items-center space-x-2">
@@ -328,7 +326,6 @@ export default function RoomDetailForm({
         </label>
       </div>
 
-      {/* Repairs */}
       <div>
         <label className="block text-sm font-medium mb-1 mt-4">Repairs</label>
         <select
@@ -342,7 +339,6 @@ export default function RoomDetailForm({
         </select>
       </div>
 
-      {/* Baseboard Installation */}
       <div>
         <label className="block text-sm font-medium mb-1 mt-4">Baseboard Installation (LF)</label>
         <input
@@ -354,7 +350,6 @@ export default function RoomDetailForm({
         />
       </div>
 
-      {/* Additional Options (all other add-ons) */}
       {filteredAddons.length > 0 && (
         <div className="space-y-2 mt-4">
           <label className="block text-sm font-medium">Additional Options</label>
@@ -379,7 +374,6 @@ export default function RoomDetailForm({
         </div>
       )}
 
-      {/* Remove Room Button */}
       <div className="text-right">
         <button onClick={onRemove} className="text-red-500 hover:text-red-700 mt-4">
           <Trash2 className="inline-block w-5 h-5 mr-1" /> Remove Room
