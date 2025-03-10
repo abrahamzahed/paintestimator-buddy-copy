@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { RoomDetails as OldRoomDetail, RoomDetail, EstimateResult } from "../types";
 import { calculateMultiRoomEstimate, calculateSingleRoomEstimate } from "../utils/estimateUtils";
@@ -69,7 +70,11 @@ const EstimateCalculator = ({
     }
   }, [user, saveEstimate]);
   
-  const [roomDetails, setRoomDetails] = useState<{ rooms: RoomDetail[] }>({
+  const [roomDetails, setRoomDetails] = useState<{ 
+    rooms: RoomDetail[];
+    isEmptyHouse: boolean;
+    needFloorCovering: boolean;
+  }>({
     rooms: initialRoomDetails || [
       {
         id: uuidv4(),
@@ -92,6 +97,8 @@ const EstimateCalculator = ({
         windowsCount: 0
       }
     ],
+    isEmptyHouse: false,
+    needFloorCovering: true
   });
 
   useEffect(() => {
