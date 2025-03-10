@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useMemo } from 'react';
@@ -11,11 +10,14 @@ import type {
 } from '@/lib/supabase';
 import { Trash2 } from 'lucide-react';
 import { RoomDetails } from '@/types/estimator';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 
 interface RoomDetailFormProps {
   roomId: string;
   roomTypes: RoomType[];
-  roomSizes: RoomSize[]; // Add this line to include roomSizes prop
+  roomSizes: RoomSize[];
   roomAddons: RoomAddon[];
   paintTypes: PaintType[];
   specialConditions: SpecialCondition[];
@@ -47,7 +49,7 @@ interface RoomDetailFormProps {
 export default function RoomDetailForm({
   roomId,
   roomTypes,
-  roomSizes, // Add this parameter to destructure roomSizes from props
+  roomSizes,
   roomAddons,
   paintTypes,
   specialConditions,
@@ -75,7 +77,6 @@ export default function RoomDetailForm({
   onUpdate,
   onRemove
 }: RoomDetailFormProps) {
-
   const currentRoomType = roomTypes.find(rt => rt.id === roomTypeId);
 
   const filteredAddons = useMemo(() => {
@@ -173,7 +174,6 @@ export default function RoomDetailForm({
       <div className="space-y-2">
         <label className="block text-sm font-medium">Room Discounts & Options</label>
         <div className="space-y-2 p-3 border rounded-md bg-gray-50">
-
           {emptyHouseCondition && (
             <label className="flex items-center space-x-2">
               <input
@@ -221,7 +221,6 @@ export default function RoomDetailForm({
             />
             <span>Millwork/Doors Need Priming (+50%)</span>
           </label>
-
         </div>
       </div>
 
@@ -257,48 +256,70 @@ export default function RoomDetailForm({
 
       <div>
         <label className="block text-sm font-medium mb-1">Door Painting</label>
-        <div className="p-3 border rounded-md bg-gray-50 space-y-2">
-          <div className="flex items-center space-x-2">
-            <select
-              value={doorPaintingMethod}
-              onChange={(e) => onUpdate({ doorPaintingMethod: e.target.value as RoomDetails['doorPaintingMethod'] })}
-              className="p-2 border rounded-md"
-            >
-              <option value="none">No Doors</option>
-              <option value="brush">Brushed</option>
-              <option value="spray">Sprayed</option>
-            </select>
-            <input
-              type="number"
-              value={numberOfDoors}
-              onChange={(e) => onUpdate({ numberOfDoors: parseInt(e.target.value) || 0 })}
-              className="w-20 p-2 border rounded-md"
-              placeholder="# Doors"
-            />
+        <div className="p-3 border rounded-md bg-gray-50 space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label htmlFor="doorCount">Door Count</Label>
+              <Input
+                id="doorCount"
+                type="number"
+                min="0"
+                value={numberOfDoors}
+                onChange={(e) => onUpdate({ numberOfDoors: parseInt(e.target.value) || 0 })}
+                className="w-full"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="doorPaintMethod">Paint Method</Label>
+              <Select 
+                value={doorPaintingMethod} 
+                onValueChange={(value) => onUpdate({ doorPaintingMethod: value as RoomDetails['doorPaintingMethod'] })}
+              >
+                <SelectTrigger id="doorPaintMethod" className="w-full">
+                  <SelectValue placeholder="Select method" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  <SelectItem value="brush">Brush</SelectItem>
+                  <SelectItem value="spray">Spray</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
       </div>
 
       <div>
         <label className="block text-sm font-medium mb-1">Windows</label>
-        <div className="p-3 border rounded-md bg-gray-50 space-y-2">
-          <div className="flex items-center space-x-2">
-            <select
-              value={windowPaintingMethod}
-              onChange={(e) => onUpdate({ windowPaintingMethod: e.target.value as RoomDetails['windowPaintingMethod'] })}
-              className="p-2 border rounded-md"
-            >
-              <option value="none">No Windows</option>
-              <option value="brush">Brushed</option>
-              <option value="spray">Sprayed</option>
-            </select>
-            <input
-              type="number"
-              value={numberOfWindows}
-              onChange={(e) => onUpdate({ numberOfWindows: parseInt(e.target.value) || 0 })}
-              className="w-20 p-2 border rounded-md"
-              placeholder="# Windows"
-            />
+        <div className="p-3 border rounded-md bg-gray-50 space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label htmlFor="windowCount">Window Count</Label>
+              <Input
+                id="windowCount"
+                type="number"
+                min="0"
+                value={numberOfWindows}
+                onChange={(e) => onUpdate({ numberOfWindows: parseInt(e.target.value) || 0 })}
+                className="w-full"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="windowPaintMethod">Paint Method</Label>
+              <Select 
+                value={windowPaintingMethod} 
+                onValueChange={(value) => onUpdate({ windowPaintingMethod: value as RoomDetails['windowPaintingMethod'] })}
+              >
+                <SelectTrigger id="windowPaintMethod" className="w-full">
+                  <SelectValue placeholder="Select method" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  <SelectItem value="brush">Brush</SelectItem>
+                  <SelectItem value="spray">Spray</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
       </div>
