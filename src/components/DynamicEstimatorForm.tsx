@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -47,7 +46,6 @@ export default function DynamicEstimatorForm({ onEstimateComplete }: DynamicEsti
   const [error, setError] = useState<string | null>(null);
   const [tableSetupRequired, setTableSetupRequired] = useState(false);
 
-  // fetch data
   useEffect(() => {
     async function fetchData() {
       try {
@@ -72,7 +70,6 @@ export default function DynamicEstimatorForm({ onEstimateComplete }: DynamicEsti
           supabase.from('extras').select('*')
         ]);
         
-        // Check for specific error about tables not existing
         if (rtRes.error && rtRes.error.message.includes('does not exist')) {
           setTableSetupRequired(true);
           throw new Error('Database tables not set up. Please run the database setup script in your Supabase instance.');
@@ -98,7 +95,6 @@ export default function DynamicEstimatorForm({ onEstimateComplete }: DynamicEsti
         console.error("Error fetching data:", err);
         setError(err.message ?? 'Error fetching data');
         
-        // Only show toast for errors other than missing tables
         if (!tableSetupRequired) {
           toast({
             title: "Error loading pricing data",
@@ -114,19 +110,12 @@ export default function DynamicEstimatorForm({ onEstimateComplete }: DynamicEsti
     fetchData();
   }, [toast]);
 
-  /** 
-   * This is the big function that calculates cost for a single room,
-   * adding logic for all extras. Some are stored in the DB (like "High ceiling"),
-   * others we handle inline.
-   */
   const calculateRoomCost = (room: RoomDetails): RoomCost => {
-    // 1) Base price by room type & size
     const sizeRow = roomSizes.find(rs => 
       rs.room_type_id === room.roomTypeId && rs.size === room.size
     );
     const basePrice = sizeRow?.base_price ?? 0;
 
-    // 2) Paint upcharge (from paint_types)
     let paintUpcharge = 0;
     if (room.paintType) {
       const pt = paintTypes.find(p => p.id === room.paintType);
@@ -140,7 +129,6 @@ export default function DynamicEstimatorForm({ onEstimateComplete }: DynamicEsti
       }
     }
 
-    // 3) Add-ons from "room.addons" (the checkboxes you haven't singled out)
     let addonCost = 0;
     room.addons.forEach((addonId) => {
       const addonObj = roomAddons.find(a => a.id === addonId);
@@ -153,15 +141,13 @@ export default function DynamicEstimatorForm({ onEstimateComplete }: DynamicEsti
       }
     });
 
-    // 4) Baseboard type costs
     let baseboardCost = 0;
     if (room.baseboardType === 'brush') {
-      baseboardCost = basePrice * 0.25; // 25% of base price
+      baseboardCost = basePrice * 0.25;
     } else if (room.baseboardType === 'spray') {
-      baseboardCost = basePrice * 0.5; // 50% of base price
+      baseboardCost = basePrice * 0.5;
     }
 
-    // 5) High Ceiling from DB
     let highCeilingCost = 0;
     if (room.hasHighCeiling) {
       const ceilingAddon = roomAddons.find(a =>
@@ -174,26 +160,20 @@ export default function DynamicEstimatorForm({ onEstimateComplete }: DynamicEsti
           highCeilingCost = ceilingAddon.value;
         }
       } else {
-        // fallback if not found in DB
         highCeilingCost = 600; 
       }
     }
 
-    // 5) Doors:
-    // Example: "Brushed: $50 paint + $50 (1–10), $40 (11–19), etc."
     let doorCost = 0;
     if (room.doorPaintingMethod !== 'none' && room.numberOfDoors > 0) {
-      // Find base door paint cost in "extras" or do an inline approach:
-      const paintFee = 50; // base "paint" cost
+      const paintFee = 50;
       let perDoor = 0;
       if (room.doorPaintingMethod === 'brush') {
-        // example: $50 if 1–10, $40 if 11–19, $35 if 20+
         if (room.numberOfDoors <= 10) perDoor = 50;
         else if (room.numberOfDoors <= 19) perDoor = 40;
         else perDoor = 35;
       } else {
-        // "spray"
-        // $75 if 1–10, $65 if 11–19, $50 if 20+
+        perWindow = 75;
         if (room.numberOfDoors <= 10) perDoor = 75;
         else if (room.numberOfDoors <= 19) perDoor = 65;
         else perDoor = 50;
@@ -201,8 +181,6 @@ export default function DynamicEstimatorForm({ onEstimateComplete }: DynamicEsti
       doorCost = paintFee + perDoor * room.numberOfDoors;
     }
 
-    // 6) Windows:
-    // "Brushed: $50 paint + $20 per window" / "Sprayed: $50 paint + $40"
     let windowCost = 0;
     if (room.windowPaintingMethod !== 'none' && room.numberOfWindows > 0) {
       const paintFee = 50;
@@ -210,42 +188,34 @@ export default function DynamicEstimatorForm({ onEstimateComplete }: DynamicEsti
       if (room.windowPaintingMethod === 'brush') {
         perWindow = 20; 
       } else {
-        // spray
         perWindow = 40;
       }
       windowCost = paintFee + perWindow * room.numberOfWindows;
     }
 
-    // 7) Fireplace Mantel
-    // "Brushed: $70–$150, Sprayed: $150–$300" 
     let fireplaceCost = 0;
     if (room.fireplaceMethod === 'brush') {
-      fireplaceCost = 100; // Midpoint of range
+      fireplaceCost = 100;
     } else if (room.fireplaceMethod === 'spray') {
-      fireplaceCost = 200; // Midpoint of range
+      fireplaceCost = 200;
     }
 
-    // 8) Stair Railing (by length or complexity)
     let railingCost = 0;
     if (room.hasStairRailing) {
       railingCost = 250; 
     }
 
-    // 9) Two Colors (+10%)
     let twoColorCost = 0;
     if (room.twoColors) {
-      // 10% of (basePrice + paintUpcharge + addonCost + highCeilingCost)
       const partialSubtotal = basePrice + paintUpcharge + addonCost + highCeilingCost;
       twoColorCost = partialSubtotal * 0.1;
     }
 
-    // 10) Millwork Priming (+50%)
     let millworkPrimingCost = 0;
     if (room.millworkPrimingNeeded) {
       millworkPrimingCost = basePrice * 0.5;
     }
 
-    // 11) Repairs
     let repairsCost = 0;
     if (room.repairs === 'minimal') {
       repairsCost = 50;
@@ -253,14 +223,11 @@ export default function DynamicEstimatorForm({ onEstimateComplete }: DynamicEsti
       repairsCost = 200;
     }
 
-    // 12) Baseboard installation
-    // $2 per lf (MDF), $3+ if other materials
     let baseboardInstallCost = 0;
     if (room.baseboardInstallationLf > 0) {
       baseboardInstallCost = room.baseboardInstallationLf * 2.0; 
     }
 
-    // Combine everything BEFORE discounts:
     let roomSubtotal = (
       basePrice +
       paintUpcharge +
@@ -277,16 +244,13 @@ export default function DynamicEstimatorForm({ onEstimateComplete }: DynamicEsti
       baseboardInstallCost
     );
 
-    // 13) "Only painting X" surcharges (e.g., +40% if only painting doors)
     let onlyExtraSurcharge = 0;
     if (basePrice < 1 && (doorCost > 0 || windowCost > 0)) {
-      // add +40% of the cost of that extra
       const costOfExtras = doorCost + windowCost + fireplaceCost + railingCost;
       onlyExtraSurcharge = costOfExtras * 0.4;
     }
     roomSubtotal += onlyExtraSurcharge;
 
-    // 14) "Empty House" discount
     let discountEmptyHouse = 0;
     if (room.isEmpty) {
       const emptyHouseCond = specialConditions.find(sc => sc.name.toLowerCase() === 'empty house');
@@ -295,7 +259,6 @@ export default function DynamicEstimatorForm({ onEstimateComplete }: DynamicEsti
       }
     }
 
-    // 15) "No Floor Covering" discount
     let discountNoFloor = 0;
     if (room.noFloorCovering) {
       const noFloorCond = specialConditions.find(sc => sc.name.toLowerCase() === 'no floor covering needed');
@@ -328,13 +291,11 @@ export default function DynamicEstimatorForm({ onEstimateComplete }: DynamicEsti
     };
   };
 
-  /** Summation and final discounts */
   const { roomCosts, subtotal, volumeDiscount, finalTotal } = useMemo(() => {
     const roomCosts = formState.rooms.map(calculateRoomCost);
 
     let subtotal = roomCosts.reduce((sum, rc) => sum + rc.totalBeforeVolume, 0);
 
-    // find volume discount
     let volumeDiscount = 0;
     let hasExtra = false;
     const applicable = volumeDiscounts
@@ -347,24 +308,19 @@ export default function DynamicEstimatorForm({ onEstimateComplete }: DynamicEsti
       }
     }
 
-    // subtract the volume discount
     let afterVolume = subtotal - volumeDiscount;
     if (hasExtra) {
-      // e.g., minus an additional $100
       afterVolume = afterVolume - 100;
     }
 
-    // apply discount cap of 37.5% if needed
     let totalDiscountSoFar = subtotal - afterVolume;
     let discountPercentageSoFar = (totalDiscountSoFar / subtotal) * 100;
 
     if (discountPercentageSoFar > 37.5) {
-      // cap it
       const maxDiscount = subtotal * 0.375;
       afterVolume = subtotal - maxDiscount;
     }
 
-    // ensure min $400
     const finalTotal = Math.max(afterVolume, 400);
 
     return {
@@ -382,7 +338,6 @@ export default function DynamicEstimatorForm({ onEstimateComplete }: DynamicEsti
     specialConditions
   ]);
 
-  /** Add new default room with all fields */
   const addRoom = () => {
     if (!roomTypes.length) return;
     const newRoom: RoomDetails = {
@@ -395,7 +350,6 @@ export default function DynamicEstimatorForm({ onEstimateComplete }: DynamicEsti
       isEmpty: false,
       noFloorCovering: false,
 
-      // new fields
       doorPaintingMethod: 'none',
       numberOfDoors: 0,
       windowPaintingMethod: 'none',
@@ -406,7 +360,9 @@ export default function DynamicEstimatorForm({ onEstimateComplete }: DynamicEsti
       millworkPrimingNeeded: false,
       repairs: 'none',
       baseboardInstallationLf: 0,
-      baseboardType: 'none'
+      baseboardType: 'none',
+      walkInClosetCount: 0,
+      regularClosetCount: 0
     };
     setFormState(prev => ({ ...prev, rooms: [...prev.rooms, newRoom] }));
   };
@@ -434,7 +390,6 @@ export default function DynamicEstimatorForm({ onEstimateComplete }: DynamicEsti
     }
   };
 
-  // Render the setup required message
   if (tableSetupRequired) {
     return (
       <div className="p-8">
@@ -504,6 +459,8 @@ export default function DynamicEstimatorForm({ onEstimateComplete }: DynamicEsti
             repairs={room.repairs}
             baseboardInstallationLf={room.baseboardInstallationLf}
             baseboardType={room.baseboardType}
+            walkInClosetCount={room.walkInClosetCount}
+            regularClosetCount={room.regularClosetCount}
             
             onUpdate={(updates) => updateRoom(room.id, updates)}
             onRemove={() => removeRoom(room.id)}
@@ -598,7 +555,6 @@ export default function DynamicEstimatorForm({ onEstimateComplete }: DynamicEsti
             </div>
           </div>
 
-          {/* Volume discount lines */}
           {volumeDiscount > 0 && (
             <div className="flex justify-between items-center text-green-600 mb-4">
               <span>Volume Discount</span>
