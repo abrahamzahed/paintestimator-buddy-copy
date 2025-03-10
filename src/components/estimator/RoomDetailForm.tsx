@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useMemo } from 'react';
@@ -122,6 +121,16 @@ export default function RoomDetailForm({
         millworkPrimingNeeded: false
       });
     } else {
+      // If doorPaintingMethod is "none", update it to "spray"
+      if (doorPaintingMethod === 'none' && !updates.doorPaintingMethod) {
+        updates.doorPaintingMethod = 'spray';
+      }
+      
+      // If windowPaintingMethod is "none", update it to "spray"
+      if (windowPaintingMethod === 'none' && !updates.windowPaintingMethod) {
+        updates.windowPaintingMethod = 'spray';
+      }
+      
       onUpdate(updates);
     }
   };
@@ -298,14 +307,13 @@ export default function RoomDetailForm({
             <div className="space-y-1">
               <Label htmlFor="doorPaintMethod">Paint Method</Label>
               <Select 
-                value={doorPaintingMethod} 
+                value={doorPaintingMethod === 'none' ? 'spray' : doorPaintingMethod} 
                 onValueChange={(value) => handleUpdate({ doorPaintingMethod: value as RoomDetails['doorPaintingMethod'] })}
               >
                 <SelectTrigger id="doorPaintMethod" className="w-full">
                   <SelectValue placeholder="Select method" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">None</SelectItem>
                   <SelectItem value="brush">Brush</SelectItem>
                   <SelectItem value="spray">Spray</SelectItem>
                 </SelectContent>
@@ -333,14 +341,13 @@ export default function RoomDetailForm({
             <div className="space-y-1">
               <Label htmlFor="windowPaintMethod">Paint Method</Label>
               <Select 
-                value={windowPaintingMethod} 
+                value={windowPaintingMethod === 'none' ? 'spray' : windowPaintingMethod} 
                 onValueChange={(value) => handleUpdate({ windowPaintingMethod: value as RoomDetails['windowPaintingMethod'] })}
               >
                 <SelectTrigger id="windowPaintMethod" className="w-full">
                   <SelectValue placeholder="Select method" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">None</SelectItem>
                   <SelectItem value="brush">Brush</SelectItem>
                   <SelectItem value="spray">Spray</SelectItem>
                 </SelectContent>
