@@ -45,9 +45,8 @@ const HomeEstimator = () => {
     
     if (currentEstimate) {
       // Save estimate to local storage for retrieval after login
-      // Fixed: Added roomPrice property
       saveTemporaryEstimate({
-        roomPrice: currentEstimate.subtotal,
+        roomPrice: currentEstimate.subtotal, // Add roomPrice property to match EstimateResult type
         laborCost: currentEstimate.finalTotal * 0.7, // Approximate labor as 70% of total
         materialCost: currentEstimate.finalTotal * 0.3, // Approximate materials as 30% of total
         totalCost: currentEstimate.finalTotal,

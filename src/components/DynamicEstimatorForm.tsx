@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -6,6 +5,8 @@ import { supabase } from '@/integrations/supabase/client';
 import RoomDetailForm from './estimator/RoomDetailForm';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
 import type { 
   RoomType, 
@@ -43,11 +44,15 @@ export default function DynamicEstimatorForm({ onEstimateComplete }: DynamicEsti
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [tableSetupRequired, setTableSetupRequired] = useState(false);
 
   // fetch data
   useEffect(() => {
     async function fetchData() {
       try {
+        setLoading(true);
+        setError(null);
+        
         const [
           rtRes,
           rsRes,
@@ -66,6 +71,12 @@ export default function DynamicEstimatorForm({ onEstimateComplete }: DynamicEsti
           supabase.from('extras').select('*')
         ]);
         
+        // Check for specific error about tables not existing
+        if (rtRes.error && rtRes.error.message.includes('does not exist')) {
+          setTableSetupRequired(true);
+          throw new Error('Database tables not set up. Please run the database setup script in your Supabase instance.');
+        }
+        
         if (rtRes.error) throw rtRes.error;
         if (rsRes.error) throw rsRes.error;
         if (raRes.error) throw raRes.error;
@@ -83,12 +94,17 @@ export default function DynamicEstimatorForm({ onEstimateComplete }: DynamicEsti
         setExtras(exRes.data);
 
       } catch (err: any) {
+        console.error("Error fetching data:", err);
         setError(err.message ?? 'Error fetching data');
-        toast({
-          title: "Error loading pricing data",
-          description: err.message ?? 'Error fetching data',
-          variant: "destructive"
-        });
+        
+        // Only show toast for errors other than missing tables
+        if (!tableSetupRequired) {
+          toast({
+            title: "Error loading pricing data",
+            description: err.message ?? 'Error fetching data',
+            variant: "destructive"
+          });
+        }
       } finally {
         setLoading(false);
       }
@@ -410,6 +426,33 @@ export default function DynamicEstimatorForm({ onEstimateComplete }: DynamicEsti
       );
     }
   };
+
+  // Render the setup required message
+  if (tableSetupRequired) {
+    return (
+      <div className="p-8">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Database Setup Required</AlertTitle>
+          <AlertDescription>
+            <p className="mb-4">To use the dynamic estimator, database tables need to be created in Supabase.</p>
+            <ol className="list-decimal pl-6 space-y-2 mb-4">
+              <li>Go to your Supabase project dashboard</li>
+              <li>Open the SQL Editor</li>
+              <li>Run the database setup script from src/lib/database-setup.sql</li>
+              <li>Refresh this page after executing the script</li>
+            </ol>
+            <Button 
+              onClick={() => window.location.reload()}
+              className="bg-paint hover:bg-paint-dark"
+            >
+              Refresh Page
+            </Button>
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
 
   if (loading) return <div className="p-8 text-center">Loading pricing data...</div>;
   if (error) return <div className="p-8 text-center text-red-500">Error: {error}</div>;
