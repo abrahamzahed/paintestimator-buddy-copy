@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useMemo } from 'react';
@@ -14,6 +15,7 @@ import { RoomDetails } from '@/types/estimator';
 interface RoomDetailFormProps {
   roomId: string;
   roomTypes: RoomType[];
+  roomSizes: RoomSize[]; // Add this line to include roomSizes prop
   roomAddons: RoomAddon[];
   paintTypes: PaintType[];
   specialConditions: SpecialCondition[];
@@ -45,6 +47,7 @@ interface RoomDetailFormProps {
 export default function RoomDetailForm({
   roomId,
   roomTypes,
+  roomSizes, // Add this parameter to destructure roomSizes from props
   roomAddons,
   paintTypes,
   specialConditions,
