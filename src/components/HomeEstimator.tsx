@@ -12,8 +12,7 @@ import { RoomDetails, EstimatorSummary } from "@/types/estimator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import CurrentEstimatePanel from "./estimator/CurrentEstimatePanel";
-import { EstimateResult, RoomDetail } from "@/types";
-import { convertToRoomDetail } from "@/utils/roomTypeConverter";
+import { EstimateResult } from "@/types";
 
 const HomeEstimator = () => {
   const navigate = useNavigate();
@@ -131,8 +130,6 @@ const HomeEstimator = () => {
     setIsSubmitting(true);
     
     try {
-      const convertedRooms = convertToRoomDetail(rooms);
-      
       const { data, error } = await supabase
         .from("leads")
         .insert([
@@ -158,7 +155,7 @@ const HomeEstimator = () => {
         throw error;
       }
       
-      saveTemporaryEstimate(estimate, convertedRooms, {});
+      saveTemporaryEstimate(estimate, rooms, {});
       saveTemporaryProjectName(projectName);
       
       setEstimateSubmitted(true);
