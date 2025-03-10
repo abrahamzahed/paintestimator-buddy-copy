@@ -91,13 +91,6 @@ export default function RoomDetailForm({
       );
   }, [roomAddons, roomTypeId]);
 
-  // Find the high ceiling addon to get its price
-  const highCeilingAddon = useMemo(() => {
-    return roomAddons.find(addon => 
-      addon.name.toLowerCase() === 'high ceiling'
-    );
-  }, [roomAddons]);
-
   // Retrieve special conditions for labeling
   const emptyHouseCondition = specialConditions.find(
     sc => sc.name.toLowerCase() === 'empty house'
@@ -241,7 +234,7 @@ export default function RoomDetailForm({
         </div>
       </div>
 
-      {/* Ceiling Options */}
+      {/* High Ceiling */}
       <div className="space-y-2">
         <label className="block text-sm font-medium">Ceiling Options</label>
         <div className="p-3 border rounded-md bg-gray-50">
@@ -252,37 +245,8 @@ export default function RoomDetailForm({
               onChange={(e) => onUpdate({ hasHighCeiling: e.target.checked })}
               className="rounded text-blue-600"
             />
-            <span>High Ceiling {highCeilingAddon && highCeilingAddon.value ? 
-              `(+$${highCeilingAddon.value.toFixed(0)})` : 
-              '(+$600)'}</span>
+            <span>High Ceiling</span>
           </label>
-          
-          {filteredAddons.map(addon => {
-            if (addon.name.toLowerCase() === 'add paint ceiling') {
-              return (
-                <label key={addon.id} className="flex items-center space-x-2 mt-2">
-                  <input
-                    type="checkbox"
-                    checked={addons.includes(addon.id)}
-                    onChange={(e) => {
-                      const newAddons = e.target.checked
-                        ? [...addons, addon.id]
-                        : addons.filter(id => id !== addon.id);
-                      onUpdate({ addons: newAddons });
-                    }}
-                    className="rounded text-blue-600"
-                  />
-                  <span>
-                    Add Paint Ceiling
-                    {addon.addon_type === 'percentage' ? 
-                      ` (+${addon.value}%)` : 
-                      addon.value ? ` (+$${addon.value.toFixed(0)})` : ''}
-                  </span>
-                </label>
-              );
-            }
-            return null;
-          })}
         </div>
       </div>
 
@@ -389,6 +353,31 @@ export default function RoomDetailForm({
           placeholder="Linear feet of new baseboards"
         />
       </div>
+
+      {/* Additional Options (all other add-ons) */}
+      {filteredAddons.length > 0 && (
+        <div className="space-y-2 mt-4">
+          <label className="block text-sm font-medium">Additional Options</label>
+          <div className="grid grid-cols-2 gap-2 p-3 border rounded-md bg-gray-50">
+            {filteredAddons.map(addon => (
+              <label key={addon.id} className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={addons.includes(addon.id)}
+                  onChange={(e) => {
+                    const newAddons = e.target.checked
+                      ? [...addons, addon.id]
+                      : addons.filter(id => id !== addon.id);
+                    onUpdate({ addons: newAddons });
+                  }}
+                  className="rounded text-blue-600"
+                />
+                <span>{addon.name}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Remove Room Button */}
       <div className="text-right">
