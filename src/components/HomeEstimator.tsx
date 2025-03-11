@@ -17,22 +17,26 @@ const HomeEstimator = () => {
   const { user } = useSession();
   const { toast } = useToast();
   
+  // User information state
   const [step, setStep] = useState(1); // 1: Info, 2: Estimator, 3: Summary
   const [projectName, setProjectName] = useState("");
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   
+  // Validation errors
   const [projectNameError, setProjectNameError] = useState<string | null>(null);
   const [nameError, setNameError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [phoneError, setPhoneError] = useState<string | null>(null);
   
+  // Estimate data
   const [currentEstimate, setCurrentEstimate] = useState<EstimatorSummary | null>(null);
-  const [roomDetails, setRoomDetails] = useState<RoomDetails>({ rooms: [] });
+  const [roomDetails, setRoomDetails] = useState<RoomDetails[]>([]);
   const [saveComplete, setSaveComplete] = useState(false);
   const [leadId, setLeadId] = useState<string | null>(null);
 
+  // If user is logged in, redirect to formal estimate page
   useEffect(() => {
     if (user) {
       navigate('/estimate');
@@ -42,6 +46,7 @@ const HomeEstimator = () => {
   const validateStep1 = () => {
     let isValid = true;
     
+    // Validate project name
     if (!projectName.trim()) {
       setProjectNameError("Please enter a project name");
       isValid = false;
@@ -49,6 +54,7 @@ const HomeEstimator = () => {
       setProjectNameError(null);
     }
     
+    // Validate name
     if (!name.trim()) {
       setNameError("Please enter your full name");
       isValid = false;
@@ -56,6 +62,7 @@ const HomeEstimator = () => {
       setNameError(null);
     }
     
+    // Validate email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email.trim() || !emailRegex.test(email)) {
       setEmailError("Please enter a valid email address");
@@ -64,6 +71,7 @@ const HomeEstimator = () => {
       setEmailError(null);
     }
     
+    // Validate phone (basic validation)
     const phoneRegex = /^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/;
     if (!phone.trim() || !phoneRegex.test(phone)) {
       setPhoneError("Please enter a valid phone number (e.g., 555-123-4567)");
@@ -91,12 +99,13 @@ const HomeEstimator = () => {
 
   const handleEstimateComplete = async (
     estimate: EstimatorSummary,
-    rooms: RoomDetails
+    rooms: RoomDetails[]
   ) => {
     setCurrentEstimate(estimate);
     setRoomDetails(rooms);
     
     try {
+      // Create a lead in Supabase with all details in the JSON format
       const detailsJson = JSON.stringify({
         estimateSummary: estimate,
         roomDetails: rooms,
@@ -131,14 +140,15 @@ const HomeEstimator = () => {
       if (leadData) {
         setLeadId(leadData.id);
         
+        // Store estimate data for account creation
         if (currentEstimate) {
           saveTemporaryEstimate({
             roomPrice: estimate.subtotal,
-            laborCost: estimate.finalTotal * 0.7,
-            materialCost: estimate.finalTotal * 0.3,
+            laborCost: estimate.finalTotal * 0.7, // Approximate labor as 70% of total
+            materialCost: estimate.finalTotal * 0.3, // Approximate materials as 30% of total
             totalCost: estimate.finalTotal,
-            timeEstimate: 0,
-            paintCans: 0,
+            timeEstimate: 0, // Will be calculated properly on the backend
+            paintCans: 0, // Will be calculated properly on the backend
             additionalCosts: {},
             discounts: { volumeDiscount: estimate.volumeDiscount }
           }, [], {});
@@ -165,11 +175,13 @@ const HomeEstimator = () => {
   };
 
   const handleCreateAccount = () => {
+    // Redirect to auth page
     navigate('/auth?returnUrl=/estimate&saveEstimate=true');
   };
 
   return (
     <div className="glass rounded-xl p-6 shadow-lg animate-scale-in relative">
+      {/* Progress Steps */}
       <div className="flex items-center justify-between mb-6">
         <div 
           className={`flex items-center ${step >= 1 ? 'text-paint' : 'text-muted-foreground'}`}
@@ -199,6 +211,7 @@ const HomeEstimator = () => {
         </div>
       </div>
 
+      {/* Title */}
       <div className="mb-6">
         <h2 className="text-2xl font-bold">
           {step === 1 && "Let's Get Started"}
@@ -212,6 +225,7 @@ const HomeEstimator = () => {
         </p>
       </div>
 
+      {/* Step 1: User Information */}
       {step === 1 && (
         <div className="space-y-4">
           <div className="space-y-2">
@@ -286,6 +300,7 @@ const HomeEstimator = () => {
         </div>
       )}
 
+      {/* Step 2: Estimator Form */}
       {step === 2 && (
         <div>
           <Button 
@@ -300,6 +315,7 @@ const HomeEstimator = () => {
         </div>
       )}
 
+      {/* Step 3: Summary */}
       {step === 3 && (
         <div className="space-y-6">
           <div className="flex items-center justify-center text-green-500 mb-4">
@@ -326,7 +342,7 @@ const HomeEstimator = () => {
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Rooms:</span>
-                <span className="font-medium">{roomDetails.rooms.length}</span>
+                <span className="font-medium">{roomDetails.length}</span>
               </div>
             </div>
           </div>
@@ -336,7 +352,6 @@ const HomeEstimator = () => {
               currentEstimate={null} 
               dynamicEstimate={currentEstimate} 
               showDetails={true}
-              roomDetails={roomDetails}
             />
           )}
           
