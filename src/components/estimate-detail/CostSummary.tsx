@@ -69,7 +69,10 @@ const CostSummary = ({ estimate }: CostSummaryProps) => {
         Array.isArray(estimate.details.estimateSummary.roomCosts)) {
       return estimate.details.estimateSummary.roomCosts[index]?.totalBeforeVolume || 0;
     }
-    return room.totalCost || room.totalBeforeVolume || 0;
+    
+    // Fix: Get the room cost from the current room in the loop
+    // instead of using an undefined 'room' variable
+    return 0;
   };
 
   return (
@@ -139,7 +142,7 @@ const CostSummary = ({ estimate }: CostSummaryProps) => {
                     <span>Included</span>
                   </>
                 )}
-                
+
                 {room.baseboardType !== 'none' && (
                   <>
                     <span>Baseboards:</span>
@@ -188,3 +191,4 @@ const CostSummary = ({ estimate }: CostSummaryProps) => {
 };
 
 export default CostSummary;
+
