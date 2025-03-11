@@ -80,75 +80,72 @@ const CurrentEstimatePanel = ({
                 </span>
               </div>
               
-              <div className="mt-1 text-muted-foreground space-y-1">
-                {/* Room specifications */}
-                <div className="grid grid-cols-2 gap-1">
-                  <span>Size:</span>
-                  <span>{formatRoomSize(room.size)}</span>
-                  
-                  <span>Paint Type:</span>
-                  <span>{getPaintTypeName(room.paintType)}</span>
-                  
-                  {room.hasHighCeiling && (
-                    <>
-                      <span>Ceiling:</span>
-                      <span>High ceiling</span>
-                    </>
-                  )}
-                  
-                  {room.twoColors && (
-                    <>
-                      <span>Wall Colors:</span>
-                      <span>Two colors</span>
-                    </>
-                  )}
-                  
-                  {(room.regularClosetCount > 0 || room.walkInClosetCount > 0) && (
-                    <>
-                      <span>Closets:</span>
-                      <span>
-                        {room.walkInClosetCount > 0 && `${room.walkInClosetCount} walk-in`}
-                        {room.walkInClosetCount > 0 && room.regularClosetCount > 0 && ', '}
-                        {room.regularClosetCount > 0 && `${room.regularClosetCount} regular`}
-                      </span>
-                    </>
-                  )}
-                  
-                  {room.fireplaceMethod !== 'none' && (
-                    <>
-                      <span>Fireplace:</span>
-                      <span>{room.fireplaceMethod.charAt(0).toUpperCase() + room.fireplaceMethod.slice(1)} painting</span>
-                    </>
-                  )}
-                  
-                  {room.repairs !== 'none' && (
-                    <>
-                      <span>Repairs:</span>
-                      <span>{room.repairs.charAt(0).toUpperCase() + room.repairs.slice(1)}</span>
-                    </>
-                  )}
-                  
-                  {room.hasStairRailing && (
-                    <>
-                      <span>Stair Railing:</span>
-                      <span>Included</span>
-                    </>
-                  )}
+              <div className="mt-1 text-muted-foreground text-xs grid grid-cols-2 gap-x-3 gap-y-1">
+                <span>Size:</span>
+                <span>{formatRoomSize(room.size)}</span>
+                
+                <span>Paint Type:</span>
+                <span>{getPaintTypeName(room.paintType)}</span>
+                
+                {room.hasHighCeiling && (
+                  <>
+                    <span>Ceiling:</span>
+                    <span>High ceiling</span>
+                  </>
+                )}
+                
+                {room.twoColors && (
+                  <>
+                    <span>Wall Colors:</span>
+                    <span>Two colors</span>
+                  </>
+                )}
+                
+                {(room.regularClosetCount > 0 || room.walkInClosetCount > 0) && (
+                  <>
+                    <span>Closets:</span>
+                    <span>
+                      {room.walkInClosetCount > 0 && `${room.walkInClosetCount} walk-in`}
+                      {room.walkInClosetCount > 0 && room.regularClosetCount > 0 && ', '}
+                      {room.regularClosetCount > 0 && `${room.regularClosetCount} regular`}
+                    </span>
+                  </>
+                )}
+                
+                {room.fireplaceMethod !== 'none' && (
+                  <>
+                    <span>Fireplace:</span>
+                    <span>{room.fireplaceMethod.charAt(0).toUpperCase() + room.fireplaceMethod.slice(1)} painting</span>
+                  </>
+                )}
+                
+                {room.repairs !== 'none' && (
+                  <>
+                    <span>Repairs:</span>
+                    <span>{room.repairs.charAt(0).toUpperCase() + room.repairs.slice(1)}</span>
+                  </>
+                )}
+                
+                {room.hasStairRailing && (
+                  <>
+                    <span>Stair Railing:</span>
+                    <span>Included</span>
+                  </>
+                )}
 
-                  {room.baseboardType !== 'none' && (
-                    <>
-                      <span>Baseboards:</span>
-                      <span>{room.baseboardType.charAt(0).toUpperCase() + room.baseboardType.slice(1)} application</span>
-                    </>
-                  )}
-                  
-                  {room.millworkPrimingNeeded && (
-                    <>
-                      <span>Millwork Priming:</span>
-                      <span>Included</span>
-                    </>
-                  )}
-                </div>
+                {room.baseboardType !== 'none' && (
+                  <>
+                    <span>Baseboards:</span>
+                    <span>{room.baseboardType.charAt(0).toUpperCase() + room.baseboardType.slice(1)} application</span>
+                  </>
+                )}
+                
+                {room.millworkPrimingNeeded && (
+                  <>
+                    <span>Millwork Priming:</span>
+                    <span>Included</span>
+                  </>
+                )}
               </div>
             </div>
           ))}

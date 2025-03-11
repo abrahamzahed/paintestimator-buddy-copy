@@ -70,8 +70,7 @@ const CostSummary = ({ estimate }: CostSummaryProps) => {
       return estimate.details.estimateSummary.roomCosts[index]?.totalBeforeVolume || 0;
     }
     
-    // Fix: Get the room cost from the current room in the loop
-    // instead of using an undefined 'room' variable
+    // Return 0 as fallback when room costs aren't available
     return 0;
   };
 
@@ -191,4 +190,3 @@ const CostSummary = ({ estimate }: CostSummaryProps) => {
 };
 
 export default CostSummary;
-
