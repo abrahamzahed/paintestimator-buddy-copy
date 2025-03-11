@@ -179,7 +179,7 @@ export default function DynamicEstimatorForm({ onEstimateComplete }: DynamicEsti
       }
     }
 
-    // 5) Doors:
+    // 6) Doors:
     // Example: "Brushed: $50 paint + $50 (1–10), $40 (11–19), etc."
     let doorCost = 0;
     if (room.doorPaintingMethod !== 'none' && room.numberOfDoors > 0) {
@@ -201,7 +201,44 @@ export default function DynamicEstimatorForm({ onEstimateComplete }: DynamicEsti
       doorCost = paintFee + perDoor * room.numberOfDoors;
     }
 
-    // 6) Windows:
+    // Add closet cost calculation (new section)
+    let closetCost = 0;
+    if (room.walkInClosetCount > 0 || room.regularClosetCount > 0) {
+      // Find closet add-ons in the room_addons table
+      const walkInClosetAddon = roomAddons.find(a => 
+        a.name.toLowerCase().includes('walk-in closet') || 
+        a.name.toLowerCase().includes('walk in closet'));
+      
+      const regularClosetAddon = roomAddons.find(a => 
+        a.name.toLowerCase().includes('regular closet') || 
+        a.name.toLowerCase() === 'closet');
+      
+      // Calculate walk-in closet cost
+      if (walkInClosetAddon) {
+        if (walkInClosetAddon.addon_type === 'percentage') {
+          closetCost += room.walkInClosetCount * (basePrice * (walkInClosetAddon.value / 100));
+        } else {
+          closetCost += room.walkInClosetCount * walkInClosetAddon.value;
+        }
+      } else if (room.walkInClosetCount > 0) {
+        // Fallback if addon not found in database
+        closetCost += room.walkInClosetCount * 300;
+      }
+      
+      // Calculate regular closet cost
+      if (regularClosetAddon) {
+        if (regularClosetAddon.addon_type === 'percentage') {
+          closetCost += room.regularClosetCount * (basePrice * (regularClosetAddon.value / 100));
+        } else {
+          closetCost += room.regularClosetCount * regularClosetAddon.value;
+        }
+      } else if (room.regularClosetCount > 0) {
+        // Fallback if addon not found in database
+        closetCost += room.regularClosetCount * 100;
+      }
+    }
+
+    // 7) Windows:
     // "Brushed: $50 paint + $20 per window" / "Sprayed: $50 paint + $40"
     let windowCost = 0;
     if (room.windowPaintingMethod !== 'none' && room.numberOfWindows > 0) {
@@ -271,6 +308,7 @@ export default function DynamicEstimatorForm({ onEstimateComplete }: DynamicEsti
       windowCost +
       fireplaceCost +
       railingCost +
+      closetCost +    // Add closet cost here
       twoColorCost +
       millworkPrimingCost +
       repairsCost +
@@ -323,6 +361,7 @@ export default function DynamicEstimatorForm({ onEstimateComplete }: DynamicEsti
       railingCost,
       repairsCost,
       baseboardInstallCost,
+      closetCost,     // Add closet cost here
       onlyExtraSurcharge,
       totalBeforeVolume
     };
@@ -406,7 +445,9 @@ export default function DynamicEstimatorForm({ onEstimateComplete }: DynamicEsti
       millworkPrimingNeeded: false,
       repairs: 'none',
       baseboardInstallationLf: 0,
-      baseboardType: 'none'
+      baseboardType: 'none',
+      walkInClosetCount: 0,
+      regularClosetCount: 0
     };
     setFormState(prev => ({ ...prev, rooms: [...prev.rooms, newRoom] }));
   };
@@ -504,6 +545,8 @@ export default function DynamicEstimatorForm({ onEstimateComplete }: DynamicEsti
             repairs={room.repairs}
             baseboardInstallationLf={room.baseboardInstallationLf}
             baseboardType={room.baseboardType}
+            walkInClosetCount={room.walkInClosetCount}
+            regularClosetCount={room.regularClosetCount}
             
             onUpdate={(updates) => updateRoom(room.id, updates)}
             onRemove={() => removeRoom(room.id)}
@@ -552,6 +595,9 @@ export default function DynamicEstimatorForm({ onEstimateComplete }: DynamicEsti
                     )}
                     {rc.doorCost > 0 && (
                       <div>Doors: +${rc.doorCost.toFixed(2)}</div>
+                    )}
+                    {rc.closetCost > 0 && (
+                      <div>Closets: +${rc.closetCost.toFixed(2)}</div>
                     )}
                     {rc.windowCost > 0 && (
                       <div>Windows: +${rc.windowCost.toFixed(2)}</div>

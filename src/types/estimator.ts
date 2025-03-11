@@ -28,6 +28,10 @@ export interface RoomDetails {
   repairs: RepairType;
   baseboardInstallationLf: number;
   baseboardType: BaseboardType;
+  
+  // New closet fields
+  walkInClosetCount: number;
+  regularClosetCount: number;
 }
 
 export interface RoomCost {
@@ -46,6 +50,7 @@ export interface RoomCost {
   millworkPrimingCost: number;
   repairsCost: number;
   baseboardInstallCost: number;
+  closetCost: number; // New closet cost field
   onlyExtraSurcharge: number;
   totalBeforeVolume: number;
 }
