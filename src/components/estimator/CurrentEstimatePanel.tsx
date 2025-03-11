@@ -59,6 +59,18 @@ const CurrentEstimatePanel = ({
     return size.charAt(0).toUpperCase() + size.slice(1);
   };
 
+  // Function to format painting method
+  const formatPaintingMethod = (method: string) => {
+    if (method === 'none') return 'None';
+    return method.charAt(0).toUpperCase() + method.slice(1);
+  };
+
+  // Function to format repairs
+  const formatRepairs = (repairs: string) => {
+    if (repairs === 'none') return 'None';
+    return repairs.charAt(0).toUpperCase() + repairs.slice(1);
+  };
+
   return (
     <div className="mt-4 p-3 bg-foreground/5 rounded-lg">
       <div className="flex justify-between items-center">
@@ -112,17 +124,39 @@ const CurrentEstimatePanel = ({
                   </>
                 )}
                 
+                {/* Door information */}
+                {room.numberOfDoors > 0 && (
+                  <>
+                    <span>Doors:</span>
+                    <span>
+                      {room.numberOfDoors} {room.numberOfDoors === 1 ? 'door' : 'doors'} 
+                      {room.doorPaintingMethod !== 'none' && ` (${formatPaintingMethod(room.doorPaintingMethod)})`}
+                    </span>
+                  </>
+                )}
+                
+                {/* Window information */}
+                {room.numberOfWindows > 0 && (
+                  <>
+                    <span>Windows:</span>
+                    <span>
+                      {room.numberOfWindows} {room.numberOfWindows === 1 ? 'window' : 'windows'} 
+                      {room.windowPaintingMethod !== 'none' && ` (${formatPaintingMethod(room.windowPaintingMethod)})`}
+                    </span>
+                  </>
+                )}
+                
                 {room.fireplaceMethod !== 'none' && (
                   <>
                     <span>Fireplace:</span>
-                    <span>{room.fireplaceMethod.charAt(0).toUpperCase() + room.fireplaceMethod.slice(1)} painting</span>
+                    <span>{formatPaintingMethod(room.fireplaceMethod)} painting</span>
                   </>
                 )}
                 
                 {room.repairs !== 'none' && (
                   <>
                     <span>Repairs:</span>
-                    <span>{room.repairs.charAt(0).toUpperCase() + room.repairs.slice(1)}</span>
+                    <span>{formatRepairs(room.repairs)}</span>
                   </>
                 )}
                 
@@ -136,7 +170,14 @@ const CurrentEstimatePanel = ({
                 {room.baseboardType !== 'none' && (
                   <>
                     <span>Baseboards:</span>
-                    <span>{room.baseboardType.charAt(0).toUpperCase() + room.baseboardType.slice(1)} application</span>
+                    <span>{formatPaintingMethod(room.baseboardType)} application</span>
+                  </>
+                )}
+                
+                {room.baseboardInstallationLf > 0 && (
+                  <>
+                    <span>Baseboard Installation:</span>
+                    <span>{room.baseboardInstallationLf} linear feet</span>
                   </>
                 )}
                 
@@ -144,6 +185,20 @@ const CurrentEstimatePanel = ({
                   <>
                     <span>Millwork Priming:</span>
                     <span>Included</span>
+                  </>
+                )}
+                
+                {room.isEmpty && (
+                  <>
+                    <span>Empty Room:</span>
+                    <span>Yes (Discounted)</span>
+                  </>
+                )}
+                
+                {room.noFloorCovering && (
+                  <>
+                    <span>No Floor Covering:</span>
+                    <span>Yes (Discounted)</span>
                   </>
                 )}
               </div>
