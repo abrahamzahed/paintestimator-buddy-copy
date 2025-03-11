@@ -138,6 +138,42 @@ const EstimateCalculator = ({
     }
   };
 
+  const handleReset = () => {
+    setStep(1);
+    // Reset to default room
+    setRoomDetails({
+      rooms: [
+        {
+          id: uuidv4(),
+          roomType: "bedroom",
+          roomSize: "average",
+          wallsCount: 4,
+          wallHeight: 8,
+          wallWidth: 10,
+          condition: "good",
+          paintType: "standard",
+          includeCeiling: false,
+          includeBaseboards: false,
+          baseboardsMethod: "brush",
+          includeCrownMolding: false,
+          hasHighCeiling: false,
+          includeCloset: false,
+          isEmptyHouse: false,
+          needFloorCovering: true,
+          doorsCount: 0,
+          windowsCount: 0
+        }
+      ],
+      isEmptyHouse: false,
+      needFloorCovering: true
+    });
+    
+    toast({
+      title: "Estimator reset",
+      description: "All rooms have been reset to default"
+    });
+  };
+
   const updateRooms = (rooms: RoomDetail[]) => {
     setRoomDetails({
       ...roomDetails,
@@ -202,14 +238,13 @@ const EstimateCalculator = ({
 
       <CurrentEstimatePanel currentEstimate={currentEstimate} />
 
-      <div className="mt-6 flex justify-end">
-        <button
-          className="bg-paint hover:bg-paint-dark text-white font-medium py-2 px-6 rounded-md"
-          onClick={handleNextStep}
-        >
-          Continue
-        </button>
-      </div>
+      <EstimatorNavigation
+        currentStep={step}
+        totalSteps={TOTAL_STEPS}
+        onNext={handleNextStep}
+        onPrev={() => {}}
+        onReset={handleReset}
+      />
     </div>
   );
 };

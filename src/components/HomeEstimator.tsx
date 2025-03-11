@@ -13,6 +13,7 @@ import { RoomDetails, EstimatorSummary } from "@/types/estimator";
 import { supabase } from "@/integrations/supabase/client";
 import CurrentEstimatePanel from "./estimator/CurrentEstimatePanel";
 import { fetchPricingData } from "@/lib/supabase";
+import EstimatorNavigation from "./estimator/EstimatorNavigation";
 
 const HomeEstimator = () => {
   const navigate = useNavigate();
@@ -97,6 +98,24 @@ const HomeEstimator = () => {
     if (step > 1) {
       setStep(step - 1);
     }
+  };
+
+  const handleReset = () => {
+    // Reset to step 1 and clear state if needed
+    setStep(1);
+    
+    // If we want to clear all the form data on reset, uncomment these:
+    // setProjectName("");
+    // setEmail("");
+    // setName("");
+    // setPhone("");
+    // setCurrentEstimate(null);
+    // setRoomDetailsArray([]);
+    
+    toast({
+      title: "Estimator reset",
+      description: "All steps have been reset to the beginning"
+    });
   };
 
   const handleEstimateComplete = async (
@@ -304,27 +323,27 @@ const HomeEstimator = () => {
             {phoneError && <p className="text-sm text-red-500">{phoneError}</p>}
           </div>
 
-          <div className="mt-6 flex justify-end">
-            <Button 
-              className="bg-paint hover:bg-paint-dark"
-              onClick={handleNextStep}
-            >
-              Continue to Estimate
-            </Button>
-          </div>
+          <EstimatorNavigation
+            currentStep={1}
+            totalSteps={3}
+            onNext={handleNextStep}
+            onPrev={handlePrevStep}
+            onReset={handleReset}
+            showReset={false} // No need for reset on first step
+          />
         </div>
       )}
 
       {/* Step 2: Estimator Form */}
       {step === 2 && (
         <div>
-          <Button 
-            variant="outline" 
-            onClick={handlePrevStep}
-            className="mb-4"
-          >
-            Back to Information
-          </Button>
+          <EstimatorNavigation
+            currentStep={2}
+            totalSteps={3}
+            onNext={() => {}} // DynamicEstimatorForm handles its own next
+            onPrev={handlePrevStep}
+            onReset={handleReset}
+          />
           
           <DynamicEstimatorForm onEstimateComplete={handleEstimateComplete} />
         </div>
@@ -372,6 +391,14 @@ const HomeEstimator = () => {
           )}
           
           <div className="pt-4 space-y-4">
+            <EstimatorNavigation
+              currentStep={3}
+              totalSteps={3}
+              onNext={() => {}}
+              onPrev={handlePrevStep}
+              onReset={handleReset}
+            />
+            
             <Button 
               className="w-full bg-paint hover:bg-paint-dark"
               onClick={handleCreateAccount}

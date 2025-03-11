@@ -10,12 +10,13 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useToast } from "@/hooks/use-toast";
 import EstimateCalculator from "@/components/EstimateCalculator";
 import { EstimateResult, Lead, RoomDetail } from "@/types";
-import { House, Send, AlertTriangle, ExternalLink } from "lucide-react";
+import { House, Send, AlertTriangle, ExternalLink, RefreshCcw } from "lucide-react";
 import ProjectSelector from "@/components/estimator/ProjectSelector";
 import { formatCurrency } from "@/utils/estimateUtils";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Link } from "react-router-dom";
 import { getTemporaryEstimate, clearTemporaryEstimate, getTemporaryProjectName } from "@/utils/estimateStorage";
+import EstimatorNavigation from "@/components/estimator/EstimatorNavigation";
 
 export default function EstimateForm() {
   const navigate = useNavigate();
@@ -291,6 +292,18 @@ export default function EstimateForm() {
     }
   };
 
+  const handleReset = () => {
+    setStep(1);
+    
+    // Clear form errors if any
+    setProjectError(null);
+    
+    toast({
+      title: "Form reset",
+      description: "You've been returned to the first step"
+    });
+  };
+
   const handlePostLoginEstimateSave = () => {
     if (tempEstimate && user) {
       setEstimateResult(tempEstimate.estimateResult);
@@ -426,10 +439,19 @@ export default function EstimateForm() {
                     error={projectError || undefined} 
                   />
                 </CardContent>
-                <CardFooter>
+                <CardFooter className="flex justify-between">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleReset}
+                    className="border-foreground/20 hover:bg-foreground/5"
+                  >
+                    <RefreshCcw className="h-4 w-4 mr-2" />
+                    Reset
+                  </Button>
                   <Button
                     type="submit"
-                    className="w-full bg-paint hover:bg-paint-dark"
+                    className="bg-paint hover:bg-paint-dark"
                   >
                     Continue to Room Details
                   </Button>
@@ -457,6 +479,24 @@ export default function EstimateForm() {
                     }}
                   />
                 </CardContent>
+                <CardFooter className="flex justify-between">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleReset}
+                    className="border-foreground/20 hover:bg-foreground/5"
+                  >
+                    <RefreshCcw className="h-4 w-4 mr-2" />
+                    Reset
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handlePrevStep}
+                  >
+                    Back
+                  </Button>
+                </CardFooter>
               </Card>
             </div>
           )}
@@ -586,13 +626,24 @@ export default function EstimateForm() {
                 )}
               </CardContent>
               <CardFooter className="flex justify-between">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handlePrevStep}
-                >
-                  Back
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleReset}
+                    className="border-foreground/20 hover:bg-foreground/5"
+                  >
+                    <RefreshCcw className="h-4 w-4 mr-2" />
+                    Reset
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handlePrevStep}
+                  >
+                    Back
+                  </Button>
+                </div>
                 <Button
                   className="bg-paint hover:bg-paint-dark px-6"
                   onClick={handleSubmit}

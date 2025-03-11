@@ -1,29 +1,48 @@
 
 import { Button } from "@/components/ui/button";
+import { RefreshCcw } from "lucide-react";
 
 interface EstimatorNavigationProps {
   currentStep: number;
   totalSteps: number;
   onNext: () => void;
   onPrev: () => void;
+  onReset?: () => void;
+  showReset?: boolean;
 }
 
 const EstimatorNavigation = ({
   currentStep,
   totalSteps,
   onNext,
-  onPrev
+  onPrev,
+  onReset,
+  showReset = true
 }: EstimatorNavigationProps) => {
   return (
     <div className="flex justify-between mt-8">
-      <Button
-        variant="outline"
-        onClick={onPrev}
-        disabled={currentStep === 1}
-        className="border-foreground/20 hover:bg-foreground/5"
-      >
-        Back
-      </Button>
+      <div className="flex gap-2">
+        <Button
+          variant="outline"
+          onClick={onPrev}
+          disabled={currentStep === 1}
+          className="border-foreground/20 hover:bg-foreground/5"
+        >
+          Back
+        </Button>
+        
+        {showReset && onReset && (
+          <Button
+            variant="outline"
+            onClick={onReset}
+            className="border-foreground/20 hover:bg-foreground/5"
+          >
+            <RefreshCcw className="h-4 w-4 mr-2" />
+            Reset
+          </Button>
+        )}
+      </div>
+      
       {currentStep < totalSteps && (
         <Button
           onClick={onNext}
