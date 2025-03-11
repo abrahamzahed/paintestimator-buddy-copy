@@ -12,6 +12,7 @@ import DynamicEstimatorForm from "./DynamicEstimatorForm";
 import { RoomDetails, EstimatorSummary } from "@/types/estimator";
 import { supabase } from "@/integrations/supabase/client";
 import CurrentEstimatePanel from "./estimator/CurrentEstimatePanel";
+import { fetchPricingData } from "@/lib/supabase";
 
 const HomeEstimator = () => {
   const navigate = useNavigate();
@@ -106,10 +107,23 @@ const HomeEstimator = () => {
     setRoomDetailsArray(rooms);
     
     try {
+      // Fetch room type data to include actual room names
+      const pricingData = await fetchPricingData();
+      
+      // Enhance room details with room type names for better readability
+      const enhancedRooms = rooms.map((room, index) => {
+        const roomType = pricingData.roomTypes.find(rt => rt.id === room.roomTypeId);
+        return {
+          ...room,
+          roomTypeName: roomType?.name || `Room Type ${index + 1}`,
+          totalBeforeVolume: estimate.roomCosts[index]?.totalBeforeVolume || 0
+        };
+      });
+      
       // Create a lead in Supabase with all details in the JSON format
       const detailsJson = JSON.stringify({
         estimateSummary: estimate,
-        roomDetails: rooms,
+        roomDetails: enhancedRooms,
         userInfo: {
           name,
           email,
