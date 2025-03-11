@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "@/context/SessionContext";
@@ -32,7 +33,7 @@ const HomeEstimator = () => {
   
   // Estimate data
   const [currentEstimate, setCurrentEstimate] = useState<EstimatorSummary | null>(null);
-  const [roomDetails, setRoomDetails] = useState<RoomDetails[]>([]);
+  const [roomDetailsArray, setRoomDetailsArray] = useState<RoomDetails[]>([]);
   const [saveComplete, setSaveComplete] = useState(false);
   const [leadId, setLeadId] = useState<string | null>(null);
 
@@ -102,7 +103,7 @@ const HomeEstimator = () => {
     rooms: RoomDetails[]
   ) => {
     setCurrentEstimate(estimate);
-    setRoomDetails(rooms);
+    setRoomDetailsArray(rooms);
     
     try {
       // Create a lead in Supabase with all details in the JSON format
@@ -342,7 +343,7 @@ const HomeEstimator = () => {
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Rooms:</span>
-                <span className="font-medium">{roomDetails.length}</span>
+                <span className="font-medium">{roomDetailsArray.length}</span>
               </div>
             </div>
           </div>
@@ -352,6 +353,7 @@ const HomeEstimator = () => {
               currentEstimate={null} 
               dynamicEstimate={currentEstimate} 
               showDetails={true}
+              roomDetails={roomDetailsArray}
             />
           )}
           
