@@ -18,14 +18,6 @@ const CurrentEstimatePanel = ({
   const totalCost = dynamicEstimate 
     ? dynamicEstimate.finalTotal 
     : (currentEstimate?.totalCost || 0);
-    
-  const laborCost = dynamicEstimate 
-    ? totalCost * 0.7 // Approximate 70% labor cost
-    : (currentEstimate?.laborCost || 0);
-    
-  const materialCost = dynamicEstimate 
-    ? totalCost * 0.3 // Approximate 30% material cost
-    : (currentEstimate?.materialCost || 0);
 
   return (
     <div className="mt-4 p-3 bg-foreground/5 rounded-lg">
@@ -35,12 +27,6 @@ const CurrentEstimatePanel = ({
           {formatCurrency(totalCost)}
         </span>
       </div>
-      {showDetails && (totalCost > 0) && (
-        <div className="mt-2 text-sm text-muted-foreground grid grid-cols-2 gap-2">
-          <div>Labor: {formatCurrency(laborCost)}</div>
-          <div>Materials: {formatCurrency(materialCost)}</div>
-        </div>
-      )}
     </div>
   );
 };
