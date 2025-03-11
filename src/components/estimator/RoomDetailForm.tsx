@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useMemo } from 'react';
@@ -427,30 +426,6 @@ export default function RoomDetailForm({
           placeholder="Linear feet of new baseboards"
         />
       </div>
-
-      {filteredAddons.length > 0 && (
-        <div className="space-y-2 mt-4">
-          <label className="block text-sm font-medium">Additional Options</label>
-          <div className="grid grid-cols-2 gap-2 p-3 border rounded-md bg-gray-50">
-            {filteredAddons.map(addon => (
-              <label key={addon.id} className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  checked={addons.includes(addon.id)}
-                  onChange={(e) => {
-                    const newAddons = e.target.checked
-                      ? [...addons, addon.id]
-                      : addons.filter(id => id !== addon.id);
-                    handleUpdate({ addons: newAddons });
-                  }}
-                  className="rounded text-blue-600"
-                />
-                <span>{addon.name}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-      )}
 
       <div className="text-right">
         <button onClick={onRemove} className="text-red-500 hover:text-red-700 mt-4">
