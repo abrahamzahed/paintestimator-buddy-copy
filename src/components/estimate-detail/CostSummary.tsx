@@ -9,14 +9,6 @@ interface CostSummaryProps {
 const CostSummary = ({ estimate }: CostSummaryProps) => {
   return (
     <div className="space-y-1">
-      <div className="flex justify-between">
-        <span className="text-sm text-muted-foreground">Labor:</span>
-        <span className="text-sm">{formatCurrency(estimate?.labor_cost || 0)}</span>
-      </div>
-      <div className="flex justify-between">
-        <span className="text-sm text-muted-foreground">Materials:</span>
-        <span className="text-sm">{formatCurrency(estimate?.material_cost || 0)}</span>
-      </div>
       {(estimate?.discount || 0) > 0 && (
         <div className="flex justify-between">
           <span className="text-sm text-muted-foreground">Discount:</span>
