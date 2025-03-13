@@ -1,4 +1,3 @@
-
 -- First, enable UUID extension if not already enabled
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
@@ -227,3 +226,38 @@ CREATE POLICY "Allow read access for all users" ON extras FOR SELECT USING (true
 -- This is needed for the free estimator functionality
 CREATE POLICY "Allow insert for anonymous users" ON public.leads FOR INSERT WITH CHECK (true);
 CREATE POLICY "Allow read for all users" ON public.leads FOR SELECT USING (true);
+
+-- Create function to handle new user registration and auto-create profile
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = public
+AS $$
+BEGIN
+  INSERT INTO public.profiles (id, name, email, phone, address, role)
+  VALUES (
+    NEW.id,
+    NEW.raw_user_meta_data->>'name',
+    NEW.email,
+    NEW.raw_user_meta_data->>'phone',
+    NEW.raw_user_meta_data->>'address',
+    'customer'
+  );
+  RETURN NEW;
+END;
+$$;
+
+-- Create trigger to automatically create profile when user signs up
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- Create or update RLS policy to allow users to access their own profiles
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users can view own profile" ON public.profiles;
+CREATE POLICY "Users can view own profile" ON public.profiles
+  FOR SELECT USING (auth.uid() = id);
+DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
+CREATE POLICY "Users can update own profile" ON public.profiles
+  FOR UPDATE USING (auth.uid() = id);

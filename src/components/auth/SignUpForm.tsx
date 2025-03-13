@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -92,46 +91,10 @@ export function SignUpForm({ onSuccess }: SignUpFormProps) {
       const phoneInMetadata = authData?.user?.user_metadata?.phone;
       console.log("Phone in metadata:", phoneInMetadata);
 
-      if (authData?.user?.id) {
-        try {
-          // Create profile with the same information
-          const { data: profileData, error: profileError } = await supabase
-            .from("profiles")
-            .insert([{
-              id: authData.user.id,
-              name,
-              email,
-              phone: formattedPhone,
-              address,
-              role: "customer",
-            }])
-            .select();
-          
-          if (profileError) {
-            console.error("Failed to create profile during signup:", profileError);
-          } else {
-            console.log("Profile created successfully:", profileData);
-          }
-          
-          // Verify profile data after insertion
-          const { data: verifyProfile, error: verifyError } = await supabase
-            .from("profiles")
-            .select("*")
-            .eq("id", authData.user.id)
-            .single();
-            
-          if (verifyError) {
-            console.error("Error verifying profile:", verifyError);
-          } else {
-            console.log("Verified profile data:", verifyProfile);
-            console.log("Phone in profile:", verifyProfile.phone);
-          }
-          
-        } catch (profileErr) {
-          console.error("Error creating profile during signup:", profileErr);
-        }
-      }
-
+      // The profile creation will now happen automatically via the database trigger
+      // that runs when a new user is created in Supabase Auth.
+      // This trigger creates an entry in the profiles table using the user metadata.
+      
       toast({
         title: "Account created!",
         description: "Please check your email to verify your account.",

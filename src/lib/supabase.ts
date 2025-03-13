@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 // Define TypeScript types for our database tables
@@ -9,21 +8,19 @@ export interface RoomType {
   created_at: string;
 }
 
-// Modified to accept any string for size (from database) but validate to our allowed values
 export interface RoomSize {
   id: string;
   room_type_id: string;
-  size: string; // Changed from 'small' | 'average' | 'large' to string
+  size: string;
   base_price: number;
   created_at: string;
 }
 
-// Modified to accept any string for addon_type but validate to our allowed values
 export interface RoomAddon {
   id: string;
   room_type_id: string | null;
   name: string;
-  addon_type: string; // Changed from 'percentage' | 'fixed' to string
+  addon_type: string;
   value: number;
   description: string | null;
   created_at: string;
@@ -54,12 +51,11 @@ export interface SpecialCondition {
   created_at: string;
 }
 
-// Modified to accept any string for price_type but validate to our allowed values
 export interface Extra {
   id: string;
   category: string;
   name: string;
-  price_type: string; // Changed from 'fixed' | 'per_unit' | 'range' to string
+  price_type: string;
   min_price: number | null;
   max_price: number | null;
   unit_price: number | null;
@@ -67,7 +63,6 @@ export interface Extra {
   created_at: string;
 }
 
-// Helper function to fetch all pricing data
 export async function fetchPricingData() {
   try {
     const [
@@ -88,7 +83,6 @@ export async function fetchPricingData() {
       supabase.from('extras').select('*')
     ]);
 
-    // Check for errors
     if (roomTypesRes.error) throw roomTypesRes.error;
     if (roomSizesRes.error) throw roomSizesRes.error;
     if (roomAddonsRes.error) throw roomAddonsRes.error;
@@ -109,5 +103,32 @@ export async function fetchPricingData() {
   } catch (error) {
     console.error('Error fetching pricing data:', error);
     throw error;
+  }
+}
+
+export async function getCurrentUserProfile() {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      console.log("No authenticated user found");
+      return null;
+    }
+    
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .maybeSingle();
+    
+    if (error) {
+      console.error("Error fetching profile:", error);
+      return null;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error("Error in getCurrentUserProfile:", error);
+    return null;
   }
 }
