@@ -234,12 +234,12 @@ LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = public
 AS $$
 BEGIN
-  INSERT INTO public.profiles (id, name, email, phone, address, role)
+  INSERT INTO public.profiles (id, name, email, phone_number, address, role)
   VALUES (
     NEW.id,
     NEW.raw_user_meta_data->>'name',
     NEW.email,
-    NEW.raw_user_meta_data->>'phone',
+    NEW.raw_user_meta_data->>'phone_number',
     NEW.raw_user_meta_data->>'address',
     'customer'
   );
@@ -261,3 +261,9 @@ CREATE POLICY "Users can view own profile" ON public.profiles
 DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
 CREATE POLICY "Users can update own profile" ON public.profiles
   FOR UPDATE USING (auth.uid() = id);
+DROP POLICY IF EXISTS "Service role can access all profiles" ON public.profiles;
+CREATE POLICY "Service role can access all profiles" ON public.profiles
+  USING (auth.role() = 'service_role');
+DROP POLICY IF EXISTS "Users can insert own profile" ON public.profiles;
+CREATE POLICY "Users can insert own profile" ON public.profiles
+  FOR INSERT WITH CHECK (auth.uid() = id);
