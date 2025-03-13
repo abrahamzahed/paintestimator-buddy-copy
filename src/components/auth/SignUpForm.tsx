@@ -68,15 +68,18 @@ export function SignUpForm({ onSuccess }: SignUpFormProps) {
       const formattedPhone = phone.replace(/\D/g, '');
       
       // Sign up with properly structured metadata
+      // Using both phone and phone_number to ensure compatibility
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        phone: formattedPhone, // This directly sets the phone field in auth.users
         options: {
           data: {
             full_name: name,
             display_name: name,
             name,
             phone: formattedPhone,
+            phone_number: formattedPhone, // Added for redundancy
             address,
           },
         },

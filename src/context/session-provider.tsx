@@ -58,7 +58,7 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
           const { data: project, error: projectError } = await supabase
             .from("projects")
             .insert([{
-              name: lead.project_name || `${lead.service_type} Project`,
+              name: lead.project_name || `Project`,
               user_id: userId,
               description: lead.description || `Imported from lead: ${lead.name}`,
               status: "active"
@@ -97,7 +97,7 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
             .from("estimates")
             .update({ 
               project_id: projectId,
-              project_name: lead.project_name || `${lead.service_type} Project`
+              project_name: lead.project_name || `Project`
             })
             .eq("lead_id", lead.id)
             .is("project_id", null); // Only update estimates not already linked
