@@ -7,13 +7,14 @@ import { saveTemporaryEstimate, saveTemporaryProjectName } from "@/utils/estimat
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, RefreshCcw } from "lucide-react";
 import DynamicEstimatorForm from "./DynamicEstimatorForm";
 import { RoomDetails, EstimatorSummary } from "@/types/estimator";
 import { supabase } from "@/integrations/supabase/client";
 import CurrentEstimatePanel from "./estimator/CurrentEstimatePanel";
 import { fetchPricingData } from "@/lib/supabase";
 import EstimatorNavigation from "./estimator/EstimatorNavigation";
+import AddressAutocomplete from "./AddressAutocomplete";
 
 const HomeEstimator = () => {
   const navigate = useNavigate();
@@ -26,12 +27,14 @@ const HomeEstimator = () => {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
   
   // Validation errors
   const [projectNameError, setProjectNameError] = useState<string | null>(null);
   const [nameError, setNameError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [addressError, setAddressError] = useState<string | null>(null);
   
   // Estimate data
   const [currentEstimate, setCurrentEstimate] = useState<EstimatorSummary | null>(null);
@@ -83,6 +86,14 @@ const HomeEstimator = () => {
       setPhoneError(null);
     }
     
+    // Validate address
+    if (!address.trim() || address.length < 10) {
+      setAddressError("Please enter a complete address");
+      isValid = false;
+    } else {
+      setAddressError(null);
+    }
+    
     return isValid;
   };
 
@@ -109,6 +120,7 @@ const HomeEstimator = () => {
     // setEmail("");
     // setName("");
     // setPhone("");
+    // setAddress("");
     // setCurrentEstimate(null);
     // setRoomDetailsArray([]);
     
@@ -147,6 +159,7 @@ const HomeEstimator = () => {
           name,
           email,
           phone,
+          address,
           projectName
         }
       });
@@ -158,6 +171,7 @@ const HomeEstimator = () => {
             name: name,
             email: email,
             phone: phone,
+            address: address,
             project_name: projectName,
             status: 'new',
             description: 'Lead from free estimator',
@@ -322,6 +336,16 @@ const HomeEstimator = () => {
             />
             {phoneError && <p className="text-sm text-red-500">{phoneError}</p>}
           </div>
+          
+          <AddressAutocomplete
+            value={address}
+            onChange={(value) => {
+              setAddress(value);
+              setAddressError(null);
+            }}
+            error={addressError || undefined}
+            required={true}
+          />
 
           <EstimatorNavigation
             currentStep={1}
@@ -373,6 +397,10 @@ const HomeEstimator = () => {
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Contact:</span>
                 <span className="font-medium">{name}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Address:</span>
+                <span className="font-medium">{address}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Rooms:</span>

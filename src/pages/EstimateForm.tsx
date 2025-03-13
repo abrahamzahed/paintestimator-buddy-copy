@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "@/context/SessionContext";
@@ -17,6 +16,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Link } from "react-router-dom";
 import { getTemporaryEstimate, clearTemporaryEstimate, getTemporaryProjectName } from "@/utils/estimateStorage";
 import EstimatorNavigation from "@/components/estimator/EstimatorNavigation";
+import AddressAutocomplete from "@/components/AddressAutocomplete";
 
 export default function EstimateForm() {
   const navigate = useNavigate();
@@ -46,7 +46,6 @@ export default function EstimateForm() {
     address: "",
     description: "",
     status: "new",
-    // Add the contact preference fields
     preferredContactMethod: "email",
     bestTimeToCall: "",
     preferredTimeline: ""
@@ -420,17 +419,12 @@ export default function EstimateForm() {
                     />
                   </div>
                   
-                  <div className="space-y-2">
-                    <Label htmlFor="address">Project Address</Label>
-                    <Input
-                      id="address"
-                      name="address"
-                      placeholder="123 Main St, City, State, Zip"
-                      value={leadData.address}
-                      onChange={handleChange}
-                      required
-                    />
-                  </div>
+                  <AddressAutocomplete
+                    id="address"
+                    value={leadData.address || ""}
+                    onChange={(value) => setLeadData({ ...leadData, address: value })}
+                    required={true}
+                  />
 
                   <ProjectSelector 
                     selectedProjectId={selectedProjectId} 

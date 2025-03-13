@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { RoomDetails as OldRoomDetail, RoomDetail, EstimateResult } from "../types";
 import { calculateMultiRoomEstimate, calculateSingleRoomEstimate } from "../utils/estimateUtils";
@@ -14,6 +13,7 @@ import { saveTemporaryEstimate, getTemporaryEstimate, getTemporaryProjectName } 
 import { useSession } from "@/context/SessionContext";
 import DynamicEstimatorForm from "./DynamicEstimatorForm";
 import { RoomDetails, EstimatorSummary } from "@/types/estimator";
+import AddressAutocomplete from "./AddressAutocomplete";
 
 interface EstimateCalculatorProps {
   onEstimateComplete: (
@@ -25,6 +25,7 @@ interface EstimateCalculatorProps {
     name?: string;
     email?: string;
     phone?: string;
+    address?: string;
   };
   initialRoomDetails?: RoomDetail[];
   submitButtonText?: string;
