@@ -66,6 +66,7 @@ export function SignUpForm({ onSuccess }: SignUpFormProps) {
     try {
       const formattedPhone = phone.replace(/\D/g, '');
       
+      // Store metadata with user
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
@@ -76,16 +77,25 @@ export function SignUpForm({ onSuccess }: SignUpFormProps) {
             name,
             phone: formattedPhone,
             address,
-            phone_number: formattedPhone // Adding phone_number to metadata as well
+            phone_number: formattedPhone
           },
         },
       });
 
       if (signUpError) throw signUpError;
 
+      // Debug logs to verify user metadata
+      console.log("Auth user created:", authData?.user?.id);
+      console.log("User metadata:", authData?.user?.user_metadata);
+      
+      // Verify phone is in metadata
+      const phoneInMetadata = authData?.user?.user_metadata?.phone;
+      console.log("Phone in metadata:", phoneInMetadata);
+
       if (authData?.user?.id) {
         try {
-          const { error: profileError } = await supabase
+          // Create profile with the same information
+          const { data: profileData, error: profileError } = await supabase
             .from("profiles")
             .insert([{
               id: authData.user.id,
@@ -94,11 +104,29 @@ export function SignUpForm({ onSuccess }: SignUpFormProps) {
               phone: formattedPhone,
               address,
               role: "customer",
-            }]);
+            }])
+            .select();
           
           if (profileError) {
             console.error("Failed to create profile during signup:", profileError);
+          } else {
+            console.log("Profile created successfully:", profileData);
           }
+          
+          // Verify profile data after insertion
+          const { data: verifyProfile, error: verifyError } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", authData.user.id)
+            .single();
+            
+          if (verifyError) {
+            console.error("Error verifying profile:", verifyError);
+          } else {
+            console.log("Verified profile data:", verifyProfile);
+            console.log("Phone in profile:", verifyProfile.phone);
+          }
+          
         } catch (profileErr) {
           console.error("Error creating profile during signup:", profileErr);
         }
