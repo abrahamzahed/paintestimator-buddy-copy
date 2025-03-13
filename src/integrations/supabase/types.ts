@@ -150,6 +150,42 @@ export type Database = {
           },
         ]
       }
+      extras: {
+        Row: {
+          category: string
+          conditions: string | null
+          created_at: string
+          id: string
+          max_price: number | null
+          min_price: number | null
+          name: string
+          price_type: string
+          unit_price: number | null
+        }
+        Insert: {
+          category: string
+          conditions?: string | null
+          created_at?: string
+          id?: string
+          max_price?: number | null
+          min_price?: number | null
+          name: string
+          price_type: string
+          unit_price?: number | null
+        }
+        Update: {
+          category?: string
+          conditions?: string | null
+          created_at?: string
+          id?: string
+          max_price?: number | null
+          min_price?: number | null
+          name?: string
+          price_type?: string
+          unit_price?: number | null
+        }
+        Relationships: []
+      }
       invoices: {
         Row: {
           amount: number
@@ -200,60 +236,45 @@ export type Database = {
       leads: {
         Row: {
           address: string | null
-          best_time_to_call: string | null
           created_at: string
           description: string | null
+          details: string | null
           email: string
           id: string
           name: string
           phone: string | null
-          preferred_contact_method: string | null
-          preferred_timeline: string | null
           project_id: string | null
           project_name: string | null
-          room_count: number | null
-          service_type: string
-          square_footage: number | null
           status: string | null
           updated_at: string
           user_id: string | null
         }
         Insert: {
           address?: string | null
-          best_time_to_call?: string | null
           created_at?: string
           description?: string | null
+          details?: string | null
           email: string
           id?: string
           name: string
           phone?: string | null
-          preferred_contact_method?: string | null
-          preferred_timeline?: string | null
           project_id?: string | null
           project_name?: string | null
-          room_count?: number | null
-          service_type: string
-          square_footage?: number | null
           status?: string | null
           updated_at?: string
           user_id?: string | null
         }
         Update: {
           address?: string | null
-          best_time_to_call?: string | null
           created_at?: string
           description?: string | null
+          details?: string | null
           email?: string
           id?: string
           name?: string
           phone?: string | null
-          preferred_contact_method?: string | null
-          preferred_timeline?: string | null
           project_id?: string | null
           project_name?: string | null
-          room_count?: number | null
-          service_type?: string
-          square_footage?: number | null
           status?: string | null
           updated_at?: string
           user_id?: string | null
@@ -303,6 +324,33 @@ export type Database = {
           },
         ]
       }
+      paint_types: {
+        Row: {
+          created_at: string
+          description: string | null
+          fixed_upcharge: number | null
+          id: string
+          name: string
+          percentage_upcharge: number | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          fixed_upcharge?: number | null
+          id?: string
+          name: string
+          percentage_upcharge?: number | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          fixed_upcharge?: number | null
+          id?: string
+          name?: string
+          percentage_upcharge?: number | null
+        }
+        Relationships: []
+      }
       pricing_rules: {
         Row: {
           base_price: number
@@ -341,6 +389,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          address: string | null
           created_at: string
           email: string | null
           id: string
@@ -350,6 +399,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          address?: string | null
           created_at?: string
           email?: string | null
           id: string
@@ -359,6 +409,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          address?: string | null
           created_at?: string
           email?: string | null
           id?: string
@@ -396,6 +447,145 @@ export type Database = {
           status?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      room_addons: {
+        Row: {
+          addon_type: string
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          room_type_id: string | null
+          value: number
+        }
+        Insert: {
+          addon_type: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          room_type_id?: string | null
+          value: number
+        }
+        Update: {
+          addon_type?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          room_type_id?: string | null
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_addons_room_type_id_fkey"
+            columns: ["room_type_id"]
+            isOneToOne: false
+            referencedRelation: "room_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      room_sizes: {
+        Row: {
+          base_price: number
+          created_at: string
+          id: string
+          room_type_id: string | null
+          size: string
+        }
+        Insert: {
+          base_price: number
+          created_at?: string
+          id?: string
+          room_type_id?: string | null
+          size: string
+        }
+        Update: {
+          base_price?: number
+          created_at?: string
+          id?: string
+          room_type_id?: string | null
+          size?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_sizes_room_type_id_fkey"
+            columns: ["room_type_id"]
+            isOneToOne: false
+            referencedRelation: "room_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      room_types: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      special_conditions: {
+        Row: {
+          created_at: string
+          description: string | null
+          discount_percentage: number
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          discount_percentage: number
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          discount_percentage?: number
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      volume_discounts: {
+        Row: {
+          created_at: string
+          discount_percentage: number
+          has_extra: boolean | null
+          id: string
+          threshold: number
+        }
+        Insert: {
+          created_at?: string
+          discount_percentage: number
+          has_extra?: boolean | null
+          id?: string
+          threshold: number
+        }
+        Update: {
+          created_at?: string
+          discount_percentage?: number
+          has_extra?: boolean | null
+          id?: string
+          threshold?: number
         }
         Relationships: []
       }
