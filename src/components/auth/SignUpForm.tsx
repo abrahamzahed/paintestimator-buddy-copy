@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -64,37 +63,31 @@ export function SignUpForm({ onSuccess }: SignUpFormProps) {
     setIsSubmitting(true);
 
     try {
-      // Format phone number to a standard format
       const formattedPhone = phone.replace(/\D/g, '');
       
-      // Sign up with properly structured metadata
-      // Using both phone and phone_number to ensure compatibility
-      const { data, error } = await supabase.auth.signUp({
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
-        phone: formattedPhone, // This directly sets the phone field in auth.users
         options: {
+          phoneNumber: formattedPhone,
           data: {
             full_name: name,
             display_name: name,
             name,
             phone: formattedPhone,
-            phone_number: formattedPhone, // Added for redundancy
             address,
           },
         },
       });
 
-      if (error) throw error;
+      if (signUpError) throw signUpError;
 
-      // After successful signup, directly create the profile as well to ensure synchronization
-      if (data?.user?.id) {
+      if (authData?.user?.id) {
         try {
-          // Attempt to create profile immediately
           const { error: profileError } = await supabase
             .from("profiles")
             .insert([{
-              id: data.user.id,
+              id: authData.user.id,
               name,
               email,
               phone: formattedPhone,
@@ -110,20 +103,17 @@ export function SignUpForm({ onSuccess }: SignUpFormProps) {
         }
       }
 
-      if (data) {
-        toast({
-          title: "Account created!",
-          description: "Please check your email to verify your account.",
-        });
-        
-        if (onSuccess) {
-          onSuccess();
-        }
+      toast({
+        title: "Account created!",
+        description: "Please check your email to verify your account.",
+      });
+      
+      if (onSuccess) {
+        onSuccess();
       }
     } catch (error: any) {
       console.error("Sign up error:", error);
       
-      // Specific error handling for common cases
       if (error.message.includes("already registered")) {
         setFormErrors({
           ...formErrors,
