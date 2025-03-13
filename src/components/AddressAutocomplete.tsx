@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { Input } from "@/components/ui/input";
@@ -62,7 +61,6 @@ const AddressAutocomplete = ({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Debounce the API request
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       if (query.length >= 3) {
@@ -75,7 +73,6 @@ const AddressAutocomplete = ({
     return () => clearTimeout(timeoutId);
   }, [query]);
 
-  // Handle clicks outside the dropdown to close it
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -126,34 +123,22 @@ const AddressAutocomplete = ({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setQuery(value);
-    onChange(value); // Update parent component's state
+    onChange(value);
   };
 
-  // Format address to remove county information and include only essential parts
   const formatAddress = (suggestion: NominatimResult): string => {
     const address = suggestion.address;
     const parts = [];
 
-    // Add house number and road
     if (address.house_number) parts.push(address.house_number);
     if (address.road) parts.push(address.road);
     
-    // Add neighborhood/suburb (but not both)
-    if (address.neighbourhood) parts.push(address.neighbourhood);
-    else if (address.suburb) parts.push(address.suburb);
-    
-    // Add city
     if (address.city) parts.push(address.city);
     
-    // Add state
     if (address.state) parts.push(address.state);
     
-    // Add postal code
     if (address.postcode) parts.push(address.postcode);
     
-    // Skip county
-
-    // Only include country for international addresses
     if (address.country && address.country !== "United States") {
       parts.push(address.country);
     }
