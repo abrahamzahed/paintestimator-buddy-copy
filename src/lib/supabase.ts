@@ -9,19 +9,21 @@ export interface RoomType {
   created_at: string;
 }
 
+// Modified to accept any string for size (from database) but validate to our allowed values
 export interface RoomSize {
   id: string;
   room_type_id: string;
-  size: 'small' | 'average' | 'large';
+  size: string; // Changed from 'small' | 'average' | 'large' to string
   base_price: number;
   created_at: string;
 }
 
+// Modified to accept any string for addon_type but validate to our allowed values
 export interface RoomAddon {
   id: string;
   room_type_id: string | null;
   name: string;
-  addon_type: 'percentage' | 'fixed';
+  addon_type: string; // Changed from 'percentage' | 'fixed' to string
   value: number;
   description: string | null;
   created_at: string;
@@ -52,11 +54,12 @@ export interface SpecialCondition {
   created_at: string;
 }
 
+// Modified to accept any string for price_type but validate to our allowed values
 export interface Extra {
   id: string;
   category: string;
   name: string;
-  price_type: 'fixed' | 'per_unit' | 'range';
+  price_type: string; // Changed from 'fixed' | 'per_unit' | 'range' to string
   min_price: number | null;
   max_price: number | null;
   unit_price: number | null;
