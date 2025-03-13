@@ -77,7 +77,8 @@ export interface Lead {
   email: string;
   phone?: string;
   address?: string;
-  service_type: string;
+  details?: string; // Updated to match current DB schema
+  service_type?: string; // Made optional as it's not in the current schema
   description?: string;
   room_count?: number;
   square_footage?: number;

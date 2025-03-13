@@ -14,3 +14,6 @@ FOR SELECT USING (true);
 CREATE POLICY "Allow update for authenticated users" ON public.leads
 FOR UPDATE USING (auth.uid() = user_id)
 WITH CHECK (auth.uid() = user_id);
+
+-- Add address column to leads table if it doesn't exist
+ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS address text;
