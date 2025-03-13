@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { Input } from "@/components/ui/input";
@@ -101,6 +102,7 @@ const AddressAutocomplete = ({
           format: "json",
           addressdetails: 1,
           limit: 5,
+          countrycodes: "us" // Restrict to United States only
         },
         headers: {
           "User-Agent": "PaintPro Web Application",
@@ -133,16 +135,14 @@ const AddressAutocomplete = ({
     if (address.house_number) parts.push(address.house_number);
     if (address.road) parts.push(address.road);
     
+    // Skip neighborhood/suburb
+    
     if (address.city) parts.push(address.city);
     
     if (address.state) parts.push(address.state);
     
     if (address.postcode) parts.push(address.postcode);
     
-    if (address.country && address.country !== "United States") {
-      parts.push(address.country);
-    }
-
     return parts.join(", ");
   };
 
