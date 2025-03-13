@@ -64,19 +64,47 @@ export function SignUpForm({ onSuccess }: SignUpFormProps) {
     setIsSubmitting(true);
 
     try {
+      // Format phone number to a standard format
+      const formattedPhone = phone.replace(/\D/g, '');
+      
+      // Sign up with properly structured metadata
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
-            name: name,
-            phone: phone,
-            address: address, // Include address in user metadata
+            full_name: name, // Changed from 'name' to 'full_name' for Supabase auth display name
+            name, // Keep original name for compatibility
+            phone: formattedPhone,
+            address,
           },
         },
       });
 
       if (error) throw error;
+
+      // After successful signup, directly create the profile as well to ensure synchronization
+      if (data?.user?.id) {
+        try {
+          // Attempt to create profile immediately
+          const { error: profileError } = await supabase
+            .from("profiles")
+            .insert([{
+              id: data.user.id,
+              name,
+              email,
+              phone: formattedPhone,
+              address,
+              role: "customer",
+            }]);
+          
+          if (profileError) {
+            console.error("Failed to create profile during signup:", profileError);
+          }
+        } catch (profileErr) {
+          console.error("Error creating profile during signup:", profileErr);
+        }
+      }
 
       if (data) {
         toast({

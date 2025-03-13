@@ -140,21 +140,26 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
         // If no profile exists, create one
         if (error.code === 'PGRST116') {
           console.log("No profile found, creating new profile");
-          const userData = user?.user_metadata;
+          if (!user) {
+            console.error("User not available for profile creation");
+            setIsLoading(false);
+            return;
+          }
+          
+          const userData = user.user_metadata;
+          console.log("User metadata for profile creation:", userData);
           
           try {
-            // Create profile with customer role by default and include email and address
-            console.log("User metadata:", userData);
-            
+            // Create profile with customer role by default
             const { data: newProfile, error: createError } = await supabase
               .from("profiles")
               .insert([{
                 id: userId,
-                name: userData?.name || user?.email?.split('@')[0] || null,
+                name: userData?.full_name || userData?.name || user?.email?.split('@')[0] || null,
+                email: user?.email || null,
                 phone: userData?.phone || null,
-                address: userData?.address || null, // Include address from metadata
-                role: "customer", // Default role for new profiles is customer
-                email: user?.email || null // Ensure email is always included
+                address: userData?.address || null,
+                role: "customer" // Default role for new profiles
               }])
               .select();
               
@@ -194,7 +199,7 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
 
       console.log("Profile fetched successfully:", data);
       
-      // Verify profile data integrity
+      // Verify profile data integrity and update missing fields if needed
       if (!data || !data.id) {
         console.error("Profile data is incomplete:", data);
         setProfileError(new Error("Profile data is incomplete"));
@@ -205,46 +210,52 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
         });
       }
       
-      // If email is missing in the profile but exists in auth, update the profile
+      const userMetadata = user?.user_metadata;
+      let profileUpdated = false;
+      let profileUpdates: Record<string, any> = {};
+      
+      // Check for missing email
       if ((!data.email || data.email === '') && user?.email) {
-        console.log("Email missing or empty in profile, updating with:", user.email);
-        try {
-          const { error: updateError } = await supabase
-            .from("profiles")
-            .update({ email: user.email })
-            .eq("id", userId);
-            
-          if (updateError) {
-            console.error("Error updating profile email:", updateError);
-          } else {
-            // Update the local data with the email
-            data.email = user.email;
-            console.log("Profile email updated successfully:", data.email);
-          }
-        } catch (updateError: any) {
-          console.error("Error updating profile email:", updateError);
-        }
+        profileUpdates.email = user.email;
+        profileUpdated = true;
       }
       
-      // If address is missing in the profile but exists in metadata, update the profile
-      const userMetadata = user?.user_metadata;
+      // Check for missing name
+      if ((!data.name || data.name === '') && (userMetadata?.full_name || userMetadata?.name)) {
+        profileUpdates.name = userMetadata?.full_name || userMetadata?.name;
+        profileUpdated = true;
+      }
+      
+      // Check for missing phone
+      if ((!data.phone || data.phone === '') && userMetadata?.phone) {
+        profileUpdates.phone = userMetadata.phone;
+        profileUpdated = true;
+      }
+      
+      // Check for missing address
       if ((!data.address || data.address === '') && userMetadata?.address) {
-        console.log("Address missing or empty in profile, updating with:", userMetadata.address);
+        profileUpdates.address = userMetadata.address;
+        profileUpdated = true;
+      }
+      
+      // Update profile if needed
+      if (profileUpdated) {
+        console.log("Updating profile with missing data:", profileUpdates);
         try {
           const { error: updateError } = await supabase
             .from("profiles")
-            .update({ address: userMetadata.address })
+            .update(profileUpdates)
             .eq("id", userId);
             
           if (updateError) {
-            console.error("Error updating profile address:", updateError);
+            console.error("Error updating profile:", updateError);
           } else {
-            // Update the local data with the address
-            data.address = userMetadata.address;
-            console.log("Profile address updated successfully:", data.address);
+            // Update the local data with the updates
+            Object.assign(data, profileUpdates);
+            console.log("Profile updated successfully with missing data");
           }
         } catch (updateError: any) {
-          console.error("Error updating profile address:", updateError);
+          console.error("Error updating profile with missing data:", updateError);
         }
       }
       
