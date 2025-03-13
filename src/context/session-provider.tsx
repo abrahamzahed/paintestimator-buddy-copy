@@ -24,6 +24,105 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
   const [profileError, setProfileError] = useState<Error | null>(null);
   const { toast } = useToast();
 
+  // Function to import leads and create projects for the user
+  const importLeadsForUser = async (userId: string, userEmail: string) => {
+    try {
+      console.log("Checking for leads to import for email:", userEmail);
+      
+      // 1. First, check for leads with the user's email
+      const { data: leads, error: leadsError } = await supabase
+        .from("leads")
+        .select("*")
+        .eq("email", userEmail)
+        .is("user_id", null); // Only get leads not already linked to a user
+      
+      if (leadsError) {
+        console.error("Error fetching leads:", leadsError);
+        return;
+      }
+      
+      if (!leads || leads.length === 0) {
+        console.log("No leads found for import");
+        return;
+      }
+      
+      console.log(`Found ${leads.length} leads to import`);
+      
+      // Process each lead
+      for (const lead of leads) {
+        // 2. Create a project for each lead
+        let projectId = lead.project_id;
+        
+        if (!projectId) {
+          // Create new project if one doesn't exist
+          const { data: project, error: projectError } = await supabase
+            .from("projects")
+            .insert([{
+              name: lead.project_name || `${lead.service_type} Project`,
+              user_id: userId,
+              description: lead.description || `Imported from lead: ${lead.name}`,
+              status: "active"
+            }])
+            .select()
+            .single();
+          
+          if (projectError) {
+            console.error("Error creating project:", projectError);
+            continue;
+          }
+          
+          projectId = project.id;
+          console.log("Created new project:", projectId);
+        }
+        
+        // 3. Update the lead with the user_id and project_id
+        const { error: updateLeadError } = await supabase
+          .from("leads")
+          .update({ 
+            user_id: userId,
+            project_id: projectId 
+          })
+          .eq("id", lead.id);
+        
+        if (updateLeadError) {
+          console.error("Error updating lead:", updateLeadError);
+          continue;
+        }
+        
+        console.log(`Updated lead ${lead.id} with user_id and project_id`);
+        
+        // 4. Update any estimates associated with this lead to link to the project
+        if (lead.id) {
+          const { error: updateEstimatesError } = await supabase
+            .from("estimates")
+            .update({ 
+              project_id: projectId,
+              project_name: lead.project_name || `${lead.service_type} Project`
+            })
+            .eq("lead_id", lead.id)
+            .is("project_id", null); // Only update estimates not already linked
+          
+          if (updateEstimatesError) {
+            console.error("Error updating estimates:", updateEstimatesError);
+          } else {
+            console.log(`Updated estimates for lead ${lead.id}`);
+          }
+        }
+      }
+      
+      // Notify user of successful import
+      if (leads.length > 0) {
+        toast({
+          title: "Data imported successfully",
+          description: `${leads.length} estimates found and added to your account.`,
+        });
+      }
+      
+    } catch (error) {
+      console.error("Error in importLeadsForUser:", error);
+    }
+  };
+
   const fetchProfile = async (userId: string) => {
     try {
       console.log("Fetching profile for user:", userId);
@@ -44,7 +143,7 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
           const userData = user?.user_metadata;
           
           try {
-            // Create profile with customer role by default and include email
+            // Create profile with customer role by default and include email and address
             console.log("User metadata:", userData);
             
             const { data: newProfile, error: createError } = await supabase
@@ -53,6 +152,7 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
                 id: userId,
                 name: userData?.name || user?.email?.split('@')[0] || null,
                 phone: userData?.phone || null,
+                address: userData?.address || null, // Include address from metadata
                 role: "customer", // Default role for new profiles is customer
                 email: user?.email || null // Ensure email is always included
               }])
@@ -65,6 +165,12 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
             
             console.log("New profile created successfully:", newProfile?.[0]);
             setProfile(newProfile?.[0] as Profile);
+            
+            // Import leads and estimates after creating the profile
+            if (user?.email) {
+              importLeadsForUser(userId, user.email);
+            }
+            
             return;
           } catch (createError: any) {
             console.error("Error in profile creation:", createError);
@@ -120,7 +226,35 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
         }
       }
       
+      // If address is missing in the profile but exists in metadata, update the profile
+      const userMetadata = user?.user_metadata;
+      if ((!data.address || data.address === '') && userMetadata?.address) {
+        console.log("Address missing or empty in profile, updating with:", userMetadata.address);
+        try {
+          const { error: updateError } = await supabase
+            .from("profiles")
+            .update({ address: userMetadata.address })
+            .eq("id", userId);
+            
+          if (updateError) {
+            console.error("Error updating profile address:", updateError);
+          } else {
+            // Update the local data with the address
+            data.address = userMetadata.address;
+            console.log("Profile address updated successfully:", data.address);
+          }
+        } catch (updateError: any) {
+          console.error("Error updating profile address:", updateError);
+        }
+      }
+      
       setProfile(data as Profile);
+      
+      // Import leads and estimates if this is a verified user
+      if (user?.email && user?.email_confirmed_at) {
+        importLeadsForUser(userId, user.email);
+      }
+      
     } catch (error) {
       console.error("Error in fetchProfile function:", error);
     } finally {

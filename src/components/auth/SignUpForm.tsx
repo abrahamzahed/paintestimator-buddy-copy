@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import AddressAutocomplete from "@/components/AddressAutocomplete";
 
 interface SignUpFormProps {
   onSuccess?: () => void;
@@ -16,6 +17,7 @@ export function SignUpForm({ onSuccess }: SignUpFormProps) {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
@@ -44,6 +46,10 @@ export function SignUpForm({ onSuccess }: SignUpFormProps) {
       errors.phone = "Please enter a valid 10-digit phone number";
     }
     
+    if (!address.trim()) {
+      errors.address = "Address is required";
+    }
+    
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -64,7 +70,8 @@ export function SignUpForm({ onSuccess }: SignUpFormProps) {
         options: {
           data: {
             name: name,
-            phone: phone, // Ensure phone is always included
+            phone: phone,
+            address: address, // Include address in user metadata
           },
         },
       });
@@ -133,6 +140,15 @@ export function SignUpForm({ onSuccess }: SignUpFormProps) {
           <p className="text-destructive text-sm">{formErrors.email}</p>
         )}
       </div>
+      <AddressAutocomplete
+        value={address}
+        onChange={setAddress}
+        label="Address"
+        placeholder="Enter your address"
+        required
+        error={formErrors.address}
+        id="address-signup"
+      />
       <div className="space-y-2">
         <Label htmlFor="phone-signup">Phone Number</Label>
         <Input
