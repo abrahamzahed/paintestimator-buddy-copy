@@ -129,17 +129,44 @@ const AddressAutocomplete = ({
     onChange(value); // Update parent component's state
   };
 
+  // Format address to remove county information and include only essential parts
+  const formatAddress = (suggestion: NominatimResult): string => {
+    const address = suggestion.address;
+    const parts = [];
+
+    // Add house number and road
+    if (address.house_number) parts.push(address.house_number);
+    if (address.road) parts.push(address.road);
+    
+    // Add neighborhood/suburb (but not both)
+    if (address.neighbourhood) parts.push(address.neighbourhood);
+    else if (address.suburb) parts.push(address.suburb);
+    
+    // Add city
+    if (address.city) parts.push(address.city);
+    
+    // Add state
+    if (address.state) parts.push(address.state);
+    
+    // Add postal code
+    if (address.postcode) parts.push(address.postcode);
+    
+    // Skip county
+
+    // Only include country for international addresses
+    if (address.country && address.country !== "United States") {
+      parts.push(address.country);
+    }
+
+    return parts.join(", ");
+  };
+
   const handleSelect = (suggestion: NominatimResult) => {
-    const selectedAddress = suggestion.display_name;
+    const selectedAddress = formatAddress(suggestion);
     setQuery(selectedAddress);
     onChange(selectedAddress);
     setSuggestions([]);
     setIsFocused(false);
-  };
-
-  // Format the address to highlight the matching parts
-  const formatAddress = (address: string) => {
-    return address;
   };
 
   return (
@@ -185,7 +212,7 @@ const AddressAutocomplete = ({
                 onClick={() => handleSelect(suggestion)}
                 className="px-4 py-2 hover:bg-muted cursor-pointer text-sm"
               >
-                {formatAddress(suggestion.display_name)}
+                {formatAddress(suggestion)}
               </li>
             ))}
           </ul>
