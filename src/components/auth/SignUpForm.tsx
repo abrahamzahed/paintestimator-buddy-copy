@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -69,13 +70,13 @@ export function SignUpForm({ onSuccess }: SignUpFormProps) {
         email,
         password,
         options: {
-          phoneNumber: formattedPhone,
           data: {
             full_name: name,
             display_name: name,
             name,
             phone: formattedPhone,
             address,
+            phone_number: formattedPhone // Adding phone_number to metadata as well
           },
         },
       });
