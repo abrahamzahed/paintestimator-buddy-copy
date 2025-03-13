@@ -73,8 +73,9 @@ export function SignUpForm({ onSuccess }: SignUpFormProps) {
         password,
         options: {
           data: {
-            full_name: name, // Changed from 'name' to 'full_name' for Supabase auth display name
-            name, // Keep original name for compatibility
+            full_name: name,
+            display_name: name,
+            name,
             phone: formattedPhone,
             address,
           },
