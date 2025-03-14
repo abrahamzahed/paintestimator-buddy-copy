@@ -234,12 +234,12 @@ LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = public
 AS $$
 BEGIN
-  INSERT INTO public.profiles (id, name, email, phone_number, address, role)
+  INSERT INTO public.profiles (id, name, email, phone, address, role)
   VALUES (
     NEW.id,
     NEW.raw_user_meta_data->>'name',
     NEW.email,
-    NEW.raw_user_meta_data->>'phone_number',
+    NEW.raw_user_meta_data->>'phone',
     NEW.raw_user_meta_data->>'address',
     'customer'
   );

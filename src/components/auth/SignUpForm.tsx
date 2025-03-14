@@ -65,7 +65,6 @@ export function SignUpForm({ onSuccess }: SignUpFormProps) {
     try {
       const formattedPhone = phone.replace(/\D/g, '');
       
-      // Store metadata with user
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
@@ -75,25 +74,18 @@ export function SignUpForm({ onSuccess }: SignUpFormProps) {
             display_name: name,
             name,
             phone: formattedPhone,
-            address,
-            phone_number: formattedPhone
+            address
           },
         },
       });
 
       if (signUpError) throw signUpError;
 
-      // Debug logs to verify user metadata
       console.log("Auth user created:", authData?.user?.id);
       console.log("User metadata:", authData?.user?.user_metadata);
       
-      // Verify phone is in metadata
       const phoneInMetadata = authData?.user?.user_metadata?.phone;
       console.log("Phone in metadata:", phoneInMetadata);
-
-      // The profile creation will now happen automatically via the database trigger
-      // that runs when a new user is created in Supabase Auth.
-      // This trigger creates an entry in the profiles table using the user metadata.
       
       toast({
         title: "Account created!",
