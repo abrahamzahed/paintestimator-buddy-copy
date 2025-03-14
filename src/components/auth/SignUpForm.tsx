@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -84,9 +83,6 @@ export function SignUpForm({ onSuccess }: SignUpFormProps) {
 
       console.log("Auth user created:", authData?.user?.id);
       console.log("User metadata:", authData?.user?.user_metadata);
-      
-      const phoneInMetadata = authData?.user?.user_metadata?.phone;
-      console.log("Phone in metadata:", phoneInMetadata);
       
       toast({
         title: "Account created!",

@@ -11,15 +11,17 @@ import { SignUpForm } from "@/components/auth/SignUpForm";
 import { PasswordResetConfirmation } from "@/components/auth/PasswordResetConfirmation";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useSyncUserData } from "@/hooks/useSyncUserData";
 
 export default function Auth() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { session, isLoading } = useSession();
+  const { session, isLoading, user } = useSession();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("sign-in");
   const [isRecoveryMode, setIsRecoveryMode] = useState(false);
   const [processingRecovery, setProcessingRecovery] = useState(true);
+  const { syncComplete } = useSyncUserData();
 
   const searchParams = new URLSearchParams(location.search);
   const tab = searchParams.get("tab");
@@ -61,7 +63,7 @@ export default function Auth() {
   // Only redirect if not in recovery mode
   useEffect(() => {
     const handleSessionRedirect = async () => {
-      if (session && !isLoading && !isRecoveryMode && !processingRecovery) {
+      if (session && user && !isLoading && !isRecoveryMode && !processingRecovery) {
         try {
           console.log("Valid session detected, redirecting to:", saveEstimate ? "/estimate?saveEstimate=true" : returnUrl);
           
@@ -82,7 +84,7 @@ export default function Auth() {
     };
     
     handleSessionRedirect();
-  }, [session, isLoading, navigate, returnUrl, saveEstimate, isRecoveryMode, processingRecovery, toast]);
+  }, [session, user, isLoading, navigate, returnUrl, saveEstimate, isRecoveryMode, processingRecovery, toast, syncComplete]);
 
   const handleSignUpSuccess = () => {
     setActiveTab("sign-in");
