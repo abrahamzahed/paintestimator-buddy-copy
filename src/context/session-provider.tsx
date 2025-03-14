@@ -4,7 +4,7 @@ import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Profile, SessionContextType } from "./session-types";
-import { useUserDataImport } from "@/hooks/useUserDataImport";
+import { useSyncUserData } from "@/hooks/useSyncUserData";
 
 export const SessionContext = createContext<SessionContextType>({
   session: null,
@@ -24,7 +24,9 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
   const [isLoading, setIsLoading] = useState(true);
   const [profileError, setProfileError] = useState<Error | null>(null);
   const { toast } = useToast();
-  const { importUserData, isImporting, importComplete, resetImportState } = useUserDataImport();
+  
+  // This will automatically handle data syncing when a user logs in
+  useSyncUserData();
 
   const fetchProfile = async (userId: string) => {
     try {
@@ -73,13 +75,6 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
             
             console.log("New profile created successfully:", newProfile?.[0]);
             setProfile(newProfile?.[0] as Profile);
-            
-            // Import leads and estimates after creating the profile
-            if (user?.email) {
-              resetImportState();
-              importUserData(userId, user.email);
-            }
-            
             return;
           } catch (createError: any) {
             console.error("Error in profile creation:", createError);
@@ -103,12 +98,6 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
 
       console.log("Profile fetched successfully:", data);
       setProfile(data as Profile);
-      
-      // Import user data if this is a verified user and we haven't imported yet
-      if (user?.email && user?.email_confirmed_at && !importComplete) {
-        importUserData(userId, user.email);
-      }
-      
     } catch (error) {
       console.error("Error in fetchProfile function:", error);
     } finally {
