@@ -1,5 +1,5 @@
 
-import React, { ReactNode } from "react";
+import React, { ReactNode, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { User } from "@supabase/supabase-js";
@@ -14,11 +14,20 @@ interface DashboardLayoutProps {
 
 const DashboardLayout = ({ children, user, profile, signOut }: DashboardLayoutProps) => {
   const navigate = useNavigate();
+  const [isSigningOut, setIsSigningOut] = useState(false);
   
   const handleSignOut = async () => {
-    console.log("Sign out button clicked in dashboard");
-    await signOut();
-    navigate('/');
+    try {
+      console.log("Sign out button clicked in dashboard");
+      setIsSigningOut(true);
+      await signOut();
+      console.log("Sign out completed, navigating to home");
+      navigate('/', { replace: true });
+    } catch (error) {
+      console.error("Error during sign out in dashboard:", error);
+    } finally {
+      setIsSigningOut(false);
+    }
   };
 
   return (
@@ -39,8 +48,12 @@ const DashboardLayout = ({ children, user, profile, signOut }: DashboardLayoutPr
               <span className="text-sm hidden md:inline-block">
                 {profile?.name || user?.email}
               </span>
-              <Button variant="outline" onClick={handleSignOut}>
-                Sign Out
+              <Button 
+                variant="outline" 
+                onClick={handleSignOut}
+                disabled={isSigningOut}
+              >
+                {isSigningOut ? 'Signing Out...' : 'Sign Out'}
               </Button>
             </div>
           </div>

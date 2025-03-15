@@ -1,4 +1,3 @@
-
 import { createContext, useState, useEffect, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,7 +24,6 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
   const [profileError, setProfileError] = useState<Error | null>(null);
   const { toast } = useToast();
   
-  // This will automatically handle data syncing when a user logs in
   useSyncUserData();
 
   const fetchProfile = async (userId: string) => {
@@ -42,7 +40,6 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
       if (error) {
         console.error("Error fetching profile:", error);
         
-        // If no profile exists, create one
         if (error.code === 'PGRST116') {
           console.log("No profile found, creating new profile");
           if (!user) {
@@ -55,7 +52,6 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
           console.log("User metadata for profile creation:", userData);
           
           try {
-            // Create profile with customer role by default
             const { data: newProfile, error: createError } = await supabase
               .from("profiles")
               .insert([{
@@ -64,7 +60,7 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
                 email: user?.email || null,
                 phone: userData?.phone || null,
                 address: userData?.address || null,
-                role: "customer" // Default role for new profiles
+                role: "customer"
               }])
               .select();
               
@@ -115,7 +111,6 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
   };
 
   useEffect(() => {
-    // Get initial session
     const initializeSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -136,7 +131,6 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
     
     initializeSession();
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log("Auth state changed:", event, session?.user?.id || "No user");
@@ -160,6 +154,11 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
   const signOut = async () => {
     try {
       console.log("Attempting to sign out user");
+      
+      setSession(null);
+      setUser(null);
+      setProfile(null);
+      
       const { error } = await supabase.auth.signOut();
       
       if (error) {
@@ -167,16 +166,12 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
         throw error;
       }
       
-      // Clear local state when user signs out
-      setSession(null);
-      setUser(null);
-      setProfile(null);
-      
       toast({
         title: "Signed out successfully",
       });
       
       console.log("User signed out successfully");
+      return true;
     } catch (error) {
       console.error("Error signing out:", error);
       toast({
@@ -184,6 +179,7 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
         description: "Please try again",
         variant: "destructive",
       });
+      return false;
     }
   };
 

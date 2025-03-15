@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -7,6 +6,7 @@ import { useSession } from '@/context/use-session';
 
 const Header = () => {
   const [scrolled, setScrolled] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const { user, signOut } = useSession();
   const navigate = useNavigate();
   
@@ -25,9 +25,19 @@ const Header = () => {
   }, [scrolled]);
 
   const handleSignOut = async () => {
-    console.log("Sign out button clicked");
-    await signOut();
-    navigate('/');
+    try {
+      console.log("Sign out button clicked in header");
+      setIsSigningOut(true);
+      const success = await signOut();
+      if (success) {
+        console.log("Successfully signed out, navigating to home");
+        navigate('/');
+      }
+    } catch (error) {
+      console.error("Error in handleSignOut:", error);
+    } finally {
+      setIsSigningOut(false);
+    }
   };
 
   return (
@@ -66,8 +76,9 @@ const Header = () => {
               <Button 
                 className="bg-paint hover:bg-paint-dark transition-all"
                 onClick={handleSignOut}
+                disabled={isSigningOut}
               >
-                Sign Out
+                {isSigningOut ? 'Signing Out...' : 'Sign Out'}
               </Button>
             </>
           ) : (
