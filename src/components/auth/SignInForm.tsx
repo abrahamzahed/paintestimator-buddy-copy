@@ -49,15 +49,12 @@ export function SignInForm({ onSuccess }: SignInFormProps) {
         description: "You have successfully signed in.",
       });
 
-      // Use a slightly longer timeout to ensure the auth state has time to propagate
-      // This helps prevent race conditions with other hooks that depend on auth state
-      setTimeout(() => {
-        if (onSuccess) {
-          onSuccess();
-        } else {
-          navigate("/dashboard");
-        }
-      }, 500);
+      // Navigate immediately after successful sign in
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        navigate("/dashboard");
+      }
     } catch (error: any) {
       console.error("Sign in error:", error);
       
