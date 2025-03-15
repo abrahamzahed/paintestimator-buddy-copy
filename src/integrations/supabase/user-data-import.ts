@@ -18,69 +18,58 @@ export const importUserDataByEmail = async (userId: string, email: string) => {
     }
     
     if (!leads || leads.length === 0) {
+      console.log("No leads found to import for email:", email);
       return { success: true, message: "No leads found to import" };
     }
     
-    console.log(`Found ${leads.length} leads to import`);
+    console.log(`Found ${leads.length} leads to import for user ${userId}`);
     const projectsCreated = [];
     
     // 2. Process each lead
     for (const lead of leads) {
-      let projectId = lead.project_id;
+      console.log(`Processing lead ${lead.id}`);
       
-      // If no project exists, create one
-      if (!projectId) {
-        const projectName = lead.project_name || `${lead.name}'s Project`;
-        console.log("Creating project:", projectName);
-        
-        const { data: project, error: projectError } = await supabase
-          .from("projects")
-          .insert({
-            name: projectName,
-            user_id: userId,
-            description: lead.description || null,
-            status: "active"
-          })
-          .select()
-          .single();
-        
-        if (projectError) {
-          console.error("Error creating project:", projectError);
-          continue;
-        }
-        
-        projectId = project.id;
-        projectsCreated.push(project.name);
-        
-        // 3. Update the lead with user_id and project_id
-        const { error: updateLeadError } = await supabase
-          .from("leads")
-          .update({
-            user_id: userId,
-            project_id: projectId
-          })
-          .eq("id", lead.id);
-        
-        if (updateLeadError) {
-          console.error("Error updating lead:", updateLeadError);
-          continue;
-        }
-        
-        console.log(`Updated lead ${lead.id} with user_id and project_id`);
-      } else {
-        // Project exists, just update lead user_id
-        const { error: updateLeadError } = await supabase
-          .from("leads")
-          .update({ user_id: userId })
-          .eq("id", lead.id);
-        
-        if (updateLeadError) {
-          console.error("Error updating lead:", updateLeadError);
-          continue;
-        }
-        
-        console.log(`Updated lead ${lead.id} with user_id`);
+      // Create a new project for this lead
+      const projectName = lead.project_name || `${lead.name}'s Project`;
+      console.log("Creating project:", projectName);
+      
+      const { data: project, error: projectError } = await supabase
+        .from("projects")
+        .insert({
+          name: projectName,
+          user_id: userId,
+          description: lead.description || null,
+          status: "active"
+        })
+        .select()
+        .single();
+      
+      if (projectError) {
+        console.error("Error creating project:", projectError);
+        continue;
       }
+      
+      const projectId = project.id;
+      projectsCreated.push(project.name);
+      
+      console.log(`Created project ${projectId} for lead ${lead.id}`);
+      
+      // 3. Update the lead with user_id and project_id
+      // IMPORTANT: This is where the previous code was failing
+      const { error: updateLeadError } = await supabase
+        .from("leads")
+        .update({
+          user_id: userId,
+          project_id: projectId
+        })
+        .eq("id", lead.id);
+      
+      if (updateLeadError) {
+        console.error("Error updating lead:", updateLeadError);
+        continue;
+      }
+      
+      console.log(`Updated lead ${lead.id} with user_id ${userId} and project_id ${projectId}`);
       
       // 4. Update any estimates linked to this lead
       const { data: estimates, error: estimatesError } = await supabase
@@ -94,20 +83,26 @@ export const importUserDataByEmail = async (userId: string, email: string) => {
       }
       
       if (estimates && estimates.length > 0) {
-        const { error: updateEstimateError } = await supabase
-          .from("estimates")
-          .update({
-            project_id: projectId,
-            user_id: userId
-          })
-          .eq("lead_id", lead.id);
+        console.log(`Found ${estimates.length} estimates to update for lead ${lead.id}`);
         
-        if (updateEstimateError) {
-          console.error("Error updating estimates:", updateEstimateError);
-          continue;
+        for (const estimate of estimates) {
+          // Update each estimate individually to ensure all are processed
+          const { error: updateEstimateError } = await supabase
+            .from("estimates")
+            .update({
+              project_id: projectId,
+              user_id: userId
+            })
+            .eq("id", estimate.id);
+          
+          if (updateEstimateError) {
+            console.error(`Error updating estimate ${estimate.id}:`, updateEstimateError);
+          } else {
+            console.log(`Updated estimate ${estimate.id} with project_id ${projectId} and user_id ${userId}`);
+          }
         }
-        
-        console.log(`Updated ${estimates.length} estimates for lead ${lead.id}`);
+      } else {
+        console.log(`No estimates found for lead ${lead.id}`);
       }
     }
     
