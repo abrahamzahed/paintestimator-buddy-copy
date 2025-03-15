@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "@/context/SessionContext";
@@ -41,6 +40,8 @@ const HomeEstimator = () => {
   const [roomDetailsArray, setRoomDetailsArray] = useState<RoomDetails[]>([]);
   const [saveComplete, setSaveComplete] = useState(false);
   const [leadId, setLeadId] = useState<string | null>(null);
+  const [projectId, setProjectId] = useState<string | null>(null);
+  const [estimateId, setEstimateId] = useState<string | null>(null);
 
   // If user is logged in, redirect to formal estimate page
   useEffect(() => {
@@ -112,18 +113,7 @@ const HomeEstimator = () => {
   };
 
   const handleReset = () => {
-    // Reset to step 1 and clear state if needed
     setStep(1);
-    
-    // If we want to clear all the form data on reset, uncomment these:
-    // setProjectName("");
-    // setEmail("");
-    // setName("");
-    // setPhone("");
-    // setAddress("");
-    // setCurrentEstimate(null);
-    // setRoomDetailsArray([]);
-    
     toast({
       title: "Estimator reset",
       description: "All steps have been reset to the beginning"
@@ -138,10 +128,8 @@ const HomeEstimator = () => {
     setRoomDetailsArray(rooms);
     
     try {
-      // Fetch room type data to include actual room names
       const pricingData = await fetchPricingData();
       
-      // Enhance room details with room type names for better readability
       const enhancedRooms = rooms.map((room, index) => {
         const roomType = pricingData.roomTypes.find(rt => rt.id === room.roomTypeId);
         return {
@@ -151,7 +139,27 @@ const HomeEstimator = () => {
         };
       });
       
-      // Create a lead in Supabase with all details in the JSON format
+      const { data: projectData, error: projectError } = await supabase
+        .from('projects')
+        .insert([
+          {
+            name: projectName,
+            description: 'Project created from free estimator',
+            status: 'active',
+            guest_email: email
+          }
+        ])
+        .select()
+        .single();
+        
+      if (projectError) {
+        throw projectError;
+      }
+      
+      const projectId = projectData.id;
+      setProjectId(projectId);
+      console.log("Created project with ID:", projectId);
+      
       const detailsJson = JSON.stringify({
         estimateSummary: estimate,
         roomDetails: enhancedRooms,
@@ -164,7 +172,7 @@ const HomeEstimator = () => {
         }
       });
       
-      const { data: leadData, error } = await supabase
+      const { data: leadData, error: leadError } = await supabase
         .from('leads')
         .insert([
           {
@@ -173,6 +181,7 @@ const HomeEstimator = () => {
             phone: phone,
             address: address,
             project_name: projectName,
+            project_id: projectId,
             status: 'new',
             description: 'Lead from free estimator',
             details: detailsJson
@@ -181,28 +190,109 @@ const HomeEstimator = () => {
         .select()
         .single();
         
-      if (error) {
-        throw error;
+      if (leadError) {
+        throw leadError;
       }
       
       if (leadData) {
         setLeadId(leadData.id);
         
-        // Store estimate data for account creation
-        if (currentEstimate) {
-          saveTemporaryEstimate({
-            roomPrice: estimate.subtotal,
-            laborCost: estimate.finalTotal * 0.7, // Approximate labor as 70% of total
-            materialCost: estimate.finalTotal * 0.3, // Approximate materials as 30% of total
-            totalCost: estimate.finalTotal,
-            timeEstimate: 0, // Will be calculated properly on the backend
-            paintCans: 0, // Will be calculated properly on the backend
-            additionalCosts: {},
-            discounts: { volumeDiscount: estimate.volumeDiscount }
-          }, [], {});
+        const roomTypes = rooms.map(room => room.roomType);
+        const roomSizes = rooms.map(room => room.roomSize);
+        const wallCounts = rooms.map(room => room.wallsCount);
+        const wallHeights = rooms.map(room => room.wallHeight);
+        const wallWidths = rooms.map(room => room.wallWidth);
+        const wallConditions = rooms.map(room => room.condition);
+        const paintTypes = rooms.map(room => room.paintType);
+        const includeCeilings = rooms.map(room => room.includeCeiling);
+        const includeBaseboards = rooms.map(room => room.includeBaseboards);
+        const baseboardsMethods = rooms.map(room => room.baseboardsMethod);
+        const includeCrownMoldings = rooms.map(room => room.includeCrownMolding);
+        const hasHighCeilings = rooms.map(room => room.hasHighCeiling);
+        const includeClosets = rooms.map(room => room.includeCloset);
+        const doorsCountPerRoom = rooms.map(room => room.doorsCount);
+        const windowsCountPerRoom = rooms.map(room => room.windowsCount);
+        
+        const isEmptyHouse = rooms.some(room => room.isEmptyHouse);
+        const needsFloorCovering = rooms.some(room => room.needFloorCovering);
+        
+        const simplifiedRoomDetails = rooms.map(room => ({
+          id: room.id,
+          roomType: room.roomType,
+          roomSize: room.roomSize,
+          wallsCount: room.wallsCount,
+          wallHeight: room.wallHeight,
+          wallWidth: room.wallWidth,
+          condition: room.condition,
+          paintType: room.paintType,
+          includeCeiling: room.includeCeiling,
+          includeBaseboards: room.includeBaseboards,
+          baseboardsMethod: room.baseboardsMethod,
+          includeCrownMolding: room.includeCrownMolding,
+          hasHighCeiling: room.hasHighCeiling,
+          includeCloset: room.includeCloset,
+          isEmptyHouse: room.isEmptyHouse,
+          needFloorCovering: room.needFloorCovering,
+          doorsCount: room.doorsCount,
+          windowsCount: room.windowsCount
+        }));
+        
+        const { data: estimateData, error: estimateError } = await supabase
+          .from('estimates')
+          .insert({
+            lead_id: leadData.id,
+            project_id: projectId,
+            project_name: projectName,
+            details: {
+              rooms: rooms.length,
+              paintType: estimate.paintCans > 2 ? "premium" : "standard",
+              roomDetails: simplifiedRoomDetails
+            },
+            labor_cost: estimate.finalTotal * 0.7,
+            material_cost: estimate.finalTotal * 0.3,
+            total_cost: estimate.finalTotal,
+            estimated_hours: estimate.finalTotal / 75,
+            estimated_paint_gallons: estimate.paintCans,
+            status: "pending",
+            room_types: roomTypes,
+            room_sizes: roomSizes,
+            wall_counts: wallCounts,
+            wall_heights: wallHeights,
+            wall_widths: wallWidths,
+            wall_conditions: wallConditions,
+            paint_types: paintTypes,
+            include_ceilings: includeCeilings,
+            include_baseboards: includeBaseboards,
+            baseboards_methods: baseboardsMethods,
+            include_crown_moldings: includeCrownMoldings,
+            has_high_ceilings: hasHighCeilings,
+            include_closets: includeClosets,
+            doors_count_per_room: doorsCountPerRoom,
+            windows_count_per_room: windowsCountPerRoom,
+            is_empty_house: isEmptyHouse,
+            needs_floor_covering: needsFloorCovering
+          })
+          .select()
+          .single();
           
-          saveTemporaryProjectName(projectName);
+        if (estimateError) {
+          throw estimateError;
         }
+        
+        setEstimateId(estimateData.id);
+        
+        saveTemporaryEstimate({
+          roomPrice: estimate.subtotal,
+          laborCost: estimate.finalTotal * 0.7,
+          materialCost: estimate.finalTotal * 0.3,
+          totalCost: estimate.finalTotal,
+          timeEstimate: 0,
+          paintCans: 0,
+          additionalCosts: {},
+          discounts: { volumeDiscount: estimate.volumeDiscount }
+        }, [], {});
+        
+        saveTemporaryProjectName(projectName);
         
         setSaveComplete(true);
         setStep(3);
@@ -223,13 +313,11 @@ const HomeEstimator = () => {
   };
 
   const handleCreateAccount = () => {
-    // Redirect to auth page
     navigate('/auth?returnUrl=/estimate&saveEstimate=true');
   };
 
   return (
     <div className="glass rounded-xl p-6 shadow-lg animate-scale-in relative">
-      {/* Progress Steps */}
       <div className="flex items-center justify-between mb-6">
         <div 
           className={`flex items-center ${step >= 1 ? 'text-paint' : 'text-muted-foreground'}`}
@@ -259,7 +347,6 @@ const HomeEstimator = () => {
         </div>
       </div>
 
-      {/* Title */}
       <div className="mb-6">
         <h2 className="text-2xl font-bold">
           {step === 1 && "Let's Get Started"}
@@ -273,7 +360,6 @@ const HomeEstimator = () => {
         </p>
       </div>
 
-      {/* Step 1: User Information */}
       {step === 1 && (
         <div className="space-y-4">
           <div className="space-y-2">
@@ -353,18 +439,17 @@ const HomeEstimator = () => {
             onNext={handleNextStep}
             onPrev={handlePrevStep}
             onReset={handleReset}
-            showReset={false} // No need for reset on first step
+            showReset={false}
           />
         </div>
       )}
 
-      {/* Step 2: Estimator Form */}
       {step === 2 && (
         <div>
           <EstimatorNavigation
             currentStep={2}
             totalSteps={3}
-            onNext={() => {}} // DynamicEstimatorForm handles its own next
+            onNext={() => {}}
             onPrev={handlePrevStep}
             onReset={handleReset}
           />
@@ -373,7 +458,6 @@ const HomeEstimator = () => {
         </div>
       )}
 
-      {/* Step 3: Summary */}
       {step === 3 && (
         <div className="space-y-6">
           <div className="flex items-center justify-center text-green-500 mb-4">

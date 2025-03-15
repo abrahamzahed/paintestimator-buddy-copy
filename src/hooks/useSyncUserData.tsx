@@ -5,7 +5,7 @@ import { useSession } from "@/context/use-session";
 import { importUserDataByEmail } from "@/integrations/supabase/user-data-import";
 
 export function useSyncUserData() {
-  const { user } = useSession();
+  const { user, refreshProfile } = useSession();
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncComplete, setSyncComplete] = useState(false);
   const { toast } = useToast();
@@ -25,11 +25,14 @@ export function useSyncUserData() {
         
         if (result.success) {
           // Only show toast if something was actually imported
-          if (result.message.includes("lead")) {
+          if (result.message.includes("lead") || result.message.includes("project")) {
             toast({
               title: "Data synchronized",
               description: result.message,
             });
+            
+            // Refresh the user profile to update any UI state that depends on the user's data
+            await refreshProfile();
           }
         } else {
           toast({
@@ -53,11 +56,14 @@ export function useSyncUserData() {
     };
 
     syncUserData();
-  }, [user, isSyncing, syncComplete, toast]);
+  }, [user, isSyncing, syncComplete, toast, refreshProfile]);
 
   return {
     isSyncing,
     syncComplete,
-    resetSyncState: () => setSyncComplete(false)
+    resetSyncState: () => setSyncComplete(false),
+    resync: () => {
+      setSyncComplete(false); // Trigger a re-sync
+    }
   };
 }
