@@ -1,3 +1,4 @@
+
 import React, { ReactNode, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -16,16 +17,21 @@ const DashboardLayout = ({ children, user, profile, signOut }: DashboardLayoutPr
   const [isSigningOut, setIsSigningOut] = useState(false);
   
   const handleSignOut = async () => {
+    if (isSigningOut) return; // Prevent multiple clicks
+    
     try {
       console.log("Sign out button clicked in dashboard");
       setIsSigningOut(true);
-      await signOut(); // No longer checking return value
-      console.log("Sign out completed, navigating to home");
-      navigate('/', { replace: true });
+      
+      await signOut();
+      
+      // Don't navigate programmatically - the auth state change will trigger a redirect
+      console.log("Sign out completed in dashboard");
     } catch (error) {
       console.error("Error during sign out in dashboard:", error);
     } finally {
-      setIsSigningOut(false);
+      // Reset signing out state after a delay to ensure visual feedback
+      setTimeout(() => setIsSigningOut(false), 500);
     }
   };
 

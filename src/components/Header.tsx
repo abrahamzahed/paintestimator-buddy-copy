@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -25,16 +26,21 @@ const Header = () => {
   }, [scrolled]);
 
   const handleSignOut = async () => {
+    if (isSigningOut) return; // Prevent multiple clicks
+    
     try {
       console.log("Sign out button clicked in header");
       setIsSigningOut(true);
+      
       await signOut();
-      console.log("Successfully signed out, navigating to home");
-      navigate('/', { replace: true });
+      
+      // Don't navigate programmatically - the auth state change will trigger a re-render
+      console.log("Successfully signed out in header");
     } catch (error) {
       console.error("Error in handleSignOut:", error);
     } finally {
-      setIsSigningOut(false);
+      // Reset signing out state after a delay to ensure visual feedback
+      setTimeout(() => setIsSigningOut(false), 500);
     }
   };
 

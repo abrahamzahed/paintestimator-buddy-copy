@@ -11,11 +11,12 @@ interface ProtectedRouteProps {
 export const ProtectedRoute = ({ children, allowedRoles = [] }: ProtectedRouteProps) => {
   const { isLoading, user, isAdmin } = useSession();
 
-  // Short loading timeout to prevent indefinite loading states
+  // During initial loading, show a loading state
   if (isLoading) {
     return <LoadingState message="Loading your account information..." />;
   }
 
+  // If not authenticated, redirect to auth page
   if (!user) {
     return <Navigate to="/auth" replace />;
   }

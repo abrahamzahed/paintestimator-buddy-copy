@@ -157,26 +157,29 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
     try {
       console.log("Attempting to sign out user");
       
-      // Set these states immediately to prevent UI lag
+      // Set loading state to prevent UI from being interactive during sign out
       setIsLoading(true);
+      
+      // Clear state immediately to prevent UI lag
+      setSession(null);
+      setUser(null);
+      setProfile(null);
       
       const { error } = await supabase.auth.signOut();
       
       if (error) {
         console.error("Error during sign out:", error);
+        toast({
+          title: "Error signing out",
+          description: "Please try again",
+          variant: "destructive",
+        });
         throw error;
       }
       
-      // Wait until after sign out is complete
-      setSession(null);
-      setUser(null);
-      setProfile(null);
-      
-      toast({
-        title: "Signed out successfully",
-      });
-      
       console.log("User signed out successfully");
+      
+      // Toast will be shown after the redirect, so we remove it
     } catch (error) {
       console.error("Error signing out:", error);
       toast({
