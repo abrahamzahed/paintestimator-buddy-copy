@@ -49,14 +49,15 @@ export function SignInForm({ onSuccess }: SignInFormProps) {
         description: "You have successfully signed in.",
       });
 
-      // Use setTimeout to ensure the auth state has time to propagate
+      // Use a slightly longer timeout to ensure the auth state has time to propagate
+      // This helps prevent race conditions with other hooks that depend on auth state
       setTimeout(() => {
         if (onSuccess) {
           onSuccess();
         } else {
           navigate("/dashboard");
         }
-      }, 100);
+      }, 500);
     } catch (error: any) {
       console.error("Sign in error:", error);
       
@@ -74,7 +75,7 @@ export function SignInForm({ onSuccess }: SignInFormProps) {
         description: error.message || "Please check your credentials and try again.",
         variant: "destructive",
       });
-    } finally {
+      
       setIsSubmitting(false);
     }
   };
