@@ -24,6 +24,7 @@ export function useSyncUserData() {
         const result = await importUserDataByEmail(user.id, user.email);
         
         if (result.success) {
+          // Only show toast if something was actually imported
           if (result.message.includes("lead")) {
             toast({
               title: "Data synchronized",

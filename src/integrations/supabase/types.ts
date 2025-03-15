@@ -11,127 +11,58 @@ export type Database = {
     Tables: {
       estimates: {
         Row: {
-          availability_windows: string[] | null
-          baseboards_methods: string[] | null
-          best_time_to_call: string | null
           created_at: string
           details: Json | null
           discount: number | null
-          doors_count_per_room: number[] | null
           estimated_hours: number
           estimated_paint_gallons: number | null
-          has_high_ceilings: boolean[] | null
           id: string
-          include_baseboards: boolean[] | null
-          include_ceilings: boolean[] | null
-          include_closets: boolean[] | null
-          include_crown_moldings: boolean[] | null
-          is_empty_house: boolean | null
           labor_cost: number
           lead_id: string
           material_cost: number
-          needs_floor_covering: boolean | null
           notes: string | null
-          paint_coverage_calculations: number[] | null
-          paint_quality_descriptions: string[] | null
-          paint_types: string[] | null
-          preferred_contact_method: string | null
-          preferred_timeline: string | null
           project_id: string | null
           project_name: string | null
-          room_sizes: string[] | null
-          room_types: string[] | null
           status: string | null
           status_type: string | null
           total_cost: number
           updated_at: string
-          wall_conditions: string[] | null
-          wall_counts: number[] | null
-          wall_heights: number[] | null
-          wall_widths: number[] | null
-          windows_count_per_room: number[] | null
         }
         Insert: {
-          availability_windows?: string[] | null
-          baseboards_methods?: string[] | null
-          best_time_to_call?: string | null
           created_at?: string
           details?: Json | null
           discount?: number | null
-          doors_count_per_room?: number[] | null
           estimated_hours: number
           estimated_paint_gallons?: number | null
-          has_high_ceilings?: boolean[] | null
           id?: string
-          include_baseboards?: boolean[] | null
-          include_ceilings?: boolean[] | null
-          include_closets?: boolean[] | null
-          include_crown_moldings?: boolean[] | null
-          is_empty_house?: boolean | null
           labor_cost: number
           lead_id: string
           material_cost: number
-          needs_floor_covering?: boolean | null
           notes?: string | null
-          paint_coverage_calculations?: number[] | null
-          paint_quality_descriptions?: string[] | null
-          paint_types?: string[] | null
-          preferred_contact_method?: string | null
-          preferred_timeline?: string | null
           project_id?: string | null
           project_name?: string | null
-          room_sizes?: string[] | null
-          room_types?: string[] | null
           status?: string | null
           status_type?: string | null
           total_cost: number
           updated_at?: string
-          wall_conditions?: string[] | null
-          wall_counts?: number[] | null
-          wall_heights?: number[] | null
-          wall_widths?: number[] | null
-          windows_count_per_room?: number[] | null
         }
         Update: {
-          availability_windows?: string[] | null
-          baseboards_methods?: string[] | null
-          best_time_to_call?: string | null
           created_at?: string
           details?: Json | null
           discount?: number | null
-          doors_count_per_room?: number[] | null
           estimated_hours?: number
           estimated_paint_gallons?: number | null
-          has_high_ceilings?: boolean[] | null
           id?: string
-          include_baseboards?: boolean[] | null
-          include_ceilings?: boolean[] | null
-          include_closets?: boolean[] | null
-          include_crown_moldings?: boolean[] | null
-          is_empty_house?: boolean | null
           labor_cost?: number
           lead_id?: string
           material_cost?: number
-          needs_floor_covering?: boolean | null
           notes?: string | null
-          paint_coverage_calculations?: number[] | null
-          paint_quality_descriptions?: string[] | null
-          paint_types?: string[] | null
-          preferred_contact_method?: string | null
-          preferred_timeline?: string | null
           project_id?: string | null
           project_name?: string | null
-          room_sizes?: string[] | null
-          room_types?: string[] | null
           status?: string | null
           status_type?: string | null
           total_cost?: number
           updated_at?: string
-          wall_conditions?: string[] | null
-          wall_counts?: number[] | null
-          wall_heights?: number[] | null
-          wall_widths?: number[] | null
-          windows_count_per_room?: number[] | null
         }
         Relationships: [
           {
