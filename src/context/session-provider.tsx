@@ -1,3 +1,4 @@
+
 import { createContext, useState, useEffect, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -151,7 +152,7 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
     };
   }, []);
 
-  const signOut = async () => {
+  const signOut = async (): Promise<void> => {
     try {
       console.log("Attempting to sign out user");
       
@@ -171,7 +172,7 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
       });
       
       console.log("User signed out successfully");
-      return true;
+      // No longer returning true/false
     } catch (error) {
       console.error("Error signing out:", error);
       toast({
@@ -179,7 +180,7 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
         description: "Please try again",
         variant: "destructive",
       });
-      return false;
+      // No longer returning false
     }
   };
 

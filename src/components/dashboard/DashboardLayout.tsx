@@ -1,4 +1,3 @@
-
 import React, { ReactNode, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -9,7 +8,7 @@ interface DashboardLayoutProps {
   children: ReactNode;
   user: User | null;
   profile: Profile | null;
-  signOut: () => Promise<boolean>; // Updated the return type here
+  signOut: () => Promise<void>; // Updated to match the SessionContextType
 }
 
 const DashboardLayout = ({ children, user, profile, signOut }: DashboardLayoutProps) => {
@@ -20,11 +19,9 @@ const DashboardLayout = ({ children, user, profile, signOut }: DashboardLayoutPr
     try {
       console.log("Sign out button clicked in dashboard");
       setIsSigningOut(true);
-      const success = await signOut();
-      if (success) {
-        console.log("Sign out completed, navigating to home");
-        navigate('/', { replace: true });
-      }
+      await signOut(); // No longer checking return value
+      console.log("Sign out completed, navigating to home");
+      navigate('/', { replace: true });
     } catch (error) {
       console.error("Error during sign out in dashboard:", error);
     } finally {

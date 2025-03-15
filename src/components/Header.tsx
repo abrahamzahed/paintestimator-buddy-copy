@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -29,11 +28,9 @@ const Header = () => {
     try {
       console.log("Sign out button clicked in header");
       setIsSigningOut(true);
-      const success = await signOut();
-      if (success) {
-        console.log("Successfully signed out, navigating to home");
-        navigate('/', { replace: true });
-      }
+      await signOut();
+      console.log("Successfully signed out, navigating to home");
+      navigate('/', { replace: true });
     } catch (error) {
       console.error("Error in handleSignOut:", error);
     } finally {

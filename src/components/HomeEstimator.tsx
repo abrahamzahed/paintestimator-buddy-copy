@@ -140,7 +140,7 @@ const HomeEstimator = () => {
         };
       });
       
-      // Create a project first
+      // Create a project first - note the removal of user_id for guest users
       const { data: projectData, error: projectError } = await supabase
         .from('projects')
         .insert({
@@ -148,7 +148,8 @@ const HomeEstimator = () => {
           description: 'Project created from free estimator',
           status: 'active',
           guest_email: email,
-          // Note: user_id is NULL for guest users
+          // When it's a guest user, we explicitly set user_id to null
+          user_id: null
         })
         .select()
         .single();
