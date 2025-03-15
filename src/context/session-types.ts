@@ -18,7 +18,7 @@ export type SessionContextType = {
   user: User | null;
   profile: Profile | null;
   isLoading: boolean;
-  signOut: () => Promise<void>;
+  signOut: () => Promise<boolean>; // Changed from Promise<void> to Promise<boolean>
   isAdmin: boolean;
   isStaff: boolean;
   refreshProfile: () => Promise<void>;

@@ -9,7 +9,7 @@ interface DashboardLayoutProps {
   children: ReactNode;
   user: User | null;
   profile: Profile | null;
-  signOut: () => Promise<void>;
+  signOut: () => Promise<boolean>; // Updated the return type here
 }
 
 const DashboardLayout = ({ children, user, profile, signOut }: DashboardLayoutProps) => {
@@ -20,9 +20,11 @@ const DashboardLayout = ({ children, user, profile, signOut }: DashboardLayoutPr
     try {
       console.log("Sign out button clicked in dashboard");
       setIsSigningOut(true);
-      await signOut();
-      console.log("Sign out completed, navigating to home");
-      navigate('/', { replace: true });
+      const success = await signOut();
+      if (success) {
+        console.log("Sign out completed, navigating to home");
+        navigate('/', { replace: true });
+      }
     } catch (error) {
       console.error("Error during sign out in dashboard:", error);
     } finally {

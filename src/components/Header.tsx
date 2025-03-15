@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -31,7 +32,7 @@ const Header = () => {
       const success = await signOut();
       if (success) {
         console.log("Successfully signed out, navigating to home");
-        navigate('/');
+        navigate('/', { replace: true });
       }
     } catch (error) {
       console.error("Error in handleSignOut:", error);
