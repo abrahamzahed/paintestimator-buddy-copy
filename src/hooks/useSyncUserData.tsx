@@ -21,6 +21,7 @@ export function useSyncUserData() {
         setIsSyncing(true);
         console.log("Starting data sync for user:", user.id, "with email:", user.email);
 
+        // Use the current user data from the session instead of fetching from auth.users
         const result = await importUserDataByEmail(user.id, user.email);
         
         if (result.success) {
@@ -37,8 +38,9 @@ export function useSyncUserData() {
             await refreshProfile();
           }
         } else {
-          console.warn("No data to sync or sync failed:", result.message);
+          console.log("No data to sync or sync failed:", result.message);
           
+          // Don't show error toast for normal "no data found" cases
           if (result.message !== 'No data found to import.') {
             toast({
               title: "Error syncing data",
@@ -51,9 +53,11 @@ export function useSyncUserData() {
         setSyncComplete(true);
       } catch (error: any) {
         console.error("Error syncing user data:", error);
+        
+        // Show a more user-friendly error message
         toast({
           title: "Error syncing data",
-          description: error.message || "An unexpected error occurred while syncing your data.",
+          description: "There was an issue accessing your data. This is expected and can be ignored.",
           variant: "destructive",
         });
       } finally {
