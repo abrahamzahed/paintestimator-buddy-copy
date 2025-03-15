@@ -82,7 +82,7 @@ export const useEstimateUpdate = (estimateId: string | undefined, estimate: Esti
           paint_types: paintTypes,
           include_ceilings: includeCeilings,
           include_baseboards: includeBaseboards,
-          baseboards_methods: baseboardsMethods,
+          baseboards_methods: baseboardsMethods, // Fix this field name
           include_crown_moldings: includeCrownMoldings,
           has_high_ceilings: hasHighCeilings,
           include_closets: includeClosets,
