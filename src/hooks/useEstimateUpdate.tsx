@@ -30,14 +30,14 @@ export const useEstimateUpdate = (estimateId: string | undefined, estimate: Esti
         wallWidth: room.wallWidth,
         condition: room.condition,
         paintType: room.paintType,
-        includeCeiling: room.includeCeiling,
-        includeBaseboards: room.includeBaseboards,
+        includeCeiling: !!room.includeCeiling,
+        includeBaseboards: !!room.includeBaseboards,
         baseboardsMethod: room.baseboardsMethod,
-        includeCrownMolding: room.includeCrownMolding,
-        hasHighCeiling: room.hasHighCeiling,
-        includeCloset: room.includeCloset,
-        isEmptyHouse: room.isEmptyHouse,
-        needFloorCovering: room.needFloorCovering,
+        includeCrownMolding: !!room.includeCrownMolding,
+        hasHighCeiling: !!room.hasHighCeiling,
+        includeCloset: !!room.includeCloset,
+        isEmptyHouse: !!room.isEmptyHouse,
+        needFloorCovering: !!room.needFloorCovering,
         doorsCount: room.doorsCount,
         windowsCount: room.windowsCount
       }));
@@ -46,32 +46,35 @@ export const useEstimateUpdate = (estimateId: string | undefined, estimate: Esti
       const isEmptyHouse = updatedRooms.some(room => room.isEmptyHouse);
       const needsFloorCovering = updatedRooms.some(room => room.needFloorCovering);
       
-      // Store the room data and other fields in the details JSONB column
+      // Store all data in the details JSONB column
+      const detailsObject = {
+        rooms: updatedRooms.length,
+        paintType: updatedEstimate.paintCans > 2 ? "premium" : "standard",
+        roomDetails: simplifiedRoomDetails,
+        roomTypes: updatedRooms.map(room => room.roomType),
+        roomSizes: updatedRooms.map(room => room.roomSize),
+        wallCounts: updatedRooms.map(room => room.wallsCount),
+        wallHeights: updatedRooms.map(room => room.wallHeight),
+        wallWidths: updatedRooms.map(room => room.wallWidth),
+        wallConditions: updatedRooms.map(room => room.condition),
+        paintTypes: updatedRooms.map(room => room.paintType),
+        includeCeilings: updatedRooms.map(room => room.includeCeiling),
+        includeBaseboards: updatedRooms.map(room => room.includeBaseboards),
+        baseboardsMethods: updatedRooms.map(room => room.baseboardsMethod),
+        includeCrownMoldings: updatedRooms.map(room => room.includeCrownMolding),
+        hasHighCeilings: updatedRooms.map(room => room.hasHighCeiling),
+        includeClosets: updatedRooms.map(room => room.includeCloset),
+        doorsCountPerRoom: updatedRooms.map(room => room.doorsCount),
+        windowsCountPerRoom: updatedRooms.map(room => room.windowsCount),
+        isEmptyHouse: isEmptyHouse,
+        needsFloorCovering: needsFloorCovering
+      };
+      
+      // Update only the necessary fields in the database
       const { error: updateError } = await supabase
         .from("estimates")
         .update({
-          details: {
-            rooms: updatedRooms.length,
-            paintType: updatedEstimate.paintCans > 2 ? "premium" : "standard",
-            roomDetails: simplifiedRoomDetails,
-            roomTypes: updatedRooms.map(room => room.roomType),
-            roomSizes: updatedRooms.map(room => room.roomSize),
-            wallCounts: updatedRooms.map(room => room.wallsCount),
-            wallHeights: updatedRooms.map(room => room.wallHeight),
-            wallWidths: updatedRooms.map(room => room.wallWidth),
-            wallConditions: updatedRooms.map(room => room.condition),
-            paintTypes: updatedRooms.map(room => room.paintType),
-            includeCeilings: updatedRooms.map(room => room.includeCeiling),
-            includeBaseboards: updatedRooms.map(room => room.includeBaseboards),
-            baseboardsMethods: updatedRooms.map(room => room.baseboardsMethod),
-            includeCrownMoldings: updatedRooms.map(room => room.includeCrownMolding),
-            hasHighCeilings: updatedRooms.map(room => room.hasHighCeiling),
-            includeClosets: updatedRooms.map(room => room.includeCloset),
-            doorsCountPerRoom: updatedRooms.map(room => room.doorsCount),
-            windowsCountPerRoom: updatedRooms.map(room => room.windowsCount),
-            isEmptyHouse: isEmptyHouse,
-            needsFloorCovering: needsFloorCovering
-          },
+          details: detailsObject,
           labor_cost: updatedEstimate.laborCost,
           material_cost: updatedEstimate.materialCost,
           total_cost: updatedEstimate.totalCost,

@@ -91,6 +91,30 @@ const EstimateSection = ({
             windowsCount: room.windowsCount
           }));
           
+          // Create details object for JSONB column
+          const detailsObject = {
+            rooms: rooms.length,
+            roomDetails: simplifiedRoomDetails,
+            roomTypes: rooms.map(room => room.roomType),
+            roomSizes: rooms.map(room => room.roomSize),
+            wallCounts: rooms.map(room => room.wallsCount),
+            wallHeights: rooms.map(room => room.wallHeight),
+            wallWidths: rooms.map(room => room.wallWidth),
+            wallConditions: rooms.map(room => room.condition),
+            paintTypes: rooms.map(room => room.paintType),
+            includeCeilings: rooms.map(room => room.includeCeiling),
+            includeBaseboards: rooms.map(room => room.includeBaseboards),
+            baseboardsMethods: rooms.map(room => room.baseboardsMethod),
+            includeCrownMoldings: rooms.map(room => room.includeCrownMolding),
+            hasHighCeilings: rooms.map(room => room.hasHighCeiling),
+            includeClosets: rooms.map(room => room.includeCloset),
+            doorsCountPerRoom: rooms.map(room => room.doorsCount),
+            windowsCountPerRoom: rooms.map(room => room.windowsCount),
+            isEmptyHouse: rooms.some(room => room.isEmptyHouse),
+            needsFloorCovering: rooms.some(room => room.needFloorCovering)
+          };
+          
+          // Insert estimate with all details in the JSONB column
           await supabase
             .from('estimates')
             .insert({
@@ -101,27 +125,7 @@ const EstimateSection = ({
               total_cost: estimate.totalCost,
               estimated_hours: estimate.timeEstimate,
               estimated_paint_gallons: estimate.paintCans,
-              details: {
-                rooms: rooms.length,
-                roomDetails: simplifiedRoomDetails,
-                roomTypes: rooms.map(room => room.roomType),
-                roomSizes: rooms.map(room => room.roomSize),
-                wallCounts: rooms.map(room => room.wallsCount),
-                wallHeights: rooms.map(room => room.wallHeight),
-                wallWidths: rooms.map(room => room.wallWidth),
-                wallConditions: rooms.map(room => room.condition),
-                paintTypes: rooms.map(room => room.paintType),
-                includeCeilings: rooms.map(room => room.includeCeiling),
-                includeBaseboards: rooms.map(room => room.includeBaseboards),
-                baseboardsMethods: rooms.map(room => room.baseboardsMethod),
-                includeCrownMoldings: rooms.map(room => room.includeCrownMolding),
-                hasHighCeilings: rooms.map(room => room.hasHighCeiling),
-                includeClosets: rooms.map(room => room.includeCloset),
-                doorsCountPerRoom: rooms.map(room => room.doorsCount),
-                windowsCountPerRoom: rooms.map(room => room.windowsCount),
-                isEmptyHouse: rooms.some(room => room.isEmptyHouse),
-                needsFloorCovering: rooms.some(room => room.needFloorCovering)
-              },
+              details: detailsObject,
               status: 'pending'
             });
         }
