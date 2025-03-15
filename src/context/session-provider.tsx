@@ -159,11 +159,24 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
 
   const signOut = async () => {
     try {
-      await supabase.auth.signOut();
+      console.log("Attempting to sign out user");
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error("Error during sign out:", error);
+        throw error;
+      }
+      
+      // Clear local state when user signs out
+      setSession(null);
+      setUser(null);
       setProfile(null);
+      
       toast({
         title: "Signed out successfully",
       });
+      
+      console.log("User signed out successfully");
     } catch (error) {
       console.error("Error signing out:", error);
       toast({

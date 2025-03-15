@@ -1,6 +1,6 @@
 
 import React, { ReactNode } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { User } from "@supabase/supabase-js";
 import { Profile } from "@/context/session-types";
@@ -13,6 +13,14 @@ interface DashboardLayoutProps {
 }
 
 const DashboardLayout = ({ children, user, profile, signOut }: DashboardLayoutProps) => {
+  const navigate = useNavigate();
+  
+  const handleSignOut = async () => {
+    console.log("Sign out button clicked in dashboard");
+    await signOut();
+    navigate('/');
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b">
@@ -31,7 +39,7 @@ const DashboardLayout = ({ children, user, profile, signOut }: DashboardLayoutPr
               <span className="text-sm hidden md:inline-block">
                 {profile?.name || user?.email}
               </span>
-              <Button variant="outline" onClick={signOut}>
+              <Button variant="outline" onClick={handleSignOut}>
                 Sign Out
               </Button>
             </div>

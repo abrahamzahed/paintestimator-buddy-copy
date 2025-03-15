@@ -1,12 +1,14 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useSession } from '@/context/use-session';
 
 const Header = () => {
   const [scrolled, setScrolled] = useState(false);
   const { user, signOut } = useSession();
+  const navigate = useNavigate();
   
   useEffect(() => {
     const handleScroll = () => {
@@ -21,6 +23,12 @@ const Header = () => {
       window.removeEventListener('scroll', handleScroll);
     };
   }, [scrolled]);
+
+  const handleSignOut = async () => {
+    console.log("Sign out button clicked");
+    await signOut();
+    navigate('/');
+  };
 
   return (
     <header 
@@ -57,7 +65,7 @@ const Header = () => {
               </Button>
               <Button 
                 className="bg-paint hover:bg-paint-dark transition-all"
-                onClick={signOut}
+                onClick={handleSignOut}
               >
                 Sign Out
               </Button>
