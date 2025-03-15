@@ -18,10 +18,18 @@ export async function importUserDataByEmail(userId: string, userEmail: string) {
     
     console.log('Import user data result:', data);
     
+    // Properly cast the returned data to access the properties safely
+    const result = data as {
+      success: boolean;
+      projects_updated: number;
+      leads_updated: number;
+      estimates_updated: number;
+    };
+    
     // Extract the project, lead and estimate counts
-    const projectsUpdated = data.projects_updated || 0;
-    const leadsUpdated = data.leads_updated || 0;
-    const estimatesUpdated = data.estimates_updated || 0;
+    const projectsUpdated = result.projects_updated || 0;
+    const leadsUpdated = result.leads_updated || 0;
+    const estimatesUpdated = result.estimates_updated || 0;
     
     // Create a descriptive result message
     let resultMessage = '';
