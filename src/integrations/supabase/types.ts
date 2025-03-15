@@ -360,7 +360,7 @@ export type Database = {
           name: string
           status: string | null
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -370,7 +370,7 @@ export type Database = {
           name: string
           status?: string | null
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -380,7 +380,7 @@ export type Database = {
           name?: string
           status?: string | null
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -528,6 +528,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_auth_email: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_line_items_for_estimate: {
         Args: {
           estimate_id: string

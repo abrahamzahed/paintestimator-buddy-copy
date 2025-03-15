@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "@/context/SessionContext";
@@ -21,7 +20,6 @@ const HomeEstimator = () => {
   const { user } = useSession();
   const { toast } = useToast();
   
-  // User information state
   const [step, setStep] = useState(1); // 1: Info, 2: Estimator, 3: Summary
   const [projectName, setProjectName] = useState("");
   const [email, setEmail] = useState("");
@@ -29,14 +27,12 @@ const HomeEstimator = () => {
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   
-  // Validation errors
   const [projectNameError, setProjectNameError] = useState<string | null>(null);
   const [nameError, setNameError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [addressError, setAddressError] = useState<string | null>(null);
   
-  // Estimate data
   const [currentEstimate, setCurrentEstimate] = useState<EstimatorSummary | null>(null);
   const [roomDetailsArray, setRoomDetailsArray] = useState<RoomDetails[]>([]);
   const [saveComplete, setSaveComplete] = useState(false);
@@ -44,7 +40,6 @@ const HomeEstimator = () => {
   const [projectId, setProjectId] = useState<string | null>(null);
   const [estimateId, setEstimateId] = useState<string | null>(null);
 
-  // If user is logged in, redirect to formal estimate page
   useEffect(() => {
     if (user) {
       navigate('/estimate');
@@ -54,7 +49,6 @@ const HomeEstimator = () => {
   const validateStep1 = () => {
     let isValid = true;
     
-    // Validate project name
     if (!projectName.trim()) {
       setProjectNameError("Please enter a project name");
       isValid = false;
@@ -62,7 +56,6 @@ const HomeEstimator = () => {
       setProjectNameError(null);
     }
     
-    // Validate name
     if (!name.trim()) {
       setNameError("Please enter your full name");
       isValid = false;
@@ -70,7 +63,6 @@ const HomeEstimator = () => {
       setNameError(null);
     }
     
-    // Validate email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email.trim() || !emailRegex.test(email)) {
       setEmailError("Please enter a valid email address");
@@ -79,7 +71,6 @@ const HomeEstimator = () => {
       setEmailError(null);
     }
     
-    // Validate phone (basic validation)
     const phoneRegex = /^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/;
     if (!phone.trim() || !phoneRegex.test(phone)) {
       setPhoneError("Please enter a valid phone number (e.g., 555-123-4567)");
@@ -88,7 +79,6 @@ const HomeEstimator = () => {
       setPhoneError(null);
     }
     
-    // Validate address
     if (!address.trim() || address.length < 10) {
       setAddressError("Please enter a complete address");
       isValid = false;
@@ -140,7 +130,6 @@ const HomeEstimator = () => {
         };
       });
       
-      // Create a project first - note the removal of user_id for guest users
       const { data: projectData, error: projectError } = await supabase
         .from('projects')
         .insert({
@@ -148,7 +137,6 @@ const HomeEstimator = () => {
           description: 'Project created from free estimator',
           status: 'active',
           guest_email: email,
-          // When it's a guest user, we explicitly set user_id to null
           user_id: null
         })
         .select()
@@ -186,7 +174,8 @@ const HomeEstimator = () => {
             project_id: projectId,
             status: 'new',
             description: 'Lead from free estimator',
-            details: detailsJson
+            details: detailsJson,
+            user_id: null
           }
         ])
         .select()
@@ -199,7 +188,6 @@ const HomeEstimator = () => {
       if (leadData) {
         setLeadId(leadData.id);
         
-        // Prepare estimate data from room details
         const roomTypes = rooms.map(room => room.roomType);
         const roomSizes = rooms.map(room => room.roomSize);
         const wallCounts = rooms.map(room => room.wallsCount);
@@ -219,7 +207,6 @@ const HomeEstimator = () => {
         const isEmptyHouse = rooms.some(room => room.isEmptyHouse);
         const needsFloorCovering = rooms.some(room => room.needFloorCovering);
         
-        // Create simplified room details for database storage
         const simplifiedRoomDetails = rooms.map(room => ({
           id: room.id,
           roomTypeId: room.roomTypeId,
@@ -242,10 +229,8 @@ const HomeEstimator = () => {
           windowsCount: room.windowsCount
         }));
         
-        // Calculate estimated paint gallons (adding this field to the estimate object)
-        const estimatedPaintGallons = Math.ceil(estimate.finalTotal / 250); // Rough estimate
+        const estimatedPaintGallons = Math.ceil(estimate.finalTotal / 250);
         
-        // Create the estimate record
         const { data: estimateData, error: estimateError } = await supabase
           .from('estimates')
           .insert({
@@ -290,13 +275,11 @@ const HomeEstimator = () => {
         
         setEstimateId(estimateData.id);
         
-        // Add paintCans to the estimate object for compatibility
         const estimateWithPaintCans = {
           ...estimate,
           paintCans: estimatedPaintGallons
         };
         
-        // Save the temporary estimate for local storage
         saveTemporaryEstimate({
           roomPrice: estimate.subtotal,
           laborCost: estimate.finalTotal * 0.7,

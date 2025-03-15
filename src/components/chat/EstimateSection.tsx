@@ -147,6 +147,9 @@ const EstimateSection = ({
               status: 'pending'
             });
         }
+      } else {
+        // For guest users who are not signed in yet
+        console.log("Guest user, skipping data persistence to database");
       }
     } catch (error) {
       console.error("Error saving detailed estimate data:", error);
