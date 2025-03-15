@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "@/context/SessionContext";
@@ -139,16 +140,16 @@ const HomeEstimator = () => {
         };
       });
       
+      // Create a project first
       const { data: projectData, error: projectError } = await supabase
         .from('projects')
-        .insert([
-          {
-            name: projectName,
-            description: 'Project created from free estimator',
-            status: 'active',
-            guest_email: email
-          }
-        ])
+        .insert({
+          name: projectName,
+          description: 'Project created from free estimator',
+          status: 'active',
+          guest_email: email,
+          // Note: user_id is NULL for guest users
+        })
         .select()
         .single();
         
@@ -197,6 +198,7 @@ const HomeEstimator = () => {
       if (leadData) {
         setLeadId(leadData.id);
         
+        // Prepare estimate data from room details
         const roomTypes = rooms.map(room => room.roomType);
         const roomSizes = rooms.map(room => room.roomSize);
         const wallCounts = rooms.map(room => room.wallsCount);
@@ -216,8 +218,10 @@ const HomeEstimator = () => {
         const isEmptyHouse = rooms.some(room => room.isEmptyHouse);
         const needsFloorCovering = rooms.some(room => room.needFloorCovering);
         
+        // Create simplified room details for database storage
         const simplifiedRoomDetails = rooms.map(room => ({
           id: room.id,
+          roomTypeId: room.roomTypeId,
           roomType: room.roomType,
           roomSize: room.roomSize,
           wallsCount: room.wallsCount,
@@ -237,6 +241,10 @@ const HomeEstimator = () => {
           windowsCount: room.windowsCount
         }));
         
+        // Calculate estimated paint gallons (adding this field to the estimate object)
+        const estimatedPaintGallons = Math.ceil(estimate.finalTotal / 250); // Rough estimate
+        
+        // Create the estimate record
         const { data: estimateData, error: estimateError } = await supabase
           .from('estimates')
           .insert({
@@ -245,14 +253,14 @@ const HomeEstimator = () => {
             project_name: projectName,
             details: {
               rooms: rooms.length,
-              paintType: estimate.paintCans > 2 ? "premium" : "standard",
+              paintType: estimatedPaintGallons > 2 ? "premium" : "standard",
               roomDetails: simplifiedRoomDetails
             },
             labor_cost: estimate.finalTotal * 0.7,
             material_cost: estimate.finalTotal * 0.3,
             total_cost: estimate.finalTotal,
             estimated_hours: estimate.finalTotal / 75,
-            estimated_paint_gallons: estimate.paintCans,
+            estimated_paint_gallons: estimatedPaintGallons,
             status: "pending",
             room_types: roomTypes,
             room_sizes: roomSizes,
@@ -281,13 +289,20 @@ const HomeEstimator = () => {
         
         setEstimateId(estimateData.id);
         
+        // Add paintCans to the estimate object for compatibility
+        const estimateWithPaintCans = {
+          ...estimate,
+          paintCans: estimatedPaintGallons
+        };
+        
+        // Save the temporary estimate for local storage
         saveTemporaryEstimate({
           roomPrice: estimate.subtotal,
           laborCost: estimate.finalTotal * 0.7,
           materialCost: estimate.finalTotal * 0.3,
           totalCost: estimate.finalTotal,
           timeEstimate: 0,
-          paintCans: 0,
+          paintCans: estimatedPaintGallons,
           additionalCosts: {},
           discounts: { volumeDiscount: estimate.volumeDiscount }
         }, [], {});

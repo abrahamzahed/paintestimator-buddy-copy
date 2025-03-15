@@ -24,8 +24,10 @@ export function useSyncUserData() {
         const result = await importUserDataByEmail(user.id, user.email);
         
         if (result.success) {
+          const { projects, leads, estimates } = result.data || { projects: 0, leads: 0, estimates: 0 };
+          
           // Only show toast if something was actually imported
-          if (result.message.includes("lead") || result.message.includes("project")) {
+          if (projects > 0 || leads > 0 || estimates > 0) {
             toast({
               title: "Data synchronized",
               description: result.message,
@@ -35,11 +37,15 @@ export function useSyncUserData() {
             await refreshProfile();
           }
         } else {
-          toast({
-            title: "Error syncing data",
-            description: result.message,
-            variant: "destructive",
-          });
+          console.warn("No data to sync or sync failed:", result.message);
+          
+          if (result.message !== 'No data found to import.') {
+            toast({
+              title: "Error syncing data",
+              description: result.message,
+              variant: "destructive",
+            });
+          }
         }
 
         setSyncComplete(true);

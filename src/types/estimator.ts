@@ -32,6 +32,23 @@ export interface RoomDetails {
   // New closet fields
   walkInClosetCount: number;
   regularClosetCount: number;
+  
+  // Backward compatibility fields for HomeEstimator.tsx
+  roomType?: string;
+  roomSize?: string;
+  wallsCount?: number;
+  wallHeight?: number;
+  wallWidth?: number;
+  condition?: string;
+  includeCeiling?: boolean;
+  includeBaseboards?: boolean;
+  baseboardsMethod?: string;
+  includeCrownMolding?: boolean;
+  includeCloset?: boolean;
+  isEmptyHouse?: boolean;
+  needFloorCovering?: boolean;
+  doorsCount?: number;
+  windowsCount?: number;
 }
 
 export interface RoomCost {
@@ -64,4 +81,5 @@ export interface EstimatorSummary {
   subtotal: number;
   volumeDiscount: number;
   finalTotal: number;
+  paintCans?: number; // Add this field for backward compatibility
 }
