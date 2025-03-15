@@ -23,7 +23,7 @@ export async function importUserDataByEmail(userId: string, userEmail: string) {
     
     if (leadsError) throw leadsError;
     
-    // Step 3: Update guest projects with the user's ID
+    // Step 3: Update guest projects with the user's ID (not inserting new ones)
     let updatedProjectCount = 0;
     if (guestProjects && guestProjects.length > 0) {
       const projectIds = guestProjects.map(project => project.id);
@@ -36,6 +36,7 @@ export async function importUserDataByEmail(userId: string, userEmail: string) {
       
       if (updateProjectsError) throw updateProjectsError;
       updatedProjectCount = updatedProjects?.length || 0;
+      console.log(`Updated ${updatedProjectCount} existing projects with user_id: ${userId}`);
     }
     
     // Step 4: Update leads with the user's ID
@@ -51,6 +52,7 @@ export async function importUserDataByEmail(userId: string, userEmail: string) {
       
       if (updateLeadsError) throw updateLeadsError;
       updatedLeadCount = updatedLeads?.length || 0;
+      console.log(`Updated ${updatedLeadCount} existing leads with user_id: ${userId}`);
     }
     
     // Step 5: Find estimates associated with the leads
@@ -65,9 +67,6 @@ export async function importUserDataByEmail(userId: string, userEmail: string) {
         .in('lead_id', leadIds);
       
       if (estimatesError) throw estimatesError;
-      
-      // Note: We don't need to update the estimates with user_id since they're
-      // linked through the project_id and lead_id, which we've already updated
       updatedEstimateCount = estimates?.length || 0;
     }
     

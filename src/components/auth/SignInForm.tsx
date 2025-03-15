@@ -49,7 +49,7 @@ export function SignInForm({ onSuccess }: SignInFormProps) {
         description: "You have successfully signed in.",
       });
 
-      // Navigate immediately after successful sign in
+      // Handle success callback or navigate immediately
       if (onSuccess) {
         onSuccess();
       } else {
