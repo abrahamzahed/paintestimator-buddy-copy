@@ -24,7 +24,11 @@ export const AuthService = {
    */
   signOut: async (): Promise<{ error: Error | null }> => {
     try {
+      console.log("Attempting to sign out user");
       const { error } = await supabase.auth.signOut();
+      if (!error) {
+        console.log("User signed out successfully");
+      }
       return { error };
     } catch (error: any) {
       console.error("Error in signOut:", error);

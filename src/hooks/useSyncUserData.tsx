@@ -43,6 +43,9 @@ export function useSyncUserData() {
             
             // Refresh the user profile to update any UI state that depends on the user's data
             await refreshProfile();
+            
+            // Force a page reload to reflect the newly imported data
+            window.location.reload();
           }
         } else {
           console.log("No data to sync or sync failed:", result.message);
@@ -62,6 +65,9 @@ export function useSyncUserData() {
     isSyncing,
     syncComplete,
     resetSyncState: () => setSyncComplete(false),
-    resync: () => setSyncComplete(false)
+    resync: () => {
+      setSyncComplete(false);
+      setIsSyncing(false);
+    }
   };
 }

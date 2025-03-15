@@ -2,6 +2,8 @@
 import { Navigate } from "react-router-dom";
 import { useSession } from "@/context/use-session";
 import LoadingState from "@/components/estimate/LoadingState";
+import { useEffect } from "react";
+import { useSyncUserData } from "@/hooks/useSyncUserData";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -10,10 +12,11 @@ interface ProtectedRouteProps {
 
 export const ProtectedRoute = ({ children, allowedRoles = [] }: ProtectedRouteProps) => {
   const { isLoading, user, isAdmin, profile } = useSession();
+  const { isSyncing, syncComplete } = useSyncUserData();
 
-  // During initial loading, show a loading state
-  if (isLoading) {
-    return <LoadingState message="Loading your account information..." />;
+  // During initial loading or data syncing, show a loading state
+  if (isLoading || (isSyncing && !syncComplete)) {
+    return <LoadingState message={isLoading ? "Loading your account information..." : "Syncing your data..."} />;
   }
 
   // If not authenticated, redirect to auth page with return URL
