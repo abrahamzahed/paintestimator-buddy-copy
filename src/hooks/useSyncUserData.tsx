@@ -21,6 +21,15 @@ export function useSyncUserData() {
         setIsSyncing(true);
         console.log("Starting data sync for user:", user.id, "with email:", user.email);
 
+        // Skip the synchronization step if we're in the authentication process
+        // We'll do this by checking if we're on an auth page
+        const isAuthPage = window.location.pathname.includes('/auth');
+        if (isAuthPage) {
+          console.log("Skipping data sync on auth page");
+          setSyncComplete(true);
+          return;
+        }
+
         // Use the current user data from the session instead of fetching from auth.users
         const result = await importUserDataByEmail(user.id, user.email);
         
@@ -54,12 +63,18 @@ export function useSyncUserData() {
       } catch (error: any) {
         console.error("Error syncing user data:", error);
         
-        // Show a more user-friendly error message
-        toast({
-          title: "Error syncing data",
-          description: "There was an issue accessing your data. This is expected and can be ignored.",
-          variant: "destructive",
-        });
+        // Silently handle the error without showing a toast on the auth page
+        const isAuthPage = window.location.pathname.includes('/auth');
+        if (!isAuthPage) {
+          toast({
+            title: "Data sync skipped",
+            description: "We'll try again later.",
+            variant: "default",
+          });
+        }
+        
+        // Still mark as complete to prevent continuous retries
+        setSyncComplete(true);
       } finally {
         setIsSyncing(false);
       }

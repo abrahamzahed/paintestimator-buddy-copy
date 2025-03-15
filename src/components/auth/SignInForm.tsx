@@ -43,16 +43,20 @@ export function SignInForm({ onSuccess }: SignInFormProps) {
 
       if (error) throw error;
 
+      // Success! Show toast and redirect
       toast({
         title: "Welcome back!",
         description: "You have successfully signed in.",
       });
 
-      if (onSuccess) {
-        onSuccess();
-      } else {
-        navigate("/dashboard");
-      }
+      // Use setTimeout to ensure the auth state has time to propagate
+      setTimeout(() => {
+        if (onSuccess) {
+          onSuccess();
+        } else {
+          navigate("/dashboard");
+        }
+      }, 100);
     } catch (error: any) {
       console.error("Sign in error:", error);
       
