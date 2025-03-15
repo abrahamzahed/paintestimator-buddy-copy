@@ -1,10 +1,8 @@
-
 import { createContext, useState, useEffect, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Profile, SessionContextType } from "./session-types";
-import { useSyncUserData } from "@/hooks/useSyncUserData";
 
 export const SessionContext = createContext<SessionContextType>({
   session: null,
@@ -25,8 +23,6 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
   const [profileError, setProfileError] = useState<Error | null>(null);
   const { toast } = useToast();
   
-  useSyncUserData();
-
   const fetchProfile = async (userId: string) => {
     try {
       console.log("Fetching profile for user:", userId);
@@ -172,7 +168,6 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
       });
       
       console.log("User signed out successfully");
-      // No longer returning true/false
     } catch (error) {
       console.error("Error signing out:", error);
       toast({
@@ -180,7 +175,6 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
         description: "Please try again",
         variant: "destructive",
       });
-      // No longer returning false
     }
   };
 

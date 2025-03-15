@@ -11,14 +11,14 @@ export function useSyncUserData() {
   const { toast } = useToast();
 
   useEffect(() => {
+    // This check prevents the sync from running on authentication pages
+    // which completely avoids any potential interference with the login process
+    if (window.location.pathname.includes('/auth')) {
+      return;
+    }
+
     // Only run once when user is available and we haven't synced yet
     const syncUserData = async () => {
-      // Skip sync entirely during authentication flow
-      if (window.location.pathname.includes('/auth')) {
-        setSyncComplete(true);
-        return;
-      }
-
       // Don't proceed if no user, already syncing, or already completed
       if (!user?.id || !user?.email || isSyncing || syncComplete) {
         return;

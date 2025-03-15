@@ -12,66 +12,76 @@ import NotFound from "./pages/NotFound";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { SessionContextProvider } from "./context/session-provider";
 import { Toaster } from "./components/ui/toaster";
+import { useSyncUserData } from "./hooks/useSyncUserData";
+
+// Create a wrapper component to use the hook at the right place
+// to avoid circular dependencies
+function SyncDataWrapper({ children }: { children: React.ReactNode }) {
+  useSyncUserData(); // This will run only after SessionContext is initialized
+  return <>{children}</>;
+}
 
 function App() {
   return (
     <SessionContextProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin"
-            element={
-              <ProtectedRoute allowedRoles={["admin"]}>
-                <AdminDashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/project/:id"
-            element={
-              <ProtectedRoute>
-                <ProjectDetail />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/estimate"
-            element={
-              <ProtectedRoute>
-                <EstimateForm />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/estimate/:id"
-            element={
-              <ProtectedRoute>
-                <EstimateDetail />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/estimate/edit/:id"
-            element={
-              <ProtectedRoute>
-                <EditEstimate />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-      <Toaster />
+      <SyncDataWrapper>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/project/:id"
+              element={
+                <ProtectedRoute>
+                  <ProjectDetail />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/estimate"
+              element={
+                <ProtectedRoute>
+                  <EstimateForm />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/estimate/:id"
+              element={
+                <ProtectedRoute>
+                  <EstimateDetail />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/estimate/edit/:id"
+              element={
+                <ProtectedRoute>
+                  <EditEstimate />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+        <Toaster />
+      </SyncDataWrapper>
     </SessionContextProvider>
   );
 }
