@@ -1,3 +1,4 @@
+
 import { createContext, useState, useEffect, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -68,7 +69,6 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
             
             console.log("New profile created successfully:", newProfile?.[0]);
             setProfile(newProfile?.[0] as Profile);
-            return;
           } catch (createError: any) {
             console.error("Error in profile creation:", createError);
             setProfileError(new Error(createError.message || "Failed to create profile"));
@@ -77,7 +77,10 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
               description: "We couldn't create your profile. Please try refreshing the page.",
               variant: "destructive",
             });
+          } finally {
+            setIsLoading(false);
           }
+          return;
         } else {
           setProfileError(new Error(error.message));
           toast({
@@ -85,15 +88,16 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
             description: "Please try refreshing the page or contact support.",
             variant: "destructive",
           });
+          setIsLoading(false);
+          return;
         }
-        throw error;
       }
 
       console.log("Profile fetched successfully:", data);
       setProfile(data as Profile);
+      setIsLoading(false);
     } catch (error) {
       console.error("Error in fetchProfile function:", error);
-    } finally {
       setIsLoading(false);
     }
   };
@@ -104,6 +108,7 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
       await fetchProfile(user.id);
     } else {
       console.log("Cannot refresh profile: No user ID available");
+      setIsLoading(false);
     }
   };
 
@@ -152,9 +157,8 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
     try {
       console.log("Attempting to sign out user");
       
-      setSession(null);
-      setUser(null);
-      setProfile(null);
+      // Set these states immediately to prevent UI lag
+      setIsLoading(true);
       
       const { error } = await supabase.auth.signOut();
       
@@ -162,6 +166,11 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
         console.error("Error during sign out:", error);
         throw error;
       }
+      
+      // Wait until after sign out is complete
+      setSession(null);
+      setUser(null);
+      setProfile(null);
       
       toast({
         title: "Signed out successfully",
@@ -175,6 +184,8 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
         description: "Please try again",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 

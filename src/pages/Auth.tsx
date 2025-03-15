@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSession } from "@/context/use-session";
@@ -10,7 +11,6 @@ import { SignUpForm } from "@/components/auth/SignUpForm";
 import { PasswordResetConfirmation } from "@/components/auth/PasswordResetConfirmation";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useSyncUserData } from "@/hooks/useSyncUserData";
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -20,7 +20,7 @@ export default function Auth() {
   const [activeTab, setActiveTab] = useState("sign-in");
   const [isRecoveryMode, setIsRecoveryMode] = useState(false);
   const [processingRecovery, setProcessingRecovery] = useState(true);
-  const { syncComplete } = useSyncUserData();
+  const [redirectTriggered, setRedirectTriggered] = useState(false);
 
   const searchParams = new URLSearchParams(location.search);
   const tab = searchParams.get("tab");
@@ -62,9 +62,13 @@ export default function Auth() {
   // Only redirect if not in recovery mode
   useEffect(() => {
     const handleSessionRedirect = async () => {
+      // Avoid multiple redirects
+      if (redirectTriggered) return;
+      
       if (session && user && !isLoading && !isRecoveryMode && !processingRecovery) {
         try {
           console.log("Valid session detected, redirecting to:", saveEstimate ? "/estimate?saveEstimate=true" : returnUrl);
+          setRedirectTriggered(true);
           
           if (saveEstimate && hasSavedEstimate()) {
             navigate("/estimate?saveEstimate=true");
@@ -78,12 +82,13 @@ export default function Auth() {
             description: "There was a problem redirecting you. Please try again.",
             variant: "destructive",
           });
+          setRedirectTriggered(false);
         }
       }
     };
     
     handleSessionRedirect();
-  }, [session, user, isLoading, navigate, returnUrl, saveEstimate, isRecoveryMode, processingRecovery, toast, syncComplete]);
+  }, [session, user, isLoading, navigate, returnUrl, saveEstimate, isRecoveryMode, processingRecovery, toast, redirectTriggered]);
 
   const handleSignUpSuccess = () => {
     setActiveTab("sign-in");
@@ -93,6 +98,7 @@ export default function Auth() {
     });
   };
 
+  // Show loading state during recovery processing
   if (processingRecovery) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-secondary/30 px-4">

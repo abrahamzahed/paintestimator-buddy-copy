@@ -11,9 +11,10 @@ export function useSyncUserData() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // This check prevents the sync from running on authentication pages
-    // which completely avoids any potential interference with the login process
+    // Skip data sync entirely on authentication pages
     if (window.location.pathname.includes('/auth')) {
+      console.log("Skipping data sync on auth page");
+      setSyncComplete(true);
       return;
     }
 
@@ -47,7 +48,6 @@ export function useSyncUserData() {
           console.log("No data to sync or sync failed:", result.message);
         }
       } catch (error: any) {
-        // Just log the error, don't show toast to avoid disrupting the user
         console.error("Error in user data sync:", error);
       } finally {
         setSyncComplete(true);

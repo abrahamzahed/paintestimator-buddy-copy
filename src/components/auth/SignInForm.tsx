@@ -43,17 +43,15 @@ export function SignInForm({ onSuccess }: SignInFormProps) {
 
       if (error) throw error;
 
-      // Success! Show toast and redirect
+      // Success! Show toast only - redirect will happen automatically via Auth page
       toast({
         title: "Welcome back!",
         description: "You have successfully signed in.",
       });
 
-      // Handle success callback or navigate immediately
+      // Handle success callback if provided
       if (onSuccess) {
         onSuccess();
-      } else {
-        navigate("/dashboard");
       }
     } catch (error: any) {
       console.error("Sign in error:", error);
@@ -72,7 +70,7 @@ export function SignInForm({ onSuccess }: SignInFormProps) {
         description: error.message || "Please check your credentials and try again.",
         variant: "destructive",
       });
-      
+    } finally {
       setIsSubmitting(false);
     }
   };
