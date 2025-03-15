@@ -21,6 +21,7 @@ export default function Auth() {
   const [isRecoveryMode, setIsRecoveryMode] = useState(false);
   const [processingRecovery, setProcessingRecovery] = useState(true);
   const [redirectTriggered, setRedirectTriggered] = useState(false);
+  const [localLoading, setLocalLoading] = useState(true);
 
   const searchParams = new URLSearchParams(location.search);
   const tab = searchParams.get("tab");
@@ -28,8 +29,8 @@ export default function Auth() {
   const saveEstimate = searchParams.get("saveEstimate") === "true";
   const type = searchParams.get("type");
   
+  // First check if this is a recovery mode
   useEffect(() => {
-    // Check if this is a password recovery URL
     const checkRecoveryMode = async () => {
       if (type === "recovery") {
         console.log("Recovery mode detected, signing out any existing user");
@@ -54,18 +55,22 @@ export default function Auth() {
       }
       
       setProcessingRecovery(false);
+      setLocalLoading(false);
     };
     
     checkRecoveryMode();
   }, [type, saveEstimate, toast, tab]);
 
-  // Only redirect if not in recovery mode
+  // Handle redirect after successful auth
   useEffect(() => {
     const handleSessionRedirect = async () => {
-      // Avoid multiple redirects
-      if (redirectTriggered) return;
+      // Don't redirect if we're in recovery mode or still processing
+      if (isRecoveryMode || processingRecovery || redirectTriggered || localLoading) {
+        return;
+      }
       
-      if (session && user && !isLoading && !isRecoveryMode && !processingRecovery) {
+      // Only redirect if we have a valid session and user, and we're not loading
+      if (session && user && !isLoading) {
         try {
           console.log("Valid session detected, redirecting to:", saveEstimate ? "/estimate?saveEstimate=true" : returnUrl);
           setRedirectTriggered(true);
@@ -88,7 +93,7 @@ export default function Auth() {
     };
     
     handleSessionRedirect();
-  }, [session, user, isLoading, navigate, returnUrl, saveEstimate, isRecoveryMode, processingRecovery, toast, redirectTriggered]);
+  }, [session, user, isLoading, navigate, returnUrl, saveEstimate, isRecoveryMode, processingRecovery, toast, redirectTriggered, localLoading]);
 
   const handleSignUpSuccess = () => {
     setActiveTab("sign-in");
@@ -98,8 +103,8 @@ export default function Auth() {
     });
   };
 
-  // Show loading state during recovery processing
-  if (processingRecovery) {
+  // Show loading state during recovery processing or while the auth state is initializing
+  if (processingRecovery || (isLoading && !redirectTriggered)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-secondary/30 px-4">
         <Card className="w-full max-w-md">

@@ -1,6 +1,5 @@
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +12,6 @@ interface SignInFormProps {
 }
 
 export function SignInForm({ onSuccess }: SignInFormProps) {
-  const navigate = useNavigate();
   const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -43,6 +41,8 @@ export function SignInForm({ onSuccess }: SignInFormProps) {
 
       if (error) throw error;
 
+      console.log("Sign in successful");
+      
       // Success! Show toast only - redirect will happen automatically via Auth page
       toast({
         title: "Welcome back!",
