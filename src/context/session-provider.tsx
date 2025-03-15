@@ -1,9 +1,10 @@
 
 import { createContext, useState, useEffect, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Profile, SessionContextType } from "./session-types";
+import { useProfile } from "./use-profile";
+import { AuthService } from "./auth-service";
 
 export const SessionContext = createContext<SessionContextType>({
   session: null,
@@ -21,91 +22,15 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [profileError, setProfileError] = useState<Error | null>(null);
   const { toast } = useToast();
+  const { fetchProfile } = useProfile();
   
-  const fetchProfile = async (userId: string) => {
-    try {
-      console.log("Fetching profile for user:", userId);
-      setProfileError(null);
-      
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", userId)
-        .single();
-
-      if (error) {
-        console.error("Error fetching profile:", error);
-        
-        if (error.code === 'PGRST116') {
-          console.log("No profile found, creating new profile");
-          if (!user) {
-            console.error("User not available for profile creation");
-            setIsLoading(false);
-            return;
-          }
-          
-          const userData = user.user_metadata;
-          console.log("User metadata for profile creation:", userData);
-          
-          try {
-            const { data: newProfile, error: createError } = await supabase
-              .from("profiles")
-              .insert([{
-                id: userId,
-                name: userData?.full_name || userData?.name || user?.email?.split('@')[0] || null,
-                email: user?.email || null,
-                phone: userData?.phone || null,
-                address: userData?.address || null,
-                role: "customer"
-              }])
-              .select();
-              
-            if (createError) {
-              console.error("Error creating profile:", createError);
-              throw createError;
-            }
-            
-            console.log("New profile created successfully:", newProfile?.[0]);
-            setProfile(newProfile?.[0] as Profile);
-          } catch (createError: any) {
-            console.error("Error in profile creation:", createError);
-            setProfileError(new Error(createError.message || "Failed to create profile"));
-            toast({
-              title: "Profile creation failed",
-              description: "We couldn't create your profile. Please try refreshing the page.",
-              variant: "destructive",
-            });
-          } finally {
-            setIsLoading(false);
-          }
-          return;
-        } else {
-          setProfileError(new Error(error.message));
-          toast({
-            title: "Error loading profile",
-            description: "Please try refreshing the page or contact support.",
-            variant: "destructive",
-          });
-          setIsLoading(false);
-          return;
-        }
-      }
-
-      console.log("Profile fetched successfully:", data);
-      setProfile(data as Profile);
-      setIsLoading(false);
-    } catch (error) {
-      console.error("Error in fetchProfile function:", error);
-      setIsLoading(false);
-    }
-  };
-
   const refreshProfile = async () => {
     if (user?.id) {
       console.log("Refreshing profile for user:", user.id);
-      await fetchProfile(user.id);
+      const profileData = await fetchProfile(user.id, user);
+      setProfile(profileData);
+      setIsLoading(false);
     } else {
       console.log("Cannot refresh profile: No user ID available");
       setIsLoading(false);
@@ -115,16 +40,19 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
   useEffect(() => {
     const initializeSession = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        console.log("Initial session check:", session?.user?.id || "No session");
-        setSession(session);
-        setUser(session?.user ?? null);
+        setIsLoading(true);
+        const sessionData = await AuthService.getSession();
+        console.log("Initial session check:", sessionData?.user?.id || "No session");
         
-        if (session?.user) {
-          await fetchProfile(session.user.id);
-        } else {
-          setIsLoading(false);
+        setSession(sessionData);
+        setUser(sessionData?.user ?? null);
+        
+        if (sessionData?.user) {
+          const profileData = await fetchProfile(sessionData.user.id, sessionData.user);
+          setProfile(profileData);
         }
+        
+        setIsLoading(false);
       } catch (error) {
         console.error("Error getting initial session:", error);
         setIsLoading(false);
@@ -133,18 +61,19 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
     
     initializeSession();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log("Auth state changed:", event, session?.user?.id || "No user");
-        setSession(session);
-        setUser(session?.user ?? null);
+    const subscription = AuthService.onAuthStateChange(
+      async (sessionData, userData) => {
+        setSession(sessionData);
+        setUser(userData);
         
-        if (session?.user) {
-          await fetchProfile(session.user.id);
+        if (userData) {
+          const profileData = await fetchProfile(userData.id, userData);
+          setProfile(profileData);
         } else {
           setProfile(null);
-          setIsLoading(false);
         }
+        
+        setIsLoading(false);
       }
     );
 
@@ -165,7 +94,7 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
       setUser(null);
       setProfile(null);
       
-      const { error } = await supabase.auth.signOut();
+      const { error } = await AuthService.signOut();
       
       if (error) {
         console.error("Error during sign out:", error);
@@ -178,8 +107,6 @@ export const SessionContextProvider = ({ children }: { children: ReactNode }) =>
       }
       
       console.log("User signed out successfully");
-      
-      // Toast will be shown after the redirect, so we remove it
     } catch (error) {
       console.error("Error signing out:", error);
       toast({
