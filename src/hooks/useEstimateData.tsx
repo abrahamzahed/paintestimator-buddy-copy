@@ -44,6 +44,7 @@ export const useEstimateData = (estimateId: string | undefined) => {
         
         setEstimate(typedEstimate);
 
+        // Extract room details from the JSONB details field
         if (estimateData.details && 
             typeof estimateData.details === 'object') {
           

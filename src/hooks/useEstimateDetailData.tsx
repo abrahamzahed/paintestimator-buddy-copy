@@ -49,6 +49,7 @@ export const useEstimateDetailData = (estimateId: string | undefined) => {
         
         setEstimate(formattedEstimate);
 
+        // Extract room details from the JSONB details field
         if (formattedEstimate.details && 
             typeof formattedEstimate.details === 'object') {
           
@@ -56,10 +57,31 @@ export const useEstimateDetailData = (estimateId: string | undefined) => {
           const roomDetailsArray = details && 'roomDetails' in details ? details.roomDetails : null;
           
           if (Array.isArray(roomDetailsArray)) {
-            setRoomDetails(roomDetailsArray as RoomDetail[]);
+            const typedRoomDetails = roomDetailsArray.map((room: any) => ({
+              id: room.id || '',
+              roomType: room.roomType || '',
+              roomSize: room.roomSize || 'average',
+              wallsCount: room.wallsCount || 4,
+              wallHeight: room.wallHeight || 8,
+              wallWidth: room.wallWidth || 10,
+              condition: room.condition || 'good',
+              paintType: room.paintType || 'standard',
+              includeCeiling: !!room.includeCeiling,
+              includeBaseboards: !!room.includeBaseboards,
+              baseboardsMethod: room.baseboardsMethod || 'brush',
+              includeCrownMolding: !!room.includeCrownMolding,
+              hasHighCeiling: !!room.hasHighCeiling,
+              includeCloset: !!room.includeCloset,
+              isEmptyHouse: !!room.isEmptyHouse,
+              needFloorCovering: room.needFloorCovering !== false,
+              doorsCount: room.doorsCount || 0,
+              windowsCount: room.windowsCount || 0
+            }));
+            
+            setRoomDetails(typedRoomDetails);
             
             const estimates: Record<string, any> = {};
-            roomDetailsArray.forEach((room: RoomDetail) => {
+            typedRoomDetails.forEach((room: RoomDetail) => {
               if (room.id) {
                 // Ensure each room has the correct calculation
                 estimates[room.id] = calculateSingleRoomEstimate(room);

@@ -20,28 +20,11 @@ export const useEstimateUpdate = (estimateId: string | undefined, estimate: Esti
     setIsSubmitting(true);
     
     try {
-      const roomTypes = updatedRooms.map(room => room.roomType);
-      const roomSizes = updatedRooms.map(room => room.roomSize);
-      const wallCounts = updatedRooms.map(room => room.wallsCount);
-      const wallHeights = updatedRooms.map(room => room.wallHeight);
-      const wallWidths = updatedRooms.map(room => room.wallWidth);
-      const wallConditions = updatedRooms.map(room => room.condition);
-      const paintTypes = updatedRooms.map(room => room.paintType);
-      const includeCeilings = updatedRooms.map(room => room.includeCeiling);
-      const includeBaseboards = updatedRooms.map(room => room.includeBaseboards);
-      const baseboardsMethods = updatedRooms.map(room => room.baseboardsMethod);
-      const includeCrownMoldings = updatedRooms.map(room => room.includeCrownMolding);
-      const hasHighCeilings = updatedRooms.map(room => room.hasHighCeiling);
-      const includeClosets = updatedRooms.map(room => room.includeCloset);
-      const doorsCountPerRoom = updatedRooms.map(room => room.doorsCount);
-      const windowsCountPerRoom = updatedRooms.map(room => room.windowsCount);
-      
-      const isEmptyHouse = updatedRooms.some(room => room.isEmptyHouse);
-      const needsFloorCovering = updatedRooms.some(room => room.needFloorCovering);
-      
+      // Extract room data for storage in the details field
       const simplifiedRoomDetails = updatedRooms.map(room => ({
         id: room.id,
         roomType: room.roomType,
+        roomSize: room.roomSize,
         wallsCount: room.wallsCount,
         wallHeight: room.wallHeight,
         wallWidth: room.wallWidth,
@@ -59,37 +42,42 @@ export const useEstimateUpdate = (estimateId: string | undefined, estimate: Esti
         windowsCount: room.windowsCount
       }));
       
+      // Check if any rooms have these properties
+      const isEmptyHouse = updatedRooms.some(room => room.isEmptyHouse);
+      const needsFloorCovering = updatedRooms.some(room => room.needFloorCovering);
+      
+      // Store the room data and other fields in the details JSONB column
       const { error: updateError } = await supabase
         .from("estimates")
         .update({
           details: {
             rooms: updatedRooms.length,
             paintType: updatedEstimate.paintCans > 2 ? "premium" : "standard",
-            roomDetails: simplifiedRoomDetails
+            roomDetails: simplifiedRoomDetails,
+            roomTypes: updatedRooms.map(room => room.roomType),
+            roomSizes: updatedRooms.map(room => room.roomSize),
+            wallCounts: updatedRooms.map(room => room.wallsCount),
+            wallHeights: updatedRooms.map(room => room.wallHeight),
+            wallWidths: updatedRooms.map(room => room.wallWidth),
+            wallConditions: updatedRooms.map(room => room.condition),
+            paintTypes: updatedRooms.map(room => room.paintType),
+            includeCeilings: updatedRooms.map(room => room.includeCeiling),
+            includeBaseboards: updatedRooms.map(room => room.includeBaseboards),
+            baseboardsMethods: updatedRooms.map(room => room.baseboardsMethod),
+            includeCrownMoldings: updatedRooms.map(room => room.includeCrownMolding),
+            hasHighCeilings: updatedRooms.map(room => room.hasHighCeiling),
+            includeClosets: updatedRooms.map(room => room.includeCloset),
+            doorsCountPerRoom: updatedRooms.map(room => room.doorsCount),
+            windowsCountPerRoom: updatedRooms.map(room => room.windowsCount),
+            isEmptyHouse: isEmptyHouse,
+            needsFloorCovering: needsFloorCovering
           },
           labor_cost: updatedEstimate.laborCost,
           material_cost: updatedEstimate.materialCost,
           total_cost: updatedEstimate.totalCost,
           estimated_hours: updatedEstimate.timeEstimate,
           estimated_paint_gallons: updatedEstimate.paintCans,
-          status: estimate.status,
-          room_types: roomTypes,
-          room_sizes: roomSizes,
-          wall_counts: wallCounts,
-          wall_heights: wallHeights,
-          wall_widths: wallWidths,
-          wall_conditions: wallConditions,
-          paint_types: paintTypes,
-          include_ceilings: includeCeilings,
-          include_baseboards: includeBaseboards,
-          baseboards_methods: baseboardsMethods, // Fix this field name
-          include_crown_moldings: includeCrownMoldings,
-          has_high_ceilings: hasHighCeilings,
-          include_closets: includeClosets,
-          doors_count_per_room: doorsCountPerRoom,
-          windows_count_per_room: windowsCountPerRoom,
-          is_empty_house: isEmptyHouse,
-          needs_floor_covering: needsFloorCovering
+          status: estimate.status
         })
         .eq("id", estimateId);
 
