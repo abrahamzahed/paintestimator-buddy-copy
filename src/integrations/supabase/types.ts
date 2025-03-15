@@ -545,6 +545,13 @@ export type Database = {
           unit_price: number
         }[]
       }
+      import_user_data_by_email: {
+        Args: {
+          p_user_id: string
+          p_email: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never
