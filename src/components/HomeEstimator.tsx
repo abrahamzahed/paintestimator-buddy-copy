@@ -188,25 +188,6 @@ const HomeEstimator = () => {
       if (leadData) {
         setLeadId(leadData.id);
         
-        const roomTypes = rooms.map(room => room.roomType);
-        const roomSizes = rooms.map(room => room.roomSize);
-        const wallCounts = rooms.map(room => room.wallsCount);
-        const wallHeights = rooms.map(room => room.wallHeight);
-        const wallWidths = rooms.map(room => room.wallWidth);
-        const wallConditions = rooms.map(room => room.condition);
-        const paintTypes = rooms.map(room => room.paintType);
-        const includeCeilings = rooms.map(room => room.includeCeiling);
-        const includeBaseboards = rooms.map(room => room.includeBaseboards);
-        const baseboardsMethods = rooms.map(room => room.baseboardsMethod);
-        const includeCrownMoldings = rooms.map(room => room.includeCrownMolding);
-        const hasHighCeilings = rooms.map(room => room.hasHighCeiling);
-        const includeClosets = rooms.map(room => room.includeCloset);
-        const doorsCountPerRoom = rooms.map(room => room.doorsCount);
-        const windowsCountPerRoom = rooms.map(room => room.windowsCount);
-        
-        const isEmptyHouse = rooms.some(room => room.isEmptyHouse);
-        const needsFloorCovering = rooms.some(room => room.needFloorCovering);
-        
         const simplifiedRoomDetails = rooms.map(room => ({
           id: room.id,
           roomTypeId: room.roomTypeId,
@@ -231,40 +212,42 @@ const HomeEstimator = () => {
         
         const estimatedPaintGallons = Math.ceil(estimate.finalTotal / 250);
         
+        const detailsObject = {
+          rooms: rooms.length,
+          paintType: estimatedPaintGallons > 2 ? "premium" : "standard",
+          roomDetails: simplifiedRoomDetails,
+          roomTypes: rooms.map(room => room.roomType),
+          roomSizes: rooms.map(room => room.roomSize),
+          wallCounts: rooms.map(room => room.wallsCount),
+          wallHeights: rooms.map(room => room.wallHeight),
+          wallWidths: rooms.map(room => room.wallWidth),
+          wallConditions: rooms.map(room => room.condition),
+          paintTypes: rooms.map(room => room.paintType),
+          includeCeilings: rooms.map(room => room.includeCeiling),
+          includeBaseboards: rooms.map(room => room.includeBaseboards),
+          baseboardsMethods: rooms.map(room => room.baseboardsMethod),
+          includeCrownMoldings: rooms.map(room => room.includeCrownMolding),
+          hasHighCeilings: rooms.map(room => room.hasHighCeiling),
+          includeClosets: rooms.map(room => room.includeCloset),
+          doorsCountPerRoom: rooms.map(room => room.doorsCount),
+          windowsCountPerRoom: rooms.map(room => room.windowsCount),
+          isEmptyHouse: rooms.some(room => room.isEmptyHouse),
+          needsFloorCovering: rooms.some(room => room.needFloorCovering)
+        };
+        
         const { data: estimateData, error: estimateError } = await supabase
           .from('estimates')
           .insert({
             lead_id: leadData.id,
             project_id: projectId,
             project_name: projectName,
-            details: {
-              rooms: rooms.length,
-              paintType: estimatedPaintGallons > 2 ? "premium" : "standard",
-              roomDetails: simplifiedRoomDetails
-            },
+            details: detailsObject,
             labor_cost: estimate.finalTotal * 0.7,
             material_cost: estimate.finalTotal * 0.3,
             total_cost: estimate.finalTotal,
             estimated_hours: estimate.finalTotal / 75,
             estimated_paint_gallons: estimatedPaintGallons,
-            status: "pending",
-            room_types: roomTypes,
-            room_sizes: roomSizes,
-            wall_counts: wallCounts,
-            wall_heights: wallHeights,
-            wall_widths: wallWidths,
-            wall_conditions: wallConditions,
-            paint_types: paintTypes,
-            include_ceilings: includeCeilings,
-            include_baseboards: includeBaseboards,
-            baseboards_methods: baseboardsMethods,
-            include_crown_moldings: includeCrownMoldings,
-            has_high_ceilings: hasHighCeilings,
-            include_closets: includeClosets,
-            doors_count_per_room: doorsCountPerRoom,
-            windows_count_per_room: windowsCountPerRoom,
-            is_empty_house: isEmptyHouse,
-            needs_floor_covering: needsFloorCovering
+            status: "pending"
           })
           .select()
           .single();
