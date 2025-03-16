@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -22,15 +21,12 @@ const CustomerDashboardView = ({
 }: CustomerDashboardViewProps) => {
   const [projectsView, setProjectsView] = useState<"active" | "archived">("active");
   
-  // Filter out deleted estimates
   const visibleEstimates = estimates.filter(estimate => estimate.status_type !== "deleted");
   
-  // Filter estimates by project
   const getEstimatesByProjectId = (projectId: string) => {
     return visibleEstimates.filter(estimate => estimate.project_id === projectId);
   };
 
-  // Filter invoices by estimate
   const getInvoicesByEstimateId = (estimateId: string) => {
     return invoices.filter(invoice => invoice.estimate_id === estimateId);
   };
@@ -43,7 +39,7 @@ const CustomerDashboardView = ({
       <div className="flex justify-between items-center mb-8">
         <h2 className="text-3xl font-bold">Welcome!</h2>
         <Button asChild className="bg-paint hover:bg-paint-dark">
-          <Link to="/estimate">
+          <Link to="/dashboard/estimate">
             <PlusCircle className="mr-2 h-4 w-4" />
             New Estimate
           </Link>
@@ -106,7 +102,7 @@ const CustomerDashboardView = ({
             Start by creating your first project and estimate
           </p>
           <Button asChild className="bg-paint hover:bg-paint-dark">
-            <Link to="/estimate">
+            <Link to="/dashboard/estimate">
               <PlusCircle className="mr-2 h-4 w-4" />
               Get Estimate
             </Link>
@@ -213,7 +209,7 @@ const CustomerDashboardView = ({
                         Create a new project or check your archived projects
                       </p>
                       <Button asChild className="bg-paint hover:bg-paint-dark">
-                        <Link to="/estimate">
+                        <Link to="/dashboard/estimate">
                           <PlusCircle className="mr-2 h-4 w-4" />
                           Get Estimate
                         </Link>
@@ -240,7 +236,8 @@ const CustomerDashboardView = ({
             </TabsContent>
             
             <TabsContent value="estimates">
-              {visibleEstimates.length > 0 ? <div className="bg-white rounded-lg border border-gray-100 shadow-sm overflow-hidden">
+              {visibleEstimates.length > 0 ? 
+                <div className="bg-white rounded-lg border border-gray-100 shadow-sm overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full border-collapse">
                       <thead>
@@ -283,7 +280,7 @@ const CustomerDashboardView = ({
                   <p className="text-lg font-medium mb-2">No estimates yet</p>
                   <p className="text-muted-foreground mb-6">Get started with your first estimate</p>
                   <Button asChild className="bg-paint hover:bg-paint-dark">
-                    <Link to="/estimate">
+                    <Link to="/dashboard/estimate">
                       <PlusCircle className="mr-2 h-4 w-4" />
                       Get Estimate
                     </Link>
