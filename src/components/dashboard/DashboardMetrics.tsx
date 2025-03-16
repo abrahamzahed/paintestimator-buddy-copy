@@ -58,7 +58,7 @@ const DashboardMetrics = ({
         <div className="flex flex-col h-full justify-between">
           <h3 className="font-semibold text-lg text-paint">Get Estimate</h3>
           <Button asChild className="mt-4 bg-paint hover:bg-paint-dark">
-            <Link to="/estimate">
+            <Link to="/dashboard/estimate">
               <PlusCircle className="mr-2 h-4 w-4" />
               New Estimate
             </Link>
