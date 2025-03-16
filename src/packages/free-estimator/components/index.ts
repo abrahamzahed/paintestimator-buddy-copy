@@ -1,2 +1,2 @@
 
-// Export free estimator components
+export { default as FreeEstimator } from './FreeEstimator';
