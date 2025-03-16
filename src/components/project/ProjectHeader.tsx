@@ -74,7 +74,7 @@ const ProjectHeader = ({ project, onDeleteClick, onArchiveClick, onRestoreClick 
         
         {project.status === "active" && (
           <Button asChild className="bg-paint hover:bg-paint-dark">
-            <Link to={`/estimate?projectId=${project.id}`}>
+            <Link to={`/dashboard/estimate`}>
               <PlusCircle className="mr-2 h-4 w-4" />
               New Estimate
             </Link>

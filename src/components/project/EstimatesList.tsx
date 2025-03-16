@@ -72,7 +72,7 @@ const EstimatesList = ({ estimates, projectId, projectStatus }: EstimatesListPro
       </p>
       {projectStatus === "active" && projectId && (
         <Button asChild className="bg-paint hover:bg-paint-dark">
-          <Link to={`/estimate?projectId=${projectId}`}>
+          <Link to={`/dashboard/estimate`}>
             <PlusCircle className="mr-2 h-4 w-4" />
             Get Estimate
           </Link>

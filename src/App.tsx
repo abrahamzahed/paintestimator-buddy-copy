@@ -4,7 +4,6 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import AdminDashboard from "./pages/AdminDashboard";
-import EstimateForm from "./pages/EstimateForm";
 import EstimateDetail from "./pages/EstimateDetail";
 import EditEstimate from "./pages/EditEstimate";
 import ProjectDetail from "./pages/ProjectDetail";
@@ -13,6 +12,8 @@ import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { SessionContextProvider } from "./context/session-provider";
 import { Toaster } from "./components/ui/toaster";
 import { useSyncUserData } from "./hooks/useSyncUserData";
+import { FreeEstimator } from "./packages/free-estimator";
+import HomeEstimator from "./components/HomeEstimator";
 
 // Create a wrapper component to use the hook at the right place
 // to avoid circular dependencies
@@ -55,9 +56,16 @@ function App() {
             />
             <Route
               path="/estimate"
+              element={<HomeEstimator />}
+            />
+            <Route
+              path="/dashboard/estimate"
               element={
                 <ProtectedRoute>
-                  <EstimateForm />
+                  <div className="container mx-auto py-8">
+                    <h1 className="text-2xl font-bold mb-6">Create New Estimate</h1>
+                    <FreeEstimator isAuthenticated={true} />
+                  </div>
                 </ProtectedRoute>
               }
             />
