@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "@/context/SessionContext";
@@ -7,7 +6,7 @@ import { saveTemporaryEstimate, saveTemporaryProjectName } from "@/utils/estimat
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, Home, LayoutDashboard } from "lucide-react";
 import DynamicEstimatorForm from "@/components/DynamicEstimatorForm";
 import { RoomDetails, EstimatorSummary } from "@/types/estimator";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +14,7 @@ import CurrentEstimatePanel from "@/components/estimator/CurrentEstimatePanel";
 import { fetchPricingData } from "@/lib/supabase";
 import EstimatorNavigation from "@/components/estimator/EstimatorNavigation";
 import AddressAutocomplete from "@/components/AddressAutocomplete";
+import { ProjectSelector } from "@/packages/auth-estimator";
 
 interface FreeEstimatorProps {
   isAuthenticated?: boolean;
@@ -32,7 +32,11 @@ const FreeEstimator = ({ isAuthenticated = false }: FreeEstimatorProps) => {
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [selectedProjectName, setSelectedProjectName] = useState<string | undefined>(undefined);
+  
   const [projectNameError, setProjectNameError] = useState<string | null>(null);
+  const [projectError, setProjectError] = useState<string | null>(null);
   const [nameError, setNameError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [phoneError, setPhoneError] = useState<string | null>(null);
@@ -60,48 +64,75 @@ const FreeEstimator = ({ isAuthenticated = false }: FreeEstimatorProps) => {
   // Skip personal info step if authenticated
   useEffect(() => {
     if (isAuthenticated && step === 1) {
-      setStep(2);
+      // We don't skip step 1 anymore, since we need to select a project
+      // But we pre-fill the form fields from the user profile
     }
   }, [isAuthenticated, step]);
+
+  const handleSelectProject = (projectId: string | null, projectName?: string) => {
+    setSelectedProjectId(projectId);
+    setSelectedProjectName(projectName);
+    setProjectName(projectName || "");
+    setProjectError(null);
+    setProjectNameError(null);
+  };
 
   const validateStep1 = () => {
     let isValid = true;
     
-    if (!projectName.trim()) {
-      setProjectNameError("Please enter a project name");
-      isValid = false;
+    if (isAuthenticated) {
+      // For authenticated users, only validate project selection
+      if (!selectedProjectId) {
+        setProjectError("Please select a project or create a new one");
+        isValid = false;
+      } else {
+        setProjectError(null);
+      }
+      
+      if (!address.trim() || address.length < 10) {
+        setAddressError("Please enter a complete address");
+        isValid = false;
+      } else {
+        setAddressError(null);
+      }
     } else {
-      setProjectNameError(null);
-    }
-    
-    if (!name.trim()) {
-      setNameError("Please enter your full name");
-      isValid = false;
-    } else {
-      setNameError(null);
-    }
-    
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email.trim() || !emailRegex.test(email)) {
-      setEmailError("Please enter a valid email address");
-      isValid = false;
-    } else {
-      setEmailError(null);
-    }
-    
-    const phoneRegex = /^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/;
-    if (!phone.trim() || !phoneRegex.test(phone)) {
-      setPhoneError("Please enter a valid phone number (e.g., 555-123-4567)");
-      isValid = false;
-    } else {
-      setPhoneError(null);
-    }
-    
-    if (!address.trim() || address.length < 10) {
-      setAddressError("Please enter a complete address");
-      isValid = false;
-    } else {
-      setAddressError(null);
+      // For non-authenticated users, validate all fields as before
+      if (!projectName.trim()) {
+        setProjectNameError("Please enter a project name");
+        isValid = false;
+      } else {
+        setProjectNameError(null);
+      }
+      
+      if (!name.trim()) {
+        setNameError("Please enter your full name");
+        isValid = false;
+      } else {
+        setNameError(null);
+      }
+      
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!email.trim() || !emailRegex.test(email)) {
+        setEmailError("Please enter a valid email address");
+        isValid = false;
+      } else {
+        setEmailError(null);
+      }
+      
+      const phoneRegex = /^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/;
+      if (!phone.trim() || !phoneRegex.test(phone)) {
+        setPhoneError("Please enter a valid phone number (e.g., 555-123-4567)");
+        isValid = false;
+      } else {
+        setPhoneError(null);
+      }
+      
+      if (!address.trim() || address.length < 10) {
+        setAddressError("Please enter a complete address");
+        isValid = false;
+      } else {
+        setAddressError(null);
+      }
     }
     
     return isValid;
@@ -122,7 +153,7 @@ const FreeEstimator = ({ isAuthenticated = false }: FreeEstimatorProps) => {
   };
 
   const handleReset = () => {
-    setStep(isAuthenticated ? 2 : 1);
+    setStep(1);
     setCurrentEstimate(null);
     setRoomDetailsArray([]);
     setSaveComplete(false);
@@ -153,23 +184,29 @@ const FreeEstimator = ({ isAuthenticated = false }: FreeEstimatorProps) => {
 
       // For authenticated users, save directly to their account
       if (isAuthenticated && user) {
-        // Create or fetch project
-        const { data: projectData, error: projectError } = await supabase
-          .from('projects')
-          .insert({
-            name: projectName || `Painting Project - ${new Date().toLocaleDateString()}`,
-            description: 'Project created from estimator',
-            status: 'active',
-            user_id: user.id
-          })
-          .select()
-          .single();
+        // Use selected project or create one if needed
+        let projectId = selectedProjectId;
+        
+        if (!projectId) {
+          // Create a new project if somehow we don't have one selected
+          const { data: projectData, error: projectError } = await supabase
+            .from('projects')
+            .insert({
+              name: selectedProjectName || `Painting Project - ${new Date().toLocaleDateString()}`,
+              description: 'Project created from estimator',
+              status: 'active',
+              user_id: user.id
+            })
+            .select()
+            .single();
+            
+          if (projectError) {
+            throw projectError;
+          }
           
-        if (projectError) {
-          throw projectError;
+          projectId = projectData.id;
         }
         
-        const projectId = projectData.id;
         setProjectId(projectId);
         
         const detailsJson = JSON.stringify({
@@ -180,7 +217,7 @@ const FreeEstimator = ({ isAuthenticated = false }: FreeEstimatorProps) => {
             email,
             phone,
             address,
-            projectName
+            projectName: selectedProjectName || projectName
           }
         });
         
@@ -193,7 +230,7 @@ const FreeEstimator = ({ isAuthenticated = false }: FreeEstimatorProps) => {
               email: email || profile?.email || '',
               phone: phone || profile?.phone || '',
               address: address || profile?.address || '',
-              project_name: projectName || `Painting Project - ${new Date().toLocaleDateString()}`,
+              project_name: selectedProjectName || projectName,
               project_id: projectId,
               status: 'new',
               description: 'Lead from estimator',
@@ -246,7 +283,7 @@ const FreeEstimator = ({ isAuthenticated = false }: FreeEstimatorProps) => {
             .insert({
               lead_id: leadData.id,
               project_id: projectId,
-              project_name: projectName || `Painting Project - ${new Date().toLocaleDateString()}`,
+              project_name: selectedProjectName || projectName,
               details: detailsObject,
               labor_cost: estimate.finalTotal * 0.7,
               material_cost: estimate.finalTotal * 0.3,
@@ -270,7 +307,7 @@ const FreeEstimator = ({ isAuthenticated = false }: FreeEstimatorProps) => {
           });
         }
       } else {
-        // For guest users
+        // For guest users - keep existing code
         const { data: projectData, error: projectError } = await supabase
           .from('projects')
           .insert({
@@ -421,6 +458,14 @@ const FreeEstimator = ({ isAuthenticated = false }: FreeEstimatorProps) => {
     navigate('/auth?returnUrl=/estimate&saveEstimate=true');
   };
 
+  const handleNavigateHome = () => {
+    navigate('/');
+  };
+
+  const handleNavigateDashboard = () => {
+    navigate('/dashboard');
+  };
+
   return (
     <div className="glass rounded-xl p-6 shadow-lg animate-scale-in relative">
       <div className="flex items-center justify-between mb-6">
@@ -465,68 +510,139 @@ const FreeEstimator = ({ isAuthenticated = false }: FreeEstimatorProps) => {
         </p>
       </div>
 
+      {/* Navigation buttons for authenticated users on Step 1 */}
+      {isAuthenticated && step === 1 && (
+        <div className="flex space-x-2 mb-6">
+          <Button 
+            variant="outline" 
+            onClick={handleNavigateDashboard}
+            className="flex items-center"
+          >
+            <LayoutDashboard className="mr-2 h-4 w-4" />
+            Dashboard
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            onClick={handleNavigateHome}
+            className="flex items-center"
+          >
+            <Home className="mr-2 h-4 w-4" />
+            Return Home
+          </Button>
+        </div>
+      )}
+
       {step === 1 && (
         <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="projectName">Project Name</Label>
-            <Input
-              id="projectName"
-              placeholder="e.g., Home Renovation 2023"
-              value={projectName}
-              onChange={(e) => {
-                setProjectName(e.target.value);
-                setProjectNameError(null);
-              }}
-              className={projectNameError ? "border-red-500" : ""}
+          {/* For authenticated users, show project selector instead of project name input */}
+          {isAuthenticated ? (
+            <ProjectSelector
+              selectedProjectId={selectedProjectId}
+              onSelectProject={handleSelectProject}
+              required={true}
+              error={projectError || undefined}
             />
-            {projectNameError && <p className="text-sm text-red-500">{projectNameError}</p>}
-          </div>
+          ) : (
+            <div className="space-y-2">
+              <Label htmlFor="projectName">Project Name</Label>
+              <Input
+                id="projectName"
+                placeholder="e.g., Home Renovation 2023"
+                value={projectName}
+                onChange={(e) => {
+                  setProjectName(e.target.value);
+                  setProjectNameError(null);
+                }}
+                className={projectNameError ? "border-red-500" : ""}
+              />
+              {projectNameError && <p className="text-sm text-red-500">{projectNameError}</p>}
+            </div>
+          )}
           
-          <div className="space-y-2">
-            <Label htmlFor="name">Full Name</Label>
-            <Input
-              id="name"
-              placeholder="John Doe"
-              value={name}
-              onChange={(e) => {
-                setName(e.target.value);
-                setNameError(null);
-              }}
-              className={nameError ? "border-red-500" : ""}
-            />
-            {nameError && <p className="text-sm text-red-500">{nameError}</p>}
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="email">Email Address</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="john@example.com"
-              value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-                setEmailError(null);
-              }}
-              className={emailError ? "border-red-500" : ""}
-            />
-            {emailError && <p className="text-sm text-red-500">{emailError}</p>}
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="phone">Phone Number</Label>
-            <Input
-              id="phone"
-              placeholder="(555) 123-4567"
-              value={phone}
-              onChange={(e) => {
-                setPhone(e.target.value);
-                setPhoneError(null);
-              }}
-              className={phoneError ? "border-red-500" : ""}
-            />
-            {phoneError && <p className="text-sm text-red-500">{phoneError}</p>}
-          </div>
+          {/* For authenticated users, use read-only fields for personal info */}
+          {isAuthenticated ? (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="name">Full Name</Label>
+                <Input
+                  id="name"
+                  value={name}
+                  readOnly
+                  className="bg-gray-50"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="email">Email Address</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  readOnly
+                  className="bg-gray-50"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone Number</Label>
+                <Input
+                  id="phone"
+                  value={phone}
+                  readOnly
+                  className="bg-gray-50"
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="name">Full Name</Label>
+                <Input
+                  id="name"
+                  placeholder="John Doe"
+                  value={name}
+                  onChange={(e) => {
+                    setName(e.target.value);
+                    setNameError(null);
+                  }}
+                  className={nameError ? "border-red-500" : ""}
+                />
+                {nameError && <p className="text-sm text-red-500">{nameError}</p>}
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="email">Email Address</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="john@example.com"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setEmailError(null);
+                  }}
+                  className={emailError ? "border-red-500" : ""}
+                />
+                {emailError && <p className="text-sm text-red-500">{emailError}</p>}
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone Number</Label>
+                <Input
+                  id="phone"
+                  placeholder="(555) 123-4567"
+                  value={phone}
+                  onChange={(e) => {
+                    setPhone(e.target.value);
+                    setPhoneError(null);
+                  }}
+                  className={phoneError ? "border-red-500" : ""}
+                />
+                {phoneError && <p className="text-sm text-red-500">{phoneError}</p>}
+              </div>
+            </>
+          )}
           
           <AddressAutocomplete
             value={address}
@@ -583,7 +699,7 @@ const FreeEstimator = ({ isAuthenticated = false }: FreeEstimatorProps) => {
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Project Name:</span>
-                <span className="font-medium">{projectName}</span>
+                <span className="font-medium">{selectedProjectName || projectName}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Contact:</span>
@@ -633,6 +749,27 @@ const FreeEstimator = ({ isAuthenticated = false }: FreeEstimatorProps) => {
                   By creating an account, you'll be able to access your estimate 
                   anytime and receive a detailed quote from our team.
                 </p>
+              </div>
+            )}
+            
+            {isAuthenticated && (
+              <div className="flex space-x-2">
+                <Button 
+                  className="flex-1 bg-paint hover:bg-paint-dark"
+                  onClick={handleNavigateDashboard}
+                >
+                  <LayoutDashboard className="mr-2 h-4 w-4" />
+                  Go to Dashboard
+                </Button>
+                
+                <Button 
+                  variant="outline"
+                  className="flex-1"
+                  onClick={handleNavigateHome}
+                >
+                  <Home className="mr-2 h-4 w-4" />
+                  Return Home
+                </Button>
               </div>
             )}
           </div>
