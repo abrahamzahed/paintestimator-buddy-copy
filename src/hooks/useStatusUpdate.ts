@@ -33,8 +33,11 @@ export const useStatusUpdate = (onAfterUpdate?: () => void) => {
       await updateProjectStatus(project.id, newStatus);
       
       // If we reach here, update was successful
+      // Add a timeout before navigation to ensure UI has time to update
       if (onAfterUpdate) {
-        onAfterUpdate();
+        setTimeout(() => {
+          onAfterUpdate();
+        }, 1200);
       }
       
       return true;
@@ -51,12 +54,14 @@ export const useStatusUpdate = (onAfterUpdate?: () => void) => {
       setIsUpdating(false);
       return false;
     } finally {
-      // No need for setTimeout, just reset state immediately after update completes
+      // Add a longer delay before resetting the updating state
       if (newStatus === "deleted" || newStatus === "archived") {
         // For these actions we'll navigate away, so don't reset state
         // as it might cause UI flicker
       } else {
-        setIsUpdating(false);
+        setTimeout(() => {
+          setIsUpdating(false);
+        }, 1200);
       }
     }
   }, [isUpdating, toast, onAfterUpdate]);

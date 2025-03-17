@@ -36,7 +36,7 @@ export const updateProjectStatus = async (projectId: string, newStatus: string) 
 
 // Simple function to start background updates without waiting
 function startBackgroundUpdates(projectId: string, newStatus: string) {
-  // Use setTimeout to run this in the next event loop tick
+  // Use setTimeout to run this in the next event loop tick with increased delay
   setTimeout(() => {
     console.log("Starting background updates...");
     // Update estimates
@@ -64,7 +64,7 @@ function startBackgroundUpdates(projectId: string, newStatus: string) {
           console.log(`✅ Successfully updated leads to ${newStatus}`);
         }
       });
-  }, 0);
+  }, 1200); // Increased delay to 1200ms
 }
 
 export const getStatusUpdateMessage = (project: Project, newStatus: string): string => {

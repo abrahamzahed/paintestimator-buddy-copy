@@ -9,6 +9,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useNavigate } from "react-router-dom";
 
 interface StatusUpdateDialogsProps {
   projectName: string;
@@ -35,6 +36,21 @@ const StatusUpdateDialogs = ({
   onRestoreDialogChange,
   onUpdateStatus
 }: StatusUpdateDialogsProps) => {
+  const navigate = useNavigate();
+  
+  const handleCancel = () => {
+    // Close all dialogs
+    onDeleteDialogChange(false);
+    onArchiveDialogChange(false);
+    onRestoreDialogChange(false);
+    
+    // Force refresh the current page
+    setTimeout(() => {
+      const currentPath = window.location.pathname;
+      navigate(0); // This forces a refresh of the current page
+    }, 1200); // Wait for 1200ms before refreshing
+  };
+
   return (
     <>
       <AlertDialog 
@@ -49,7 +65,7 @@ const StatusUpdateDialogs = ({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isUpdatingStatus}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel onClick={handleCancel} disabled={isUpdatingStatus}>Cancel</AlertDialogCancel>
             <AlertDialogAction 
               onClick={() => onUpdateStatus("deleted")}
               disabled={isUpdatingStatus}
@@ -73,7 +89,7 @@ const StatusUpdateDialogs = ({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isUpdatingStatus}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel onClick={handleCancel} disabled={isUpdatingStatus}>Cancel</AlertDialogCancel>
             <AlertDialogAction 
               onClick={() => onUpdateStatus("archived")}
               disabled={isUpdatingStatus}
@@ -97,7 +113,7 @@ const StatusUpdateDialogs = ({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isUpdatingStatus}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel onClick={handleCancel} disabled={isUpdatingStatus}>Cancel</AlertDialogCancel>
             <AlertDialogAction 
               onClick={() => onUpdateStatus("active")}
               disabled={isUpdatingStatus}
