@@ -35,11 +35,14 @@ export const useProjectData = (projectId: string | undefined) => {
   
   // Define a safe navigation function
   const safeNavigate = useCallback(() => {
-    // Add a small class to body to show navigation state if needed
-    document.body.classList.add('navigating');
-    
-    // Use window.location instead of React Router navigate for more reliable navigation
-    window.location.href = "/dashboard";
+    // Only navigate if we're not already doing so
+    if (!document.body.classList.contains('navigating')) {
+      // Add a small class to body to show navigation state if needed
+      document.body.classList.add('navigating');
+      
+      // Use window.location instead of React Router navigate for more reliable navigation
+      window.location.href = "/dashboard";
+    }
   }, []);
   
   // Use the updated status update hook with a callback that navigates after completion

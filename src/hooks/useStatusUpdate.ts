@@ -12,6 +12,9 @@ export const useStatusUpdate = (onAfterUpdate?: () => void) => {
   const updateStatus = async (project: Project, newStatus: string) => {
     if (!project?.id) return false;
     
+    // Prevent multiple concurrent update attempts
+    if (isUpdating) return false;
+    
     // Set updating state to track progress
     setIsUpdating(true);
     setError(null);
@@ -36,7 +39,7 @@ export const useStatusUpdate = (onAfterUpdate?: () => void) => {
           } catch (callbackErr) {
             console.error("Error in update callback:", callbackErr);
           }
-        }, 250); // Slightly longer timeout to ensure dialog closes
+        }, 350); // Slightly longer timeout to ensure dialog closes
       }
       
       // Mark operation as complete regardless of callback outcome
