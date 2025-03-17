@@ -38,8 +38,7 @@ export const useProjectData = (projectId: string | undefined) => {
     // Add a small class to body to show navigation state if needed
     document.body.classList.add('navigating');
     
-    // Use window.location instead of React Router navigate
-    // This ensures a clean state when returning to dashboard
+    // Use window.location instead of React Router navigate for more reliable navigation
     window.location.href = "/dashboard";
   }, []);
   
@@ -72,6 +71,7 @@ export const useProjectData = (projectId: string | undefined) => {
     loadProjectData();
   }, [projectId, toast]);
 
+  // Improved handler to securely manage dialog state and status updates
   const handleUpdateProjectStatus = async (newStatus: string) => {
     if (!projectId || !project) return;
     

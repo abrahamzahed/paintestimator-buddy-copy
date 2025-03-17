@@ -12,6 +12,7 @@ export const useStatusUpdate = (onAfterUpdate?: () => void) => {
   const updateStatus = async (project: Project, newStatus: string) => {
     if (!project?.id) return false;
     
+    // Set updating state to track progress
     setIsUpdating(true);
     setError(null);
     
@@ -35,7 +36,7 @@ export const useStatusUpdate = (onAfterUpdate?: () => void) => {
           } catch (callbackErr) {
             console.error("Error in update callback:", callbackErr);
           }
-        }, 100);
+        }, 250); // Slightly longer timeout to ensure dialog closes
       }
       
       // Mark operation as complete regardless of callback outcome
