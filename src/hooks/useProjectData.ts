@@ -4,7 +4,7 @@ import { Project, Estimate, Invoice } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { fetchProjectWithRelated } from "@/utils/projectDataUtils";
-import { updateProjectStatus, getStatusUpdateMessage } from "@/utils/projectStatusUtils";
+import { useStatusUpdate } from "@/hooks/useStatusUpdate";
 
 export const useProjectData = (projectId: string | undefined) => {
   const { toast } = useToast();
@@ -16,7 +16,12 @@ export const useProjectData = (projectId: string | undefined) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showArchiveDialog, setShowArchiveDialog] = useState(false);
   const [showRestoreDialog, setShowRestoreDialog] = useState(false);
-  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  
+  // Use the new status update hook
+  const { updateStatus, isUpdating: isUpdatingStatus } = useStatusUpdate(() => {
+    // Navigate after status update is complete
+    navigate("/dashboard");
+  });
 
   useEffect(() => {
     const loadProjectData = async () => {
@@ -47,45 +52,16 @@ export const useProjectData = (projectId: string | undefined) => {
   const handleUpdateProjectStatus = async (newStatus: string) => {
     if (!projectId || !project) return;
     
-    try {
-      setIsUpdatingStatus(true);
-      
-      // Update the project status and related entities
-      await updateProjectStatus(projectId, newStatus);
-      
-      // Update local project state to reflect the change
-      setProject({
-        ...project,
-        status: newStatus
-      });
-      
-      // Show success message
-      toast({
-        title: `Project ${newStatus}`,
-        description: getStatusUpdateMessage(project, newStatus),
-      });
-      
-      // Close any open dialogs
-      setShowDeleteDialog(false);
-      setShowArchiveDialog(false);
-      setShowRestoreDialog(false);
-      
-      // Navigate to dashboard with a small delay to ensure state is updated
-      setTimeout(() => {
-        navigate("/dashboard");
-      }, 500);
-      
-    } catch (error) {
-      console.error(`Error updating project status to ${newStatus}:`, error);
-      
-      toast({
-        title: `Failed to ${newStatus} project`,
-        description: "An error occurred while trying to update the project. Check console for details.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsUpdatingStatus(false);
-    }
+    // Close any open dialogs before starting the update
+    setShowDeleteDialog(false);
+    setShowArchiveDialog(false);
+    setShowRestoreDialog(false);
+    
+    // Use the new status update function
+    await updateStatus(project, newStatus);
+    
+    // Update local project state to reflect the change if we haven't navigated away
+    setProject(prev => prev ? { ...prev, status: newStatus } : null);
   };
 
   return {

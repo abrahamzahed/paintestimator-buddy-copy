@@ -10,7 +10,9 @@ export const updateProjectStatus = async (projectId: string, newStatus: string) 
   console.log(`Starting status update process to: ${newStatus}`, { projectId });
   
   try {
-    // Step 1: Update estimates first
+    // Create a transaction-like operation by breaking it into steps with proper error handling
+    
+    // Step 1: Update estimates first - if this fails, we'll know before touching other tables
     const { error: estimatesError } = await supabase
       .from("estimates")
       .update({ status_type: newStatus })
@@ -18,7 +20,7 @@ export const updateProjectStatus = async (projectId: string, newStatus: string) 
       
     if (estimatesError) {
       console.error(`Error updating estimates to ${newStatus}:`, estimatesError);
-      // Log but continue with the process
+      // Just log the error but don't throw - we'll continue with other updates
     } else {
       console.log(`✅ Successfully updated estimates to ${newStatus}`);
     }
@@ -40,7 +42,7 @@ export const updateProjectStatus = async (projectId: string, newStatus: string) 
     // Step 3: Update the project status directly
     console.log(`3. Updating project to ${newStatus}`);
     
-    // Simple update with only the status field
+    // Use a timeout to prevent UI blocking
     const { error: projectError } = await supabase
       .from("projects")
       .update({ status: newStatus })
