@@ -35,33 +35,15 @@ const StatusUpdateDialogs = ({
   onRestoreDialogChange,
   onUpdateStatus
 }: StatusUpdateDialogsProps) => {
-  // Safe handlers that won't cause UI thread blocking
-  const handleDialogChange = (
-    dialogType: 'delete' | 'archive' | 'restore',
-    isOpen: boolean
-  ) => {
-    // Don't allow closing dialog when update is in progress
-    if (isUpdatingStatus && !isOpen) return;
-    
-    // Handle different dialog types
-    switch (dialogType) {
-      case 'delete':
-        onDeleteDialogChange(isOpen);
-        break;
-      case 'archive':
-        onArchiveDialogChange(isOpen);
-        break;
-      case 'restore':
-        onRestoreDialogChange(isOpen);
-        break;
-    }
-  };
-
   return (
     <>
       <AlertDialog 
-        open={showDeleteDialog}
-        onOpenChange={(open) => handleDialogChange('delete', open)}
+        open={showDeleteDialog} 
+        onOpenChange={(isOpen) => {
+          if (!isUpdatingStatus || isOpen) {
+            onDeleteDialogChange(isOpen);
+          }
+        }}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -71,9 +53,7 @@ const StatusUpdateDialogs = ({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isUpdatingStatus}>
-              Cancel
-            </AlertDialogCancel>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction 
               onClick={() => onUpdateStatus("deleted")}
               disabled={isUpdatingStatus}
@@ -87,7 +67,11 @@ const StatusUpdateDialogs = ({
 
       <AlertDialog 
         open={showArchiveDialog}
-        onOpenChange={(open) => handleDialogChange('archive', open)}
+        onOpenChange={(isOpen) => {
+          if (!isUpdatingStatus || isOpen) {
+            onArchiveDialogChange(isOpen);
+          }
+        }}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -97,9 +81,7 @@ const StatusUpdateDialogs = ({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isUpdatingStatus}>
-              Cancel
-            </AlertDialogCancel>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction 
               onClick={() => onUpdateStatus("archived")}
               disabled={isUpdatingStatus}
@@ -113,7 +95,11 @@ const StatusUpdateDialogs = ({
 
       <AlertDialog 
         open={showRestoreDialog}
-        onOpenChange={(open) => handleDialogChange('restore', open)}
+        onOpenChange={(isOpen) => {
+          if (!isUpdatingStatus || isOpen) {
+            onRestoreDialogChange(isOpen);
+          }
+        }}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -123,9 +109,7 @@ const StatusUpdateDialogs = ({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isUpdatingStatus}>
-              Cancel
-            </AlertDialogCancel>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction 
               onClick={() => onUpdateStatus("active")}
               disabled={isUpdatingStatus}

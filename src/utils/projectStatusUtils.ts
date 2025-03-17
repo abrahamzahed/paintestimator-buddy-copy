@@ -10,7 +10,7 @@ export const updateProjectStatus = async (projectId: string, newStatus: string) 
   console.log(`Starting status update process to: ${newStatus}`, { projectId });
   
   try {
-    // Directly update the project status first - this is the most important update
+    // First update the project status - this is the critical part
     console.log(`Updating project to ${newStatus}`);
     const { error: projectError } = await supabase
       .from("projects")
@@ -24,21 +24,8 @@ export const updateProjectStatus = async (projectId: string, newStatus: string) 
     
     console.log(`✅ Successfully updated project to ${newStatus}`);
     
-    // Schedule background updates to run later using requestIdleCallback if available
-    // or setTimeout as fallback - this ensures the main thread isn't blocked
-    if (typeof window.requestIdleCallback === 'function') {
-      window.requestIdleCallback(() => {
-        backgroundUpdates(projectId, newStatus).catch(error => {
-          console.error("Error in background updates:", error);
-        });
-      });
-    } else {
-      setTimeout(() => {
-        backgroundUpdates(projectId, newStatus).catch(error => {
-          console.error("Error in background updates:", error);
-        });
-      }, 100);
-    }
+    // Queue background updates without blocking
+    queueBackgroundUpdates(projectId, newStatus);
     
     return newStatus;
   } catch (error) {
@@ -47,7 +34,17 @@ export const updateProjectStatus = async (projectId: string, newStatus: string) 
   }
 };
 
-// Separate function to handle background updates without blocking
+// Separate function to queue background updates
+function queueBackgroundUpdates(projectId: string, newStatus: string) {
+  // Use setTimeout with 0 delay to move this to the next event loop iteration
+  setTimeout(() => {
+    backgroundUpdates(projectId, newStatus).catch(error => {
+      console.error("Error in background updates:", error);
+    });
+  }, 0);
+}
+
+// Function to handle background updates without blocking
 async function backgroundUpdates(projectId: string, newStatus: string) {
   try {
     // Update estimates in the background

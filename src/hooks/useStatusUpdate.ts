@@ -19,36 +19,24 @@ export const useStatusUpdate = (onAfterUpdate?: () => void) => {
     }
     
     try {
-      // Set updating state to track progress - do this first
+      // Set updating state
       setIsUpdating(true);
       setError(null);
       
-      // Show optimistic toast immediately for better UX
+      // Show optimistic toast
       toast({
         title: `Project ${newStatus}`,
         description: getStatusUpdateMessage(project, newStatus),
       });
       
-      // Perform the actual update
+      // Perform the update
       await updateProjectStatus(project.id, newStatus);
       
-      // If we get here, the update was successful
+      // If we reach here, update was successful
       if (onAfterUpdate) {
-        // To avoid navigation race conditions when the user might cancel the dialog,
-        // add a delay before executing the callback to ensure DOM operations complete
-        setTimeout(() => {
-          try {
-            onAfterUpdate();
-          } catch (callbackErr) {
-            console.error("Error in update callback:", callbackErr);
-          }
-        }, 400);
+        // Small delay to ensure UI has updated
+        setTimeout(onAfterUpdate, 300);
       }
-      
-      // Reset updating state after a short delay to ensure UI has time to update
-      setTimeout(() => {
-        setIsUpdating(false);
-      }, 500);
       
       return true;
     } catch (err) {
@@ -61,9 +49,13 @@ export const useStatusUpdate = (onAfterUpdate?: () => void) => {
         variant: "destructive",
       });
       
-      // Make sure we reset the updating state even in error cases
-      setIsUpdating(false);
       return false;
+    } finally {
+      // Always reset the updating state when done
+      // Small delay to ensure UI has time to update
+      setTimeout(() => {
+        setIsUpdating(false);
+      }, 200);
     }
   }, [isUpdating, toast, onAfterUpdate]);
 
