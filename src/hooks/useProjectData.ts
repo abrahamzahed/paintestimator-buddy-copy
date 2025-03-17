@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Project, Estimate, Invoice } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -17,12 +17,30 @@ export const useProjectData = (projectId: string | undefined) => {
   const [showArchiveDialog, setShowArchiveDialog] = useState(false);
   const [showRestoreDialog, setShowRestoreDialog] = useState(false);
   
-  // Use the updated status update hook with a callback that only navigates
-  // after the status update is complete
-  const { updateStatus, isUpdating: isUpdatingStatus } = useStatusUpdate(() => {
+  // Define a callback to handle data refresh without full page reload
+  const refreshData = useCallback(async () => {
+    try {
+      if (!projectId) return;
+      
+      const { project: projectData, estimates: estimatesData, invoices: invoicesData } = 
+        await fetchProjectWithRelated(projectId);
+      
+      setProject(projectData);
+      setEstimates(estimatesData);
+      setInvoices(invoicesData);
+    } catch (error) {
+      console.error("Error refreshing project data:", error);
+    }
+  }, [projectId]);
+  
+  // Use the navigateWithDelay function as the callback for the status update hook
+  const navigateWithDelay = useCallback(() => {
     // Navigate after status update is complete
-    setTimeout(() => navigate("/dashboard"), 100);
-  });
+    navigate("/dashboard");
+  }, [navigate]);
+  
+  // Use the updated status update hook with a callback that navigates after completion
+  const { updateStatus, isUpdating: isUpdatingStatus } = useStatusUpdate(navigateWithDelay);
 
   useEffect(() => {
     const loadProjectData = async () => {
@@ -58,13 +76,12 @@ export const useProjectData = (projectId: string | undefined) => {
     setShowArchiveDialog(false);
     setShowRestoreDialog(false);
     
-    // Use the new status update function
-    const success = await updateStatus(project, newStatus);
+    // Optimistically update the UI immediately
+    setProject(prev => prev ? { ...prev, status: newStatus } : null);
     
-    if (success) {
-      // Update local project state to reflect the change if we haven't navigated away
-      setProject(prev => prev ? { ...prev, status: newStatus } : null);
-    }
+    // Use the new status update function
+    await updateStatus(project, newStatus);
+    // Note: The navigation is handled by the callback provided to useStatusUpdate
   };
 
   return {

@@ -24,33 +24,42 @@ export const updateProjectStatus = async (projectId: string, newStatus: string) 
     
     console.log(`✅ Successfully updated project to ${newStatus}`);
     
-    // Now update estimates in the background - if this fails, at least the project status was updated
-    console.log(`Updating estimates to ${newStatus}`);
-    const { error: estimatesError } = await supabase
-      .from("estimates")
-      .update({ status_type: newStatus })
-      .eq("project_id", projectId);
-      
-    if (estimatesError) {
-      console.error(`Error updating estimates to ${newStatus}:`, estimatesError);
-      // Just log the error but don't throw - we've already updated the project
-    } else {
-      console.log(`✅ Successfully updated estimates to ${newStatus}`);
-    }
+    // Start background updates for related entities
+    const backgroundUpdates = async () => {
+      try {
+        // Update estimates in the background
+        console.log(`Updating estimates to ${newStatus}`);
+        const { error: estimatesError } = await supabase
+          .from("estimates")
+          .update({ status_type: newStatus })
+          .eq("project_id", projectId);
+          
+        if (estimatesError) {
+          console.error(`Error updating estimates to ${newStatus}:`, estimatesError);
+        } else {
+          console.log(`✅ Successfully updated estimates to ${newStatus}`);
+        }
+        
+        // Update leads in the background
+        console.log(`Updating leads to ${newStatus}`);
+        const { error: leadsError } = await supabase
+          .from("leads")
+          .update({ status: newStatus })
+          .eq("project_id", projectId);
+          
+        if (leadsError) {
+          console.error(`Error updating leads to ${newStatus}:`, leadsError);
+        } else {
+          console.log(`✅ Successfully updated leads to ${newStatus}`);
+        }
+      } catch (error) {
+        console.error("Error in background updates:", error);
+        // Don't throw from background task - we already updated the main project
+      }
+    };
     
-    // Now update leads in the background - if this fails, at least the project status was updated
-    console.log(`Updating leads to ${newStatus}`);
-    const { error: leadsError } = await supabase
-      .from("leads")
-      .update({ status: newStatus })
-      .eq("project_id", projectId);
-      
-    if (leadsError) {
-      console.error(`Error updating leads to ${newStatus}:`, leadsError);
-      // Log but continue
-    } else {
-      console.log(`✅ Successfully updated leads to ${newStatus}`);
-    }
+    // Execute background updates without awaiting
+    backgroundUpdates();
     
     return newStatus;
   } catch (error) {

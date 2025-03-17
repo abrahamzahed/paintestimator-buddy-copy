@@ -16,24 +16,32 @@ export const useStatusUpdate = (onAfterUpdate?: () => void) => {
     setError(null);
     
     try {
-      await updateProjectStatus(project.id, newStatus);
-      
+      // Show optimistic toast immediately for better UX
       toast({
         title: `Project ${newStatus}`,
         description: getStatusUpdateMessage(project, newStatus),
       });
       
-      // Return true immediately to update UI
-      setTimeout(() => {
-        if (onAfterUpdate) {
+      // Perform the actual update
+      await updateProjectStatus(project.id, newStatus);
+      
+      // If we get here, the update was successful
+      // Delay the callback to ensure UI is responsive
+      if (onAfterUpdate) {
+        // Use a longer timeout to allow database operations to complete
+        setTimeout(() => {
           onAfterUpdate();
-        }
-      }, 300);
+          setIsUpdating(false);
+        }, 800); // Increased buffer time
+      } else {
+        setIsUpdating(false);
+      }
       
       return true;
     } catch (err) {
       console.error(`Error updating project status:`, err);
       setError(err instanceof Error ? err : new Error("Failed to update project status"));
+      setIsUpdating(false);
       
       toast({
         title: `Failed to update project`,
@@ -42,8 +50,6 @@ export const useStatusUpdate = (onAfterUpdate?: () => void) => {
       });
       
       return false;
-    } finally {
-      setIsUpdating(false);
     }
   };
 
