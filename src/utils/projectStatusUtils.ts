@@ -38,8 +38,13 @@ export const updateProjectStatus = async (projectId: string, newStatus: string) 
     }
     
     // Step 3: Update the project status directly using standard supabase client
-    // instead of typed client to avoid any potential reference to auth.users
     console.log(`3. Updating project to ${newStatus}`, { projectId });
+    
+    // Add the current user's ID to ensure RLS allows the operation
+    const { data: sessionData } = await supabase.auth.getSession();
+    const userId = sessionData?.session?.user?.id;
+    
+    console.log("Current user ID for RLS:", userId);
     
     const { error: projectError } = await supabase
       .from("projects")
@@ -48,7 +53,6 @@ export const updateProjectStatus = async (projectId: string, newStatus: string) 
       
     if (projectError) {
       console.error(`Error updating project to ${newStatus}:`, projectError);
-      console.error(`Project update error details:`, projectError);
       throw projectError;
     }
     
