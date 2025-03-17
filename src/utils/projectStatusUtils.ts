@@ -1,7 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { Project } from "@/types";
-import { db } from "@/utils/supabase-helpers";
 
 export const updateProjectStatus = async (projectId: string, newStatus: string) => {
   if (!projectId) {
@@ -38,16 +37,18 @@ export const updateProjectStatus = async (projectId: string, newStatus: string) 
       console.log(`✅ Successfully updated leads to ${newStatus}`);
     }
     
-    // Step 3: Update the project status directly
+    // Step 3: Update the project status directly using standard supabase client
+    // instead of typed client to avoid any potential reference to auth.users
     console.log(`3. Updating project to ${newStatus}`, { projectId });
     
-    // Use the typed supabase client from supabase-helpers to ensure proper RLS
-    const { error: projectError } = await db.from("projects")
+    const { error: projectError } = await supabase
+      .from("projects")
       .update({ status: newStatus })
       .eq("id", projectId);
       
     if (projectError) {
       console.error(`Error updating project to ${newStatus}:`, projectError);
+      console.error(`Project update error details:`, projectError);
       throw projectError;
     }
     
