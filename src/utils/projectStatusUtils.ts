@@ -40,15 +40,35 @@ export const updateProjectStatus = async (projectId: string, newStatus: string) 
     // Step 3: Update the project status directly using standard supabase client
     console.log(`3. Updating project to ${newStatus}`, { projectId });
     
-    // Add the current user's ID to ensure RLS allows the operation
+    // Fetch the current user's session to get their ID - needed for RLS
     const { data: sessionData } = await supabase.auth.getSession();
     const userId = sessionData?.session?.user?.id;
     
     console.log("Current user ID for RLS:", userId);
     
+    // Fetch the project first to ensure it exists and to get its current user_id
+    const { data: projectData, error: fetchError } = await supabase
+      .from("projects")
+      .select("user_id")
+      .eq("id", projectId)
+      .single();
+      
+    if (fetchError) {
+      console.error("Error fetching project:", fetchError);
+      throw fetchError;
+    }
+    
+    // Prepare the update payload - ensure we're not modifying user_id if it exists
+    const updatePayload = { status: newStatus };
+    
+    // If project has no user_id assigned yet but we have the current user's ID, assign it
+    if (!projectData.user_id && userId) {
+      Object.assign(updatePayload, { user_id: userId });
+    }
+    
     const { error: projectError } = await supabase
       .from("projects")
-      .update({ status: newStatus })
+      .update(updatePayload)
       .eq("id", projectId);
       
     if (projectError) {
