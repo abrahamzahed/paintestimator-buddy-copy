@@ -81,10 +81,11 @@ export const useProjectData = (projectId: string | undefined) => {
     
     try {
       setIsUpdatingStatus(true);
+      console.log(`Starting status update process to: ${newStatus}`);
       
-      // 1. FIRST update all estimates linked to this project with the same status_type
-      if (newStatus === "deleted" || newStatus === "archived" || newStatus === "active") {
-        console.log(`1. Updating estimates to ${newStatus}`);
+      // Step 1: Update estimates first
+      if (estimates.length > 0) {
+        console.log(`1. Updating ${estimates.length} estimates to ${newStatus}`);
         const { error: estimatesError } = await supabase
           .from("estimates")
           .update({ status_type: newStatus })
@@ -92,23 +93,32 @@ export const useProjectData = (projectId: string | undefined) => {
           
         if (estimatesError) {
           console.error(`Error updating estimates to ${newStatus}:`, estimatesError);
-          // Continue execution even if this fails
+          // Log but continue with the process
+        } else {
+          console.log(`✅ Successfully updated estimates to ${newStatus}`);
         }
-        
-        // 2. SECOND update all leads linked to this project with the same status
-        console.log(`2. Updating leads to ${newStatus}`);
-        const { error: leadsError } = await supabase
-          .from("leads")
-          .update({ status: newStatus })
-          .eq("project_id", projectId);
-          
-        if (leadsError) {
-          console.error(`Error updating leads to ${newStatus}:`, leadsError);
-          // Continue execution even if this fails
-        }
+      } else {
+        console.log("No estimates to update");
       }
       
-      // 3. FINALLY update the project status
+      // Step 2: Update any leads associated with this project
+      console.log(`2. Updating leads to ${newStatus}`);
+      const { error: leadsError } = await supabase
+        .from("leads")
+        .update({ status: newStatus })
+        .eq("project_id", projectId);
+        
+      if (leadsError) {
+        console.error(`Error updating leads to ${newStatus}:`, leadsError);
+        // Log but continue with the process
+      } else {
+        console.log(`✅ Successfully updated leads to ${newStatus}`);
+      }
+      
+      // Step 3: Finally update the project status with a small delay
+      // This delay helps ensure the previous operations have time to complete
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
       console.log(`3. Updating project to ${newStatus}`);
       const { error: projectError } = await supabase
         .from("projects")
@@ -116,8 +126,11 @@ export const useProjectData = (projectId: string | undefined) => {
         .eq("id", projectId);
         
       if (projectError) {
+        console.error(`Error updating project to ${newStatus}:`, projectError);
         throw projectError;
       }
+      
+      console.log(`✅ Successfully updated project to ${newStatus}`);
       
       // Prepare toast message
       let toastMessage = "";
@@ -140,10 +153,11 @@ export const useProjectData = (projectId: string | undefined) => {
       setShowDeleteDialog(false);
       setShowArchiveDialog(false);
       setShowRestoreDialog(false);
-      setIsUpdatingStatus(false);
       
-      // Use navigate instead of direct window.location for smoother transition
-      navigate("/dashboard");
+      // Navigate to dashboard with a small delay to ensure state is updated
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 500);
       
     } catch (error) {
       console.error(`Error updating project status to ${newStatus}:`, error);
@@ -152,10 +166,8 @@ export const useProjectData = (projectId: string | undefined) => {
         description: "An error occurred while trying to update the project",
         variant: "destructive",
       });
+    } finally {
       setIsUpdatingStatus(false);
-      setShowDeleteDialog(false);
-      setShowArchiveDialog(false);
-      setShowRestoreDialog(false);
     }
   };
 
