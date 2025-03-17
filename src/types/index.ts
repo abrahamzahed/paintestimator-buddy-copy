@@ -1,5 +1,6 @@
 
 import { Json } from "@/integrations/supabase/types";
+import { RoomDetails } from "./estimator";
 
 export interface Message {
   id: string;
@@ -33,23 +34,44 @@ export interface EstimateResult {
 
 export interface RoomDetail {
   id: string;
+  // New format properties
+  roomTypeId?: string;
+  size?: string;
+  addons?: string[];
+  doorPaintingMethod?: string;
+  numberOfDoors?: number;
+  windowPaintingMethod?: string;
+  numberOfWindows?: number;
+  fireplaceMethod?: string;
+  hasStairRailing?: boolean;
+  twoColors?: boolean;
+  millworkPrimingNeeded?: boolean;
+  repairs?: string;
+  baseboardInstallationLf?: number;
+  baseboardType?: string;
+  walkInClosetCount?: number;
+  regularClosetCount?: number;
+  isEmpty?: boolean;
+  noFloorCovering?: boolean;
+  
+  // Legacy format properties (retained for compatibility)
   roomType: string;
-  roomSize: string;
-  wallsCount: number;
-  wallHeight: number;
-  wallWidth: number;
-  condition: string;
+  roomSize?: string;
+  wallsCount?: number;
+  wallHeight?: number;
+  wallWidth?: number;
+  condition?: string;
   paintType: string;
-  includeCeiling: boolean;
-  includeBaseboards: boolean;
-  baseboardsMethod: string;
-  includeCrownMolding: boolean;
+  includeCeiling?: boolean;
+  includeBaseboards?: boolean;
+  baseboardsMethod?: string;
+  includeCrownMolding?: boolean;
   hasHighCeiling: boolean;
-  includeCloset: boolean;
-  isEmptyHouse: boolean;
-  needFloorCovering: boolean;
-  doorsCount: number;
-  windowsCount: number;
+  includeCloset?: boolean;
+  isEmptyHouse?: boolean;
+  needFloorCovering?: boolean;
+  doorsCount?: number;
+  windowsCount?: number;
 }
 
 export interface RoomDetails {

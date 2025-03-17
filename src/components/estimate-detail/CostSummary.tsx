@@ -27,15 +27,19 @@ const CostSummary = ({ estimate }: CostSummaryProps) => {
     loadPricingData();
   }, []);
 
-  // Safely access roomDetails from estimate details
+  // Safely access rooms from estimate details
   const getDetailsRooms = () => {
     if (estimate?.details && typeof estimate.details === 'object') {
-      // For leads table format (option 1)
+      // New format from FreeEstimator
+      if ('rooms' in estimate.details && Array.isArray(estimate.details.rooms)) {
+        return estimate.details.rooms;
+      }
+      
+      // Fallback for legacy format
       if ('roomDetails' in estimate.details && Array.isArray(estimate.details.roomDetails)) {
         return estimate.details.roomDetails;
       }
       
-      // Fallback for legacy format
       return [];
     }
     return [];
@@ -82,7 +86,7 @@ const CostSummary = ({ estimate }: CostSummaryProps) => {
             <div key={index} className="border-t pt-2">
               <div className="flex justify-between items-start">
                 <span className="font-medium">
-                  {getRoomTypeName(room.roomTypeId)} (Room {index + 1})
+                  {getRoomTypeName(room.roomTypeId || room.roomType)} (Room {index + 1})
                 </span>
                 <span className="font-medium">
                   {formatCurrency(getRoomCost(index))}
@@ -91,12 +95,12 @@ const CostSummary = ({ estimate }: CostSummaryProps) => {
               
               <div className="mt-1 text-muted-foreground text-xs grid grid-cols-2 gap-x-3 gap-y-1">
                 <span>Size:</span>
-                <span>{formatRoomSize(room.size)}</span>
+                <span>{formatRoomSize(room.size || room.roomSize)}</span>
                 
                 <span>Paint Type:</span>
                 <span>{getPaintTypeName(room.paintType)}</span>
                 
-                {room.hasHighCeiling && (
+                {(room.hasHighCeiling) && (
                   <>
                     <span>Ceiling:</span>
                     <span>High ceiling</span>
@@ -110,25 +114,26 @@ const CostSummary = ({ estimate }: CostSummaryProps) => {
                   </>
                 )}
                 
-                {(room.regularClosetCount > 0 || room.walkInClosetCount > 0) && (
+                {((room.regularClosetCount > 0 || room.walkInClosetCount > 0) || room.includeCloset) && (
                   <>
                     <span>Closets:</span>
                     <span>
                       {room.walkInClosetCount > 0 && `${room.walkInClosetCount} walk-in`}
                       {room.walkInClosetCount > 0 && room.regularClosetCount > 0 && ', '}
                       {room.regularClosetCount > 0 && `${room.regularClosetCount} regular`}
+                      {!room.walkInClosetCount && !room.regularClosetCount && room.includeCloset && 'Included'}
                     </span>
                   </>
                 )}
                 
-                {room.fireplaceMethod !== 'none' && (
+                {room.fireplaceMethod && room.fireplaceMethod !== 'none' && (
                   <>
                     <span>Fireplace:</span>
                     <span>{room.fireplaceMethod.charAt(0).toUpperCase() + room.fireplaceMethod.slice(1)} painting</span>
                   </>
                 )}
                 
-                {room.repairs !== 'none' && (
+                {room.repairs && room.repairs !== 'none' && (
                   <>
                     <span>Repairs:</span>
                     <span>{room.repairs.charAt(0).toUpperCase() + room.repairs.slice(1)}</span>
@@ -142,7 +147,7 @@ const CostSummary = ({ estimate }: CostSummaryProps) => {
                   </>
                 )}
 
-                {room.baseboardType !== 'none' && (
+                {room.baseboardType && room.baseboardType !== 'none' && (
                   <>
                     <span>Baseboards:</span>
                     <span>{room.baseboardType.charAt(0).toUpperCase() + room.baseboardType.slice(1)} application</span>
@@ -153,6 +158,20 @@ const CostSummary = ({ estimate }: CostSummaryProps) => {
                   <>
                     <span>Millwork Priming:</span>
                     <span>Included</span>
+                  </>
+                )}
+                
+                {(room.doorPaintingMethod && room.doorPaintingMethod !== 'none') && (
+                  <>
+                    <span>Doors:</span>
+                    <span>{room.numberOfDoors} ({room.doorPaintingMethod} painting)</span>
+                  </>
+                )}
+                
+                {(room.windowPaintingMethod && room.windowPaintingMethod !== 'none') && (
+                  <>
+                    <span>Windows:</span>
+                    <span>{room.numberOfWindows} ({room.windowPaintingMethod} painting)</span>
                   </>
                 )}
               </div>

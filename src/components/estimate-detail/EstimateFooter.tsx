@@ -110,7 +110,7 @@ const EstimateFooter = ({ estimate }: EstimateFooterProps) => {
     }
   };
   
-  // Fix: Simplify logic to show edit/delete buttons for any active estimate
+  // Simplify logic to show edit/delete buttons for any active estimate
   // in an active project
   const isProjectActive = projectStatus === "active";
   const canModify = isProjectActive && estimate?.status_type === "active";
@@ -137,7 +137,7 @@ const EstimateFooter = ({ estimate }: EstimateFooterProps) => {
         )}
       </div>
       
-      {/* Fix: Show edit/delete buttons for active estimates in active projects */}
+      {/* Show edit/delete buttons for active estimates in active projects */}
       {canModify && (
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={handleEditClick}>

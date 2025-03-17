@@ -1,9 +1,9 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Estimate, EstimateResult, RoomDetail } from "@/types";
+import { RoomDetails } from "@/types/estimator";
 
 export const useEstimateUpdate = (estimateId: string | undefined, estimate: Estimate | null) => {
   const navigate = useNavigate();
@@ -20,54 +20,46 @@ export const useEstimateUpdate = (estimateId: string | undefined, estimate: Esti
     setIsSubmitting(true);
     
     try {
-      // Extract room data for storage in the details field
-      const simplifiedRoomDetails = updatedRooms.map(room => ({
+      // Convert the rooms to the new format
+      const roomsInNewFormat = updatedRooms.map(room => ({
         id: room.id,
-        roomType: room.roomType,
-        roomSize: room.roomSize,
-        wallsCount: room.wallsCount,
-        wallHeight: room.wallHeight,
-        wallWidth: room.wallWidth,
-        condition: room.condition,
-        paintType: room.paintType,
-        includeCeiling: !!room.includeCeiling,
-        includeBaseboards: !!room.includeBaseboards,
-        baseboardsMethod: room.baseboardsMethod,
-        includeCrownMolding: !!room.includeCrownMolding,
+        roomTypeId: room.roomTypeId || room.roomType,
+        size: room.size || room.roomSize || 'average',
+        addons: room.addons || [],
         hasHighCeiling: !!room.hasHighCeiling,
-        includeCloset: !!room.includeCloset,
-        isEmptyHouse: !!room.isEmptyHouse,
-        needFloorCovering: !!room.needFloorCovering,
-        doorsCount: room.doorsCount,
-        windowsCount: room.windowsCount
+        paintType: room.paintType,
+        isEmpty: room.isEmpty || room.isEmptyHouse || false,
+        noFloorCovering: room.noFloorCovering || !room.needFloorCovering || false,
+        doorPaintingMethod: room.doorPaintingMethod || (room.doorsCount && room.doorsCount > 0 ? 'brush' : 'none'),
+        numberOfDoors: room.numberOfDoors || room.doorsCount || 0,
+        windowPaintingMethod: room.windowPaintingMethod || (room.windowsCount && room.windowsCount > 0 ? 'brush' : 'none'),
+        numberOfWindows: room.numberOfWindows || room.windowsCount || 0,
+        fireplaceMethod: room.fireplaceMethod || 'none',
+        hasStairRailing: !!room.hasStairRailing,
+        twoColors: !!room.twoColors,
+        millworkPrimingNeeded: !!room.millworkPrimingNeeded,
+        repairs: room.repairs || 'none',
+        baseboardInstallationLf: room.baseboardInstallationLf || 0,
+        baseboardType: room.baseboardType || (room.includeBaseboards ? room.baseboardsMethod || 'brush' : 'none'),
+        walkInClosetCount: room.walkInClosetCount || 0,
+        regularClosetCount: room.regularClosetCount || 0
       }));
-      
-      // Check if any rooms have these properties
-      const isEmptyHouse = updatedRooms.some(room => room.isEmptyHouse);
-      const needsFloorCovering = updatedRooms.some(room => room.needFloorCovering);
       
       // Store all data in the details JSONB column
       const detailsObject = {
-        rooms: updatedRooms.length,
-        paintType: updatedEstimate.paintCans > 2 ? "premium" : "standard",
-        roomDetails: simplifiedRoomDetails,
-        roomTypes: updatedRooms.map(room => room.roomType),
-        roomSizes: updatedRooms.map(room => room.roomSize),
-        wallCounts: updatedRooms.map(room => room.wallsCount),
-        wallHeights: updatedRooms.map(room => room.wallHeight),
-        wallWidths: updatedRooms.map(room => room.wallWidth),
-        wallConditions: updatedRooms.map(room => room.condition),
-        paintTypes: updatedRooms.map(room => room.paintType),
-        includeCeilings: updatedRooms.map(room => room.includeCeiling),
-        includeBaseboards: updatedRooms.map(room => room.includeBaseboards),
-        baseboardsMethods: updatedRooms.map(room => room.baseboardsMethod),
-        includeCrownMoldings: updatedRooms.map(room => room.includeCrownMolding),
-        hasHighCeilings: updatedRooms.map(room => room.hasHighCeiling),
-        includeClosets: updatedRooms.map(room => room.includeCloset),
-        doorsCountPerRoom: updatedRooms.map(room => room.doorsCount),
-        windowsCountPerRoom: updatedRooms.map(room => room.windowsCount),
-        isEmptyHouse: isEmptyHouse,
-        needsFloorCovering: needsFloorCovering
+        rooms: roomsInNewFormat,
+        estimateSummary: {
+          subtotal: updatedEstimate.totalCost + (updatedEstimate.discounts.volumeDiscount || 0),
+          volumeDiscount: updatedEstimate.discounts.volumeDiscount || 0,
+          finalTotal: updatedEstimate.totalCost,
+          roomCosts: Object.values(roomEstimates).map(roomEstimate => ({
+            totalBeforeVolume: roomEstimate.totalCost || 0
+          }))
+        },
+        // Keep userInfo if it exists
+        userInfo: estimate.details && typeof estimate.details === 'object' && 'userInfo' in estimate.details 
+          ? estimate.details.userInfo 
+          : undefined
       };
       
       // Update only the necessary fields in the database
@@ -80,6 +72,7 @@ export const useEstimateUpdate = (estimateId: string | undefined, estimate: Esti
           total_cost: updatedEstimate.totalCost,
           estimated_hours: updatedEstimate.timeEstimate,
           estimated_paint_gallons: updatedEstimate.paintCans,
+          discount: updatedEstimate.discounts.volumeDiscount || 0,
           status: estimate.status
         })
         .eq("id", estimateId);
@@ -94,7 +87,7 @@ export const useEstimateUpdate = (estimateId: string | undefined, estimate: Esti
       // Add a delay before navigating to prevent loading issues
       setTimeout(() => {
         navigate(`/estimate/${estimateId}`);
-      }, 500);
+      }, 1200);
       
     } catch (error: any) {
       console.error("Error updating estimate:", error);

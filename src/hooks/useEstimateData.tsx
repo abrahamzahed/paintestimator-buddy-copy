@@ -50,28 +50,70 @@ export const useEstimateData = (estimateId: string | undefined) => {
           
           const details = estimateData.details;
           
-          if (details && 'roomDetails' in details && Array.isArray(details.roomDetails)) {
-            const roomDetailsArray = details.roomDetails as any[];
+          // Try new format first (FreeEstimator format)
+          if (details && 'rooms' in details && Array.isArray(details.rooms)) {
+            const roomsArray = details.rooms;
             
-            const typedRoomDetails = roomDetailsArray.map(room => ({
-              id: room.id || '',
-              roomType: room.roomType || '',
-              roomSize: room.roomSize || 'average',
-              wallsCount: room.wallsCount || 4,
-              wallHeight: room.wallHeight || 8,
-              wallWidth: room.wallWidth || 10,
-              condition: room.condition || 'good',
-              paintType: room.paintType || 'standard',
-              includeCeiling: !!room.includeCeiling,
-              includeBaseboards: !!room.includeBaseboards,
-              baseboardsMethod: room.baseboardsMethod || 'brush',
-              includeCrownMolding: !!room.includeCrownMolding,
+            const typedRoomDetails = roomsArray.map(room => ({
+              id: room.id,
+              roomTypeId: room.roomTypeId,
+              roomType: room.roomTypeId, // For backward compatibility
+              size: room.size,
+              roomSize: room.size, // For backward compatibility
+              addons: room.addons || [],
               hasHighCeiling: !!room.hasHighCeiling,
-              includeCloset: !!room.includeCloset,
-              isEmptyHouse: !!room.isEmptyHouse,
-              needFloorCovering: room.needFloorCovering !== false,
-              doorsCount: room.doorsCount || 0,
-              windowsCount: room.windowsCount || 0
+              paintType: room.paintType,
+              isEmpty: !!room.isEmpty,
+              noFloorCovering: !!room.noFloorCovering,
+              doorPaintingMethod: room.doorPaintingMethod || 'none',
+              numberOfDoors: room.numberOfDoors || 0,
+              windowPaintingMethod: room.windowPaintingMethod || 'none',
+              numberOfWindows: room.numberOfWindows || 0,
+              fireplaceMethod: room.fireplaceMethod || 'none',
+              hasStairRailing: !!room.hasStairRailing,
+              twoColors: !!room.twoColors,
+              millworkPrimingNeeded: !!room.millworkPrimingNeeded,
+              repairs: room.repairs || 'none',
+              baseboardInstallationLf: room.baseboardInstallationLf || 0,
+              baseboardType: room.baseboardType || 'none',
+              walkInClosetCount: room.walkInClosetCount || 0,
+              regularClosetCount: room.regularClosetCount || 0
+            }));
+            
+            setRoomDetails(typedRoomDetails);
+          }
+          // Fallback to legacy format
+          else if (details && 'roomDetails' in details && Array.isArray(details.roomDetails)) {
+            // Legacy format
+            console.log("Using legacy room details format");
+            
+            const roomDetailsArray = details.roomDetails;
+            
+            // Convert old format to new format as best as possible
+            const typedRoomDetails = roomDetailsArray.map((room: any) => ({
+              id: room.id || '',
+              roomTypeId: room.roomType || '',
+              roomType: room.roomType || '',
+              size: room.roomSize || 'average',
+              roomSize: room.roomSize || 'average',
+              addons: [],
+              hasHighCeiling: !!room.hasHighCeiling,
+              paintType: room.paintType || 'standard',
+              isEmpty: !!room.isEmptyHouse,
+              noFloorCovering: !room.needFloorCovering,
+              doorPaintingMethod: room.doorsCount > 0 ? 'brush' : 'none',
+              numberOfDoors: room.doorsCount || 0,
+              windowPaintingMethod: room.windowsCount > 0 ? 'brush' : 'none',
+              numberOfWindows: room.windowsCount || 0,
+              fireplaceMethod: 'none',
+              hasStairRailing: false,
+              twoColors: false,
+              millworkPrimingNeeded: false,
+              repairs: 'none',
+              baseboardInstallationLf: 0,
+              baseboardType: room.includeBaseboards ? room.baseboardsMethod || 'brush' : 'none',
+              walkInClosetCount: room.includeCloset && room.roomType?.toLowerCase().includes('master') ? 1 : 0,
+              regularClosetCount: room.includeCloset && !room.roomType?.toLowerCase().includes('master') ? 1 : 0
             }));
             
             setRoomDetails(typedRoomDetails);
