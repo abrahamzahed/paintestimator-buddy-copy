@@ -33,11 +33,33 @@ export const useProjectData = (projectId: string | undefined) => {
     }
   }, [projectId]);
   
-  // Use the navigateWithDelay function as the callback for the status update hook
+  // Define a robust navigation function with proper error handling
   const navigateWithDelay = useCallback(() => {
-    // Navigate after status update is complete
-    navigate("/dashboard");
-  }, [navigate]);
+    try {
+      // Add a class to body to show loading state if needed
+      document.body.classList.add('navigating');
+      
+      // Navigate after status update is complete
+      console.log("Navigating to dashboard after status update");
+      navigate("/dashboard", { replace: true });
+      
+      // Clean up loading state after navigation
+      setTimeout(() => {
+        document.body.classList.remove('navigating');
+      }, 500);
+    } catch (navError) {
+      console.error("Navigation error:", navError);
+      // Ensure we clean up even if navigation fails
+      document.body.classList.remove('navigating');
+      
+      // Show error toast if navigation fails
+      toast({
+        title: "Navigation Error",
+        description: "There was a problem returning to the dashboard. Please try again.",
+        variant: "destructive",
+      });
+    }
+  }, [navigate, toast]);
   
   // Use the updated status update hook with a callback that navigates after completion
   const { updateStatus, isUpdating: isUpdatingStatus } = useStatusUpdate(navigateWithDelay);
@@ -79,7 +101,7 @@ export const useProjectData = (projectId: string | undefined) => {
     // Optimistically update the UI immediately
     setProject(prev => prev ? { ...prev, status: newStatus } : null);
     
-    // Use the new status update function
+    // Use the updated status update function
     await updateStatus(project, newStatus);
     // Note: The navigation is handled by the callback provided to useStatusUpdate
   };
@@ -96,6 +118,7 @@ export const useProjectData = (projectId: string | undefined) => {
     showRestoreDialog,
     setShowRestoreDialog,
     isUpdatingStatus,
-    handleUpdateProjectStatus
+    handleUpdateProjectStatus,
+    refreshData
   };
 };

@@ -24,42 +24,14 @@ export const updateProjectStatus = async (projectId: string, newStatus: string) 
     
     console.log(`✅ Successfully updated project to ${newStatus}`);
     
-    // Start background updates for related entities
-    const backgroundUpdates = async () => {
-      try {
-        // Update estimates in the background
-        console.log(`Updating estimates to ${newStatus}`);
-        const { error: estimatesError } = await supabase
-          .from("estimates")
-          .update({ status_type: newStatus })
-          .eq("project_id", projectId);
-          
-        if (estimatesError) {
-          console.error(`Error updating estimates to ${newStatus}:`, estimatesError);
-        } else {
-          console.log(`✅ Successfully updated estimates to ${newStatus}`);
-        }
-        
-        // Update leads in the background
-        console.log(`Updating leads to ${newStatus}`);
-        const { error: leadsError } = await supabase
-          .from("leads")
-          .update({ status: newStatus })
-          .eq("project_id", projectId);
-          
-        if (leadsError) {
-          console.error(`Error updating leads to ${newStatus}:`, leadsError);
-        } else {
-          console.log(`✅ Successfully updated leads to ${newStatus}`);
-        }
-      } catch (error) {
+    // Start background updates for related entities without awaiting them
+    // This allows the UI to continue responding while these updates happen
+    setTimeout(() => {
+      backgroundUpdates(projectId, newStatus).catch(error => {
         console.error("Error in background updates:", error);
         // Don't throw from background task - we already updated the main project
-      }
-    };
-    
-    // Execute background updates without awaiting
-    backgroundUpdates();
+      });
+    }, 100);
     
     return newStatus;
   } catch (error) {
@@ -67,6 +39,40 @@ export const updateProjectStatus = async (projectId: string, newStatus: string) 
     throw error;
   }
 };
+
+// Separate function to handle background updates without blocking
+async function backgroundUpdates(projectId: string, newStatus: string) {
+  try {
+    // Update estimates in the background
+    console.log(`Updating estimates to ${newStatus}`);
+    const { error: estimatesError } = await supabase
+      .from("estimates")
+      .update({ status_type: newStatus })
+      .eq("project_id", projectId);
+      
+    if (estimatesError) {
+      console.error(`Error updating estimates to ${newStatus}:`, estimatesError);
+    } else {
+      console.log(`✅ Successfully updated estimates to ${newStatus}`);
+    }
+    
+    // Update leads in the background
+    console.log(`Updating leads to ${newStatus}`);
+    const { error: leadsError } = await supabase
+      .from("leads")
+      .update({ status: newStatus })
+      .eq("project_id", projectId);
+      
+    if (leadsError) {
+      console.error(`Error updating leads to ${newStatus}:`, leadsError);
+    } else {
+      console.log(`✅ Successfully updated leads to ${newStatus}`);
+    }
+  } catch (error) {
+    console.error("Error in background updates:", error);
+    // Don't throw from background task - we already updated the main project
+  }
+}
 
 export const getStatusUpdateMessage = (project: Project, newStatus: string): string => {
   if (newStatus === "deleted") {
