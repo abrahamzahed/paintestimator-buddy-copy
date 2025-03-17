@@ -82,17 +82,9 @@ export const useProjectData = (projectId: string | undefined) => {
     try {
       setIsUpdatingStatus(true);
       
-      // First update the project status
-      const { error: projectError } = await supabase
-        .from("projects")
-        .update({ status: newStatus })
-        .eq("id", projectId);
-        
-      if (projectError) throw projectError;
-      
-      // If project is being deleted or archived, also update related estimates
-      if (newStatus === "deleted" || newStatus === "archived") {
-        // Update all estimates linked to this project with the same status_type
+      // 1. FIRST update all estimates linked to this project with the same status_type
+      if (newStatus === "deleted" || newStatus === "archived" || newStatus === "active") {
+        console.log(`1. Updating estimates to ${newStatus}`);
         const { error: estimatesError } = await supabase
           .from("estimates")
           .update({ status_type: newStatus })
@@ -103,7 +95,8 @@ export const useProjectData = (projectId: string | undefined) => {
           // Continue execution even if this fails
         }
         
-        // Update all leads linked to this project with the same status
+        // 2. SECOND update all leads linked to this project with the same status
+        console.log(`2. Updating leads to ${newStatus}`);
         const { error: leadsError } = await supabase
           .from("leads")
           .update({ status: newStatus })
@@ -113,6 +106,17 @@ export const useProjectData = (projectId: string | undefined) => {
           console.error(`Error updating leads to ${newStatus}:`, leadsError);
           // Continue execution even if this fails
         }
+      }
+      
+      // 3. FINALLY update the project status
+      console.log(`3. Updating project to ${newStatus}`);
+      const { error: projectError } = await supabase
+        .from("projects")
+        .update({ status: newStatus })
+        .eq("id", projectId);
+        
+      if (projectError) {
+        throw projectError;
       }
       
       // Prepare toast message
