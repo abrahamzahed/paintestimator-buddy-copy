@@ -26,21 +26,22 @@ export const useStatusUpdate = (onAfterUpdate?: () => void) => {
       await updateProjectStatus(project.id, newStatus);
       
       // If we get here, the update was successful
-      // Delay the callback to ensure UI is responsive and data has time to propagate
       if (onAfterUpdate) {
-        // Use a longer timeout to allow database operations to complete
+        // Execute callback immediately but don't await it
+        // This allows the UI to remain responsive
         setTimeout(() => {
           try {
             onAfterUpdate();
           } catch (callbackErr) {
             console.error("Error in update callback:", callbackErr);
-          } finally {
-            setIsUpdating(false);
           }
-        }, 1200); // Increased buffer time
-      } else {
-        setIsUpdating(false);
+        }, 100);
       }
+      
+      // Mark operation as complete regardless of callback outcome
+      setTimeout(() => {
+        setIsUpdating(false);
+      }, 500);
       
       return true;
     } catch (err) {

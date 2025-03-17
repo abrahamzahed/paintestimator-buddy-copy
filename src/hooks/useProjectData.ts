@@ -33,36 +33,18 @@ export const useProjectData = (projectId: string | undefined) => {
     }
   }, [projectId]);
   
-  // Define a robust navigation function with proper error handling
-  const navigateWithDelay = useCallback(() => {
-    try {
-      // Add a class to body to show loading state if needed
-      document.body.classList.add('navigating');
-      
-      // Navigate after status update is complete
-      console.log("Navigating to dashboard after status update");
-      navigate("/dashboard", { replace: true });
-      
-      // Clean up loading state after navigation
-      setTimeout(() => {
-        document.body.classList.remove('navigating');
-      }, 500);
-    } catch (navError) {
-      console.error("Navigation error:", navError);
-      // Ensure we clean up even if navigation fails
-      document.body.classList.remove('navigating');
-      
-      // Show error toast if navigation fails
-      toast({
-        title: "Navigation Error",
-        description: "There was a problem returning to the dashboard. Please try again.",
-        variant: "destructive",
-      });
-    }
-  }, [navigate, toast]);
+  // Define a safe navigation function
+  const safeNavigate = useCallback(() => {
+    // Add a small class to body to show navigation state if needed
+    document.body.classList.add('navigating');
+    
+    // Use window.location instead of React Router navigate
+    // This ensures a clean state when returning to dashboard
+    window.location.href = "/dashboard";
+  }, []);
   
   // Use the updated status update hook with a callback that navigates after completion
-  const { updateStatus, isUpdating: isUpdatingStatus } = useStatusUpdate(navigateWithDelay);
+  const { updateStatus, isUpdating: isUpdatingStatus } = useStatusUpdate(safeNavigate);
 
   useEffect(() => {
     const loadProjectData = async () => {
@@ -103,7 +85,7 @@ export const useProjectData = (projectId: string | undefined) => {
     
     // Use the updated status update function
     await updateStatus(project, newStatus);
-    // Note: The navigation is handled by the callback provided to useStatusUpdate
+    // Navigation is handled by the callback provided to useStatusUpdate
   };
 
   return {

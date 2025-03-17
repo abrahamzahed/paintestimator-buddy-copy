@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Project } from "@/types";
 
@@ -24,14 +23,13 @@ export const updateProjectStatus = async (projectId: string, newStatus: string) 
     
     console.log(`✅ Successfully updated project to ${newStatus}`);
     
-    // Start background updates for related entities without awaiting them
-    // This allows the UI to continue responding while these updates happen
+    // Don't await background updates - this ensures the main thread isn't blocked
     setTimeout(() => {
       backgroundUpdates(projectId, newStatus).catch(error => {
         console.error("Error in background updates:", error);
         // Don't throw from background task - we already updated the main project
       });
-    }, 100);
+    }, 50);
     
     return newStatus;
   } catch (error) {
