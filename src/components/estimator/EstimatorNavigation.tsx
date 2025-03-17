@@ -9,6 +9,11 @@ interface EstimatorNavigationProps {
   onPrev: () => void;
   onReset?: () => void;
   showReset?: boolean;
+  isLastStep?: boolean;
+  showSubmit?: boolean;
+  onSubmit?: () => void;
+  submitButtonText?: string;
+  disableNext?: boolean;
 }
 
 const EstimatorNavigation = ({
@@ -17,7 +22,12 @@ const EstimatorNavigation = ({
   onNext,
   onPrev,
   onReset,
-  showReset = true
+  showReset = true,
+  isLastStep = false,
+  showSubmit = false,
+  onSubmit,
+  submitButtonText = "Submit",
+  disableNext = false
 }: EstimatorNavigationProps) => {
   return (
     <div className="flex justify-between mt-8">
@@ -43,14 +53,26 @@ const EstimatorNavigation = ({
         )}
       </div>
       
-      {currentStep < totalSteps && (
-        <Button
-          onClick={onNext}
-          className="bg-paint hover:bg-paint-dark"
-        >
-          Next
-        </Button>
-      )}
+      <div>
+        {(currentStep < totalSteps && !isLastStep) && (
+          <Button
+            onClick={onNext}
+            className="bg-paint hover:bg-paint-dark"
+            disabled={disableNext}
+          >
+            Next
+          </Button>
+        )}
+        
+        {isLastStep && showSubmit && onSubmit && (
+          <Button
+            onClick={onSubmit}
+            className="bg-paint hover:bg-paint-dark"
+          >
+            {submitButtonText}
+          </Button>
+        )}
+      </div>
     </div>
   );
 };

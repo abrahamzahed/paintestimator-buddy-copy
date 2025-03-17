@@ -2,7 +2,7 @@
 import { formatCurrency } from "@/utils/estimateUtils";
 import { EstimateResult, RoomDetail } from "@/types";
 import { Button } from "@/components/ui/button";
-import { Send } from "lucide-react";
+import { Send, Edit } from "lucide-react";
 
 interface EstimateSummaryProps {
   currentEstimate: EstimateResult | null;
@@ -11,6 +11,8 @@ interface EstimateSummaryProps {
   onSubmit: (e?: React.FormEvent) => void;
   submitButtonText: string;
   isLastStep: boolean;
+  onEdit?: (step: number) => void;
+  isEditMode?: boolean;
 }
 
 const EstimateSummary = ({ 
@@ -19,14 +21,29 @@ const EstimateSummary = ({
   roomEstimates, 
   onSubmit,
   submitButtonText,
-  isLastStep
+  isLastStep,
+  onEdit,
+  isEditMode = false
 }: EstimateSummaryProps) => {
   if (!currentEstimate) return null;
   
   return (
     <div className="space-y-4">
       <div className="rounded-lg border p-4">
-        <h4 className="font-medium mb-2">Rooms Included ({rooms.length})</h4>
+        <div className="flex justify-between items-center mb-2">
+          <h4 className="font-medium">Rooms Included ({rooms.length})</h4>
+          {isEditMode && onEdit && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => onEdit(2)} 
+              className="text-paint hover:text-paint-dark"
+            >
+              <Edit className="h-4 w-4 mr-1" />
+              Edit Rooms
+            </Button>
+          )}
+        </div>
         <ul className="divide-y">
           {rooms.map((room) => {
             const roomEstimate = roomEstimates[room.id];
@@ -83,6 +100,21 @@ const EstimateSummary = ({
       </div>
       
       <div className="rounded-lg border p-4 space-y-2">
+        <div className="flex justify-between items-center mb-2">
+          <h4 className="font-medium">Cost Summary</h4>
+          {isEditMode && onEdit && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => onEdit(1)} 
+              className="text-paint hover:text-paint-dark"
+            >
+              <Edit className="h-4 w-4 mr-1" />
+              Edit Project Info
+            </Button>
+          )}
+        </div>
+        
         <div className="flex justify-between">
           <span>Total Labor Cost:</span>
           <span>{formatCurrency(currentEstimate.laborCost)}</span>
@@ -121,7 +153,7 @@ const EstimateSummary = ({
       </div>
       
       {isLastStep && (
-        <div className="absolute bottom-0 right-0">
+        <div className="flex justify-end mt-4">
           <Button
             onClick={() => onSubmit()}
             className="bg-paint hover:bg-paint-dark px-6"

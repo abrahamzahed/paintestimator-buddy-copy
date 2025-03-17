@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { RoomDetails as OldRoomDetail, RoomDetail, EstimateResult } from "../types";
 import { calculateMultiRoomEstimate, calculateSingleRoomEstimate } from "../utils/estimateUtils";
@@ -8,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { v4 as uuidv4 } from "uuid";
 import CurrentEstimatePanel from "./estimator/CurrentEstimatePanel";
 import EstimatorNavigation from "./estimator/EstimatorNavigation";
+import EstimateSummary from "./estimator/EstimateSummary";
 import { useLocation } from "react-router-dom";
 import { saveTemporaryEstimate, getTemporaryEstimate, getTemporaryProjectName } from "@/utils/estimateStorage";
 import { useSession } from "@/context/SessionContext";
@@ -30,6 +32,9 @@ interface EstimateCalculatorProps {
   initialRoomDetails?: RoomDetail[];
   submitButtonText?: string;
   useDynamicEstimator?: boolean;
+  isEditMode?: boolean;
+  currentStep?: number;
+  onStepChange?: (step: number) => void;
 }
 
 const EstimateCalculator = ({ 
@@ -37,13 +42,18 @@ const EstimateCalculator = ({
   initialUserData,
   initialRoomDetails,
   submitButtonText = "Submit Request",
-  useDynamicEstimator = false
+  useDynamicEstimator = false,
+  isEditMode = false,
+  currentStep: externalStep,
+  onStepChange
 }: EstimateCalculatorProps) => {
   const { toast } = useToast();
   const location = useLocation();
   const { user } = useSession();
-  const [step, setStep] = useState(1);
-  const TOTAL_STEPS = 1; // Only one step within calculator - rooms configuration
+  const [internalStep, setInternalStep] = useState(1);
+  const step = externalStep !== undefined ? externalStep : internalStep;
+  
+  const TOTAL_STEPS = 3; // For editing, we show all steps: 1. Info, 2. Rooms, 3. Summary
   const [currentEstimate, setCurrentEstimate] = useState<EstimateResult | null>(null);
   const [roomEstimates, setRoomEstimates] = useState<Record<string, ReturnType<typeof calculateSingleRoomEstimate>>>({});
   
@@ -129,45 +139,79 @@ const EstimateCalculator = ({
   }, [roomDetails, toast, useDynamicEstimator]);
 
   const handleNextStep = () => {
-    if (currentEstimate) {
-      if (!user) {
-        // For non-logged in users, save the estimate to localStorage
-        saveTemporaryEstimate(currentEstimate, roomDetails.rooms, roomEstimates);
+    if (externalStep !== undefined && onStepChange) {
+      // If we're using external step control
+      if (step < TOTAL_STEPS) {
+        onStepChange(step + 1);
       }
-      
-      onEstimateComplete(currentEstimate, roomDetails.rooms, roomEstimates);
+    } else {
+      // Using internal step control
+      if (internalStep < TOTAL_STEPS) {
+        setInternalStep(internalStep + 1);
+      } else if (currentEstimate) {
+        handleSubmit();
+      }
+    }
+  };
+
+  const handlePrevStep = () => {
+    if (externalStep !== undefined && onStepChange) {
+      // If we're using external step control
+      if (step > 1) {
+        onStepChange(step - 1);
+      }
+    } else {
+      // Using internal step control
+      if (internalStep > 1) {
+        setInternalStep(internalStep - 1);
+      }
+    }
+  };
+
+  const handleEditStep = (newStep: number) => {
+    if (externalStep !== undefined && onStepChange) {
+      onStepChange(newStep);
+    } else {
+      setInternalStep(newStep);
     }
   };
 
   const handleReset = () => {
-    setStep(1);
-    // Reset to default room
-    setRoomDetails({
-      rooms: [
-        {
-          id: uuidv4(),
-          roomType: "bedroom",
-          roomSize: "average",
-          wallsCount: 4,
-          wallHeight: 8,
-          wallWidth: 10,
-          condition: "good",
-          paintType: "standard",
-          includeCeiling: false,
-          includeBaseboards: false,
-          baseboardsMethod: "brush",
-          includeCrownMolding: false,
-          hasHighCeiling: false,
-          includeCloset: false,
-          isEmptyHouse: false,
-          needFloorCovering: true,
-          doorsCount: 0,
-          windowsCount: 0
-        }
-      ],
-      isEmptyHouse: false,
-      needFloorCovering: true
-    });
+    if (externalStep !== undefined && onStepChange) {
+      onStepChange(1);
+    } else {
+      setInternalStep(1);
+    }
+    
+    // Reset to default room if not in edit mode
+    if (!isEditMode) {
+      setRoomDetails({
+        rooms: [
+          {
+            id: uuidv4(),
+            roomType: "bedroom",
+            roomSize: "average",
+            wallsCount: 4,
+            wallHeight: 8,
+            wallWidth: 10,
+            condition: "good",
+            paintType: "standard",
+            includeCeiling: false,
+            includeBaseboards: false,
+            baseboardsMethod: "brush",
+            includeCrownMolding: false,
+            hasHighCeiling: false,
+            includeCloset: false,
+            isEmptyHouse: false,
+            needFloorCovering: true,
+            doorsCount: 0,
+            windowsCount: 0
+          }
+        ],
+        isEmptyHouse: false,
+        needFloorCovering: true
+      });
+    }
     
     toast({
       title: "Estimator reset",
@@ -223,10 +267,13 @@ const EstimateCalculator = ({
 
   return (
     <div className="glass rounded-xl p-6 shadow-lg animate-scale-in relative">
-      <ProgressIndicator totalSteps={TOTAL_STEPS} currentStep={step} hideDisplay={true} />
+      {!isEditMode && (
+        <ProgressIndicator totalSteps={TOTAL_STEPS} currentStep={step} hideDisplay={false} />
+      )}
 
       <div className="min-h-[300px] relative">
-        <FormStep title="What rooms are you painting?" isActive={true}>
+        {/* Step 1: Show room selection */}
+        <FormStep title="Configure Your Rooms" isActive={step === 2}>
           <p className="text-muted-foreground mb-4">
             Add all rooms you want to paint and their details. You can add multiple rooms.
           </p>
@@ -235,16 +282,37 @@ const EstimateCalculator = ({
             updateRooms={updateRooms} 
           />
         </FormStep>
-      </div>
 
-      <CurrentEstimatePanel currentEstimate={currentEstimate} />
+        {/* Step 3: Show summary */}
+        <FormStep title="Estimate Summary" isActive={step === 3}>
+          <EstimateSummary 
+            currentEstimate={currentEstimate}
+            rooms={roomDetails.rooms}
+            roomEstimates={roomEstimates}
+            onSubmit={handleSubmit}
+            submitButtonText={submitButtonText}
+            isLastStep={true}
+            onEdit={isEditMode ? handleEditStep : undefined}
+            isEditMode={isEditMode}
+          />
+        </FormStep>
+        
+        {/* Show current estimate always in step 2 */}
+        {step === 2 && (
+          <CurrentEstimatePanel currentEstimate={currentEstimate} />
+        )}
+      </div>
 
       <EstimatorNavigation
         currentStep={step}
         totalSteps={TOTAL_STEPS}
         onNext={handleNextStep}
-        onPrev={() => {}}
+        onPrev={handlePrevStep}
         onReset={handleReset}
+        isLastStep={step === TOTAL_STEPS}
+        showSubmit={step === TOTAL_STEPS && isEditMode}
+        onSubmit={handleSubmit}
+        submitButtonText={submitButtonText}
       />
     </div>
   );
