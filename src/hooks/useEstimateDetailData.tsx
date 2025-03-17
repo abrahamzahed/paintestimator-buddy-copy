@@ -10,22 +10,36 @@ export const useEstimateDetailData = (estimateId: string | undefined) => {
   const [estimate, setEstimate] = useState<Estimate | null>(null);
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
   const [showDetailedView, setShowDetailedView] = useState(false);
   const [roomDetails, setRoomDetails] = useState<RoomDetail[]>([]);
   const [roomEstimates, setRoomEstimates] = useState<Record<string, any>>({});
+  const [clientInfo, setClientInfo] = useState({
+    name: "Client Name",
+    email: "",
+    phone: "",
+    address: "Client Address"
+  });
 
   useEffect(() => {
     const fetchEstimateData = async () => {
       try {
-        if (!estimateId) return;
+        if (!estimateId) {
+          setError(new Error("No estimate ID provided"));
+          setLoading(false);
+          return;
+        }
 
+        // Fetch estimate data
         const { data: estimateData, error: estimateError } = await supabase
           .from("estimates")
           .select("*, projects(name)")
           .eq("id", estimateId)
           .single();
 
-        if (estimateError) throw estimateError;
+        if (estimateError) {
+          throw estimateError;
+        }
         
         // Skip loading if estimate is deleted
         if (estimateData.status_type === 'deleted') {
@@ -34,6 +48,7 @@ export const useEstimateDetailData = (estimateId: string | undefined) => {
             description: "This estimate has been deleted",
             variant: "destructive",
           });
+          setError(new Error("Estimate has been deleted"));
           setLoading(false);
           return;
         }
@@ -49,11 +64,41 @@ export const useEstimateDetailData = (estimateId: string | undefined) => {
         
         setEstimate(formattedEstimate);
 
+        // Fetch client information from the lead if available
+        if (formattedEstimate.lead_id) {
+          const { data: leadData, error: leadError } = await supabase
+            .from("leads")
+            .select("name, email, phone, address")
+            .eq("id", formattedEstimate.lead_id)
+            .single();
+            
+          if (!leadError && leadData) {
+            setClientInfo({
+              name: leadData.name || "Client Name",
+              email: leadData.email || "",
+              phone: leadData.phone || "",
+              address: leadData.address || "Client Address"
+            });
+          }
+        }
+
         // Extract room details from the JSONB details field
         if (formattedEstimate.details && 
             typeof formattedEstimate.details === 'object') {
           
           const details = formattedEstimate.details;
+          
+          // First try to get client info from details if not already set
+          if (details.userInfo) {
+            setClientInfo(prevInfo => ({
+              name: details.userInfo.name || prevInfo.name,
+              email: details.userInfo.email || prevInfo.email,
+              phone: details.userInfo.phone || prevInfo.phone,
+              address: details.userInfo.address || prevInfo.address
+            }));
+          }
+          
+          // Now extract room details
           const roomDetailsArray = details && 'roomDetails' in details ? details.roomDetails : null;
           
           if (Array.isArray(roomDetailsArray)) {
@@ -108,6 +153,7 @@ export const useEstimateDetailData = (estimateId: string | undefined) => {
 
       } catch (error) {
         console.error("Error fetching estimate data:", error);
+        setError(error instanceof Error ? error : new Error("Failed to fetch estimate data"));
         toast({
           title: "Error loading estimate",
           description: "Please try again later",
@@ -129,9 +175,11 @@ export const useEstimateDetailData = (estimateId: string | undefined) => {
     estimate,
     lineItems,
     loading,
+    error,
     showDetailedView,
     roomDetails,
     roomEstimates,
+    clientInfo,
     toggleDetailedView,
     setShowDetailedView
   };

@@ -1,90 +1,59 @@
 
+import React from "react";
 import { useParams } from "react-router-dom";
-import { useSession } from "@/context/use-session";
-import { EstimateResult } from "@/types";
-import DashboardLayout from "@/components/dashboard/DashboardLayout";
+import { useEstimateDetailData } from "@/hooks/useEstimateDetailData";
+import EstimatePageLayout from "@/components/estimate/EstimatePageLayout";
 import LoadingState from "@/components/estimate/LoadingState";
 import EstimateNotFound from "@/components/estimate/EstimateNotFound";
-import EstimateContent from "@/components/estimate/EstimateContent";
-import { useEstimateDetailData } from "@/hooks/useEstimateDetailData";
+import FreeEstimatorSummary from "@/components/estimate/FreeEstimatorSummary";
 
 export default function EstimateDetail() {
   const { id } = useParams<{ id: string }>();
-  const { user, profile, signOut } = useSession();
   const { 
     estimate, 
-    lineItems, 
-    loading, 
-    showDetailedView, 
     roomDetails, 
-    roomEstimates,
-    setShowDetailedView 
+    loading, 
+    error
   } = useEstimateDetailData(id);
-
-  const getEstimateResult = (): EstimateResult => {
-    if (!estimate) {
-      return {
-        totalCost: 0,
-        laborCost: 0,
-        materialCost: 0,
-        timeEstimate: 0,
-        paintCans: 0,
-        roomPrice: 0,
-        additionalCosts: {},
-        discounts: {},
-      };
-    }
-    
-    // Calculate the sum of all room costs to verify the total
-    const totalRoomCosts = Object.values(roomEstimates).reduce(
-      (sum, est: any) => sum + (est.totalCost || 0), 0
-    );
-    
-    // If our calculated total differs significantly from the stored total,
-    // use the calculated one for better accuracy
-    const storedTotal = estimate.total_cost || 0;
-    const finalTotal = Math.abs(storedTotal - totalRoomCosts) > 10 ? 
-      totalRoomCosts : storedTotal;
-    
-    return {
-      totalCost: finalTotal,
-      laborCost: estimate.labor_cost || 0,
-      materialCost: estimate.material_cost || 0,
-      timeEstimate: estimate.estimated_hours || 0,
-      paintCans: estimate.estimated_paint_gallons || 0,
-      roomPrice: 0,
-      additionalCosts: {},
-      discounts: estimate.discount ? { volumeDiscount: estimate.discount } : {}
-    };
-  };
 
   if (loading) {
     return (
-      <DashboardLayout user={user} profile={profile} signOut={signOut}>
+      <EstimatePageLayout>
         <LoadingState />
-      </DashboardLayout>
+      </EstimatePageLayout>
     );
   }
 
-  if (!estimate) {
+  if (!estimate || error) {
     return (
-      <DashboardLayout user={user} profile={profile} signOut={signOut}>
+      <EstimatePageLayout>
         <EstimateNotFound />
-      </DashboardLayout>
+      </EstimatePageLayout>
     );
+  }
+
+  // Extract client information from the estimate or related data
+  let clientName = "Client Name";
+  let clientAddress = "Client Address";
+  
+  if (estimate.details && typeof estimate.details === 'object') {
+    // Try to get client info from details
+    const details = estimate.details;
+    if (details.userInfo) {
+      clientName = details.userInfo.name || clientName;
+      clientAddress = details.userInfo.address || clientAddress;
+    }
   }
 
   return (
-    <DashboardLayout user={user} profile={profile} signOut={signOut}>
-      <EstimateContent
+    <EstimatePageLayout>
+      <FreeEstimatorSummary
         estimate={estimate}
-        lineItems={lineItems}
         roomDetails={roomDetails}
-        roomEstimates={roomEstimates}
-        showDetailedView={showDetailedView}
-        setShowDetailedView={setShowDetailedView}
-        getEstimateResult={getEstimateResult}
+        projectName={estimate.project_name || "Painting Project"}
+        clientName={clientName}
+        clientAddress={clientAddress}
       />
-    </DashboardLayout>
+    </EstimatePageLayout>
   );
 }
