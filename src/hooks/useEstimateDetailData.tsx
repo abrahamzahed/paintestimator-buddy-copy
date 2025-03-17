@@ -89,17 +89,20 @@ export const useEstimateDetailData = (estimateId: string | undefined) => {
           const details = formattedEstimate.details;
           
           // First try to get client info from details if not already set
-          if (details.userInfo) {
-            setClientInfo(prevInfo => ({
-              name: details.userInfo.name || prevInfo.name,
-              email: details.userInfo.email || prevInfo.email,
-              phone: details.userInfo.phone || prevInfo.phone,
-              address: details.userInfo.address || prevInfo.address
-            }));
+          if (details && typeof details === 'object' && 'userInfo' in details) {
+            const userInfo = details.userInfo;
+            if (userInfo && typeof userInfo === 'object') {
+              setClientInfo(prevInfo => ({
+                name: userInfo.name || prevInfo.name,
+                email: userInfo.email || prevInfo.email,
+                phone: userInfo.phone || prevInfo.phone,
+                address: userInfo.address || prevInfo.address
+              }));
+            }
           }
           
           // Now extract room details
-          const roomDetailsArray = details && 'roomDetails' in details ? details.roomDetails : null;
+          const roomDetailsArray = details && typeof details === 'object' && 'roomDetails' in details ? details.roomDetails : null;
           
           if (Array.isArray(roomDetailsArray)) {
             const typedRoomDetails = roomDetailsArray.map((room: any) => ({

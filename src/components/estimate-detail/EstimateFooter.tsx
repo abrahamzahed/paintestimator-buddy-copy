@@ -24,6 +24,7 @@ const EstimateFooter = ({ estimate }: EstimateFooterProps) => {
   const { toast } = useToast();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isEditOptionsOpen, setIsEditOptionsOpen] = useState(false);
   const [projectStatus, setProjectStatus] = useState<string>("active"); // Default to active
   
   useEffect(() => {
@@ -51,12 +52,18 @@ const EstimateFooter = ({ estimate }: EstimateFooterProps) => {
     fetchProjectStatus();
   }, [estimate.project_id]);
   
-  const handleEdit = () => {
-    navigate(`/estimate/edit/${estimate.id}`);
+  const handleEditClick = () => {
+    setIsEditOptionsOpen(true);
+  };
+  
+  const handleEditEstimate = () => {
+    navigate(`/estimate/edit/${estimate.id}?step=2`);
+    setIsEditOptionsOpen(false);
   };
 
   const handleDeleteClick = () => {
     setIsDeleteDialogOpen(true);
+    setIsEditOptionsOpen(false);
   };
   
   const handleDeleteEstimate = async () => {
@@ -89,7 +96,7 @@ const EstimateFooter = ({ estimate }: EstimateFooterProps) => {
         } else {
           navigate("/dashboard");
         }
-      }, 500);
+      }, 1200);
       
     } catch (error: any) {
       console.error("Error deleting estimate:", error);
@@ -133,16 +140,43 @@ const EstimateFooter = ({ estimate }: EstimateFooterProps) => {
       {/* Fix: Show edit/delete buttons for active estimates in active projects */}
       {canModify && (
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={handleEdit}>
+          <Button variant="outline" size="sm" onClick={handleEditClick}>
             <Edit className="h-4 w-4 mr-2" />
             Edit
           </Button>
-          <Button variant="destructive" size="sm" onClick={handleDeleteClick}>
-            <Trash2 className="h-4 w-4 mr-2" />
-            Delete
-          </Button>
         </div>
       )}
+
+      {/* Edit options dialog */}
+      <Dialog open={isEditOptionsOpen} onOpenChange={setIsEditOptionsOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Edit Options</DialogTitle>
+            <DialogDescription>
+              Choose what you want to do with this estimate.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <Button 
+              onClick={handleEditEstimate}
+              className="flex items-center justify-center"
+            >
+              <Edit className="mr-2 h-4 w-4" />
+              Edit Estimate
+            </Button>
+            
+            <Button 
+              variant="destructive" 
+              onClick={handleDeleteClick}
+              className="flex items-center justify-center"
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete Estimate
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete confirmation dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
