@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { Project, Estimate, Invoice } from "@/types";
 import { useToast } from "@/hooks/use-toast";
@@ -15,7 +16,6 @@ export const useProjectData = (projectId: string | undefined) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showArchiveDialog, setShowArchiveDialog] = useState(false);
   const [showRestoreDialog, setShowRestoreDialog] = useState(false);
-  const [isNavigating, setIsNavigating] = useState(false);
   
   const refreshData = useCallback(async () => {
     try {
@@ -32,19 +32,11 @@ export const useProjectData = (projectId: string | undefined) => {
     }
   }, [projectId]);
   
-  const safeNavigate = useCallback(() => {
-    if (isNavigating) {
-      console.log("Navigation already in progress");
-      return;
-    }
-    
-    setIsNavigating(true);
-    console.log("Navigating to dashboard...");
-    
-    window.location.href = "/dashboard";
-  }, [isNavigating]);
+  const navigateToDashboard = useCallback(() => {
+    navigate("/dashboard");
+  }, [navigate]);
   
-  const { updateStatus, isUpdating: isUpdatingStatus } = useStatusUpdate(safeNavigate);
+  const { updateStatus, isUpdating: isUpdatingStatus } = useStatusUpdate(navigateToDashboard);
 
   useEffect(() => {
     const loadProjectData = async () => {
@@ -75,13 +67,16 @@ export const useProjectData = (projectId: string | undefined) => {
   const handleUpdateProjectStatus = useCallback(async (newStatus: string) => {
     if (!projectId || !project) return;
     
+    // Close all dialogs first to avoid UI locks
     setShowDeleteDialog(false);
     setShowArchiveDialog(false);
     setShowRestoreDialog(false);
     
     if (!isUpdatingStatus) {
+      // Optimistically update the UI
       setProject(prev => prev ? { ...prev, status: newStatus } : null);
       
+      // Trigger the actual API update
       await updateStatus(project, newStatus);
     }
   }, [projectId, project, isUpdatingStatus, updateStatus]);

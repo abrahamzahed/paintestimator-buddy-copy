@@ -34,8 +34,7 @@ export const useStatusUpdate = (onAfterUpdate?: () => void) => {
       
       // If we reach here, update was successful
       if (onAfterUpdate) {
-        // Small delay to ensure UI has updated
-        setTimeout(onAfterUpdate, 300);
+        onAfterUpdate();
       }
       
       return true;
@@ -49,13 +48,16 @@ export const useStatusUpdate = (onAfterUpdate?: () => void) => {
         variant: "destructive",
       });
       
+      setIsUpdating(false);
       return false;
     } finally {
-      // Always reset the updating state when done
-      // Small delay to ensure UI has time to update
-      setTimeout(() => {
+      // No need for setTimeout, just reset state immediately after update completes
+      if (newStatus === "deleted" || newStatus === "archived") {
+        // For these actions we'll navigate away, so don't reset state
+        // as it might cause UI flicker
+      } else {
         setIsUpdating(false);
-      }, 200);
+      }
     }
   }, [isUpdating, toast, onAfterUpdate]);
 

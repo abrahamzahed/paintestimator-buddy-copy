@@ -39,11 +39,7 @@ const StatusUpdateDialogs = ({
     <>
       <AlertDialog 
         open={showDeleteDialog} 
-        onOpenChange={(isOpen) => {
-          if (!isUpdatingStatus || isOpen) {
-            onDeleteDialogChange(isOpen);
-          }
-        }}
+        onOpenChange={onDeleteDialogChange}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -53,7 +49,7 @@ const StatusUpdateDialogs = ({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isUpdatingStatus}>Cancel</AlertDialogCancel>
             <AlertDialogAction 
               onClick={() => onUpdateStatus("deleted")}
               disabled={isUpdatingStatus}
@@ -67,11 +63,7 @@ const StatusUpdateDialogs = ({
 
       <AlertDialog 
         open={showArchiveDialog}
-        onOpenChange={(isOpen) => {
-          if (!isUpdatingStatus || isOpen) {
-            onArchiveDialogChange(isOpen);
-          }
-        }}
+        onOpenChange={onArchiveDialogChange}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -81,7 +73,7 @@ const StatusUpdateDialogs = ({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isUpdatingStatus}>Cancel</AlertDialogCancel>
             <AlertDialogAction 
               onClick={() => onUpdateStatus("archived")}
               disabled={isUpdatingStatus}
@@ -95,11 +87,7 @@ const StatusUpdateDialogs = ({
 
       <AlertDialog 
         open={showRestoreDialog}
-        onOpenChange={(isOpen) => {
-          if (!isUpdatingStatus || isOpen) {
-            onRestoreDialogChange(isOpen);
-          }
-        }}
+        onOpenChange={onRestoreDialogChange}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -109,7 +97,7 @@ const StatusUpdateDialogs = ({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isUpdatingStatus}>Cancel</AlertDialogCancel>
             <AlertDialogAction 
               onClick={() => onUpdateStatus("active")}
               disabled={isUpdatingStatus}
