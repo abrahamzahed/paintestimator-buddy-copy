@@ -545,6 +545,12 @@ export type Database = {
           unit_price: number
         }[]
       }
+      get_user_role: {
+        Args: {
+          user_id: string
+        }
+        Returns: string
+      }
       import_user_data_by_email: {
         Args: {
           p_user_id: string
