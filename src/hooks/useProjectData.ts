@@ -1,9 +1,9 @@
-import { useState, useEffect, useCallback } from "react";
+
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Project, Estimate, Invoice } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { db } from "@/utils/supabase-helpers";
 
 export const useProjectData = (projectId: string | undefined) => {
   const { toast } = useToast();
@@ -93,7 +93,6 @@ export const useProjectData = (projectId: string | undefined) => {
           
         if (estimatesError) {
           console.error(`Error updating estimates to ${newStatus}:`, estimatesError);
-          console.error(`Estimate update error details:`, JSON.stringify(estimatesError, null, 2));
           // Log but continue with the process
         } else {
           console.log(`✅ Successfully updated estimates to ${newStatus}`);
@@ -111,7 +110,6 @@ export const useProjectData = (projectId: string | undefined) => {
         
       if (leadsError) {
         console.error(`Error updating leads to ${newStatus}:`, leadsError);
-        console.error(`Leads update error details:`, JSON.stringify(leadsError, null, 2));
         // Log but continue with the process
       } else {
         console.log(`✅ Successfully updated leads to ${newStatus}`);
@@ -169,28 +167,6 @@ export const useProjectData = (projectId: string | undefined) => {
       
     } catch (error) {
       console.error(`Error updating project status to ${newStatus}:`, error);
-      console.error(`Stack trace:`, new Error().stack);
-      console.error(`Project ID: ${projectId}, Current project data:`, project);
-      
-      // Check RLS-related information without using a non-existent RPC function
-      console.log("Note: Unable to fetch RLS policies directly. Check Supabase dashboard for RLS policies.");
-      
-      // Try to investigate project table access directly
-      try {
-        console.log("Checking project table access permissions...");
-        const { data: accessTest, error: accessError } = await supabase
-          .from("projects")
-          .select("id, name, status")
-          .limit(1);
-          
-        if (accessError) {
-          console.error("Error accessing projects table:", accessError);
-        } else {
-          console.log("Projects table access test result:", accessTest);
-        }
-      } catch (accessCheckError) {
-        console.error("Error checking table access:", accessCheckError);
-      }
       
       toast({
         title: `Failed to ${newStatus} project`,
