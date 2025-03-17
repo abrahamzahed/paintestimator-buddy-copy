@@ -90,6 +90,31 @@ export const useProjectData = (projectId: string | undefined) => {
         
       if (projectError) throw projectError;
       
+      // If project is being deleted or archived, also update related estimates
+      if (newStatus === "deleted" || newStatus === "archived") {
+        // Update all estimates linked to this project with the same status_type
+        const { error: estimatesError } = await supabase
+          .from("estimates")
+          .update({ status_type: newStatus })
+          .eq("project_id", projectId);
+          
+        if (estimatesError) {
+          console.error(`Error updating estimates to ${newStatus}:`, estimatesError);
+          // Continue execution even if this fails
+        }
+        
+        // Update all leads linked to this project with the same status
+        const { error: leadsError } = await supabase
+          .from("leads")
+          .update({ status: newStatus })
+          .eq("project_id", projectId);
+          
+        if (leadsError) {
+          console.error(`Error updating leads to ${newStatus}:`, leadsError);
+          // Continue execution even if this fails
+        }
+      }
+      
       // Prepare toast message
       let toastMessage = "";
       
