@@ -200,16 +200,24 @@ export const useProjectData = (projectId: string | undefined) => {
       console.error(`Stack trace:`, new Error().stack);
       console.error(`Project ID: ${projectId}, Current project data:`, project);
       
-      // Try to get RLS policies for the projects table to help debug
+      // Check RLS-related information without using a non-existent RPC function
+      console.log("Note: Unable to fetch RLS policies directly. Check Supabase dashboard for RLS policies.");
+      
+      // Try to investigate project table access directly
       try {
-        const { data: rlsPolicies, error: rlsError } = await supabase.rpc('get_policies_for_table', { table_name: 'projects' });
-        if (rlsError) {
-          console.error("Error fetching RLS policies:", rlsError);
+        console.log("Checking project table access permissions...");
+        const { data: accessTest, error: accessError } = await supabase
+          .from("projects")
+          .select("id, name, status")
+          .limit(1);
+          
+        if (accessError) {
+          console.error("Error accessing projects table:", accessError);
         } else {
-          console.log("RLS policies for projects table:", rlsPolicies);
+          console.log("Projects table access test result:", accessTest);
         }
-      } catch (rlsCheckError) {
-        console.error("Error checking RLS policies:", rlsCheckError);
+      } catch (accessCheckError) {
+        console.error("Error checking table access:", accessCheckError);
       }
       
       toast({
