@@ -82,7 +82,7 @@ export const useProjectData = (projectId: string | undefined) => {
     
     try {
       setIsUpdatingStatus(true);
-      console.log(`Starting status update process to: ${newStatus}`);
+      console.log(`Starting status update process to: ${newStatus}`, { projectId, currentStatus: project.status });
       
       // Step 1: Update estimates first
       if (estimates.length > 0) {
@@ -94,6 +94,7 @@ export const useProjectData = (projectId: string | undefined) => {
           
         if (estimatesError) {
           console.error(`Error updating estimates to ${newStatus}:`, estimatesError);
+          console.error(`Estimate update error details:`, JSON.stringify(estimatesError, null, 2));
           // Log but continue with the process
         } else {
           console.log(`✅ Successfully updated estimates to ${newStatus}`);
@@ -111,6 +112,7 @@ export const useProjectData = (projectId: string | undefined) => {
         
       if (leadsError) {
         console.error(`Error updating leads to ${newStatus}:`, leadsError);
+        console.error(`Leads update error details:`, JSON.stringify(leadsError, null, 2));
         // Log but continue with the process
       } else {
         console.log(`✅ Successfully updated leads to ${newStatus}`);
@@ -120,18 +122,51 @@ export const useProjectData = (projectId: string | undefined) => {
       // This delay helps ensure the previous operations have time to complete
       await new Promise(resolve => setTimeout(resolve, 300));
       
-      console.log(`3. Updating project to ${newStatus}`);
-      const { error: projectError } = await supabase
-        .from("projects")
-        .update({ status: newStatus })
-        .eq("id", projectId);
+      console.log(`3. Updating project to ${newStatus}`, { projectId });
+      // Try first using db helper to see if it works better
+      try {
+        const { error: projectError } = await db.from("projects")
+          .update({ status: newStatus })
+          .eq("id", projectId);
+          
+        if (projectError) {
+          console.error(`Error updating project with db helper to ${newStatus}:`, projectError);
+          console.error(`Project update error details (db helper):`, JSON.stringify(projectError, null, 2));
+          throw projectError;
+        } else {
+          console.log(`✅ Successfully updated project to ${newStatus} using db helper`);
+        }
+      } catch (dbHelperError) {
+        console.error(`Failed with db helper, trying direct supabase client:`, dbHelperError);
         
-      if (projectError) {
-        console.error(`Error updating project to ${newStatus}:`, projectError);
-        throw projectError;
+        // If the db helper fails, try with the direct supabase client
+        const { error: projectError } = await supabase
+          .from("projects")
+          .update({ status: newStatus })
+          .eq("id", projectId);
+          
+        if (projectError) {
+          console.error(`Error updating project to ${newStatus}:`, projectError);
+          console.error(`Project update error details:`, JSON.stringify(projectError, null, 2));
+          
+          // Try to get more details about the project record
+          const { data: projectData, error: fetchError } = await supabase
+            .from("projects")
+            .select("*")
+            .eq("id", projectId)
+            .single();
+            
+          if (fetchError) {
+            console.error("Could not fetch project details:", fetchError);
+          } else {
+            console.log("Current project record:", projectData);
+          }
+          
+          throw projectError;
+        }
+        
+        console.log(`✅ Successfully updated project to ${newStatus} using direct client`);
       }
-      
-      console.log(`✅ Successfully updated project to ${newStatus}`);
       
       // Prepare toast message
       let toastMessage = "";
@@ -162,9 +197,24 @@ export const useProjectData = (projectId: string | undefined) => {
       
     } catch (error) {
       console.error(`Error updating project status to ${newStatus}:`, error);
+      console.error(`Stack trace:`, new Error().stack);
+      console.error(`Project ID: ${projectId}, Current project data:`, project);
+      
+      // Try to get RLS policies for the projects table to help debug
+      try {
+        const { data: rlsPolicies, error: rlsError } = await supabase.rpc('get_policies_for_table', { table_name: 'projects' });
+        if (rlsError) {
+          console.error("Error fetching RLS policies:", rlsError);
+        } else {
+          console.log("RLS policies for projects table:", rlsPolicies);
+        }
+      } catch (rlsCheckError) {
+        console.error("Error checking RLS policies:", rlsCheckError);
+      }
+      
       toast({
         title: `Failed to ${newStatus} project`,
-        description: "An error occurred while trying to update the project",
+        description: "An error occurred while trying to update the project. Check console for details.",
         variant: "destructive",
       });
     } finally {
