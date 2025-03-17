@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Project, Estimate, Invoice } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { db } from "@/utils/supabase-helpers";
 
 export const useProjectData = (projectId: string | undefined) => {
   const { toast } = useToast();
