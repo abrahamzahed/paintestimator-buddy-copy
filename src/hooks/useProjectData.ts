@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Project, Estimate, Invoice } from "@/types";
@@ -118,55 +117,28 @@ export const useProjectData = (projectId: string | undefined) => {
         console.log(`✅ Successfully updated leads to ${newStatus}`);
       }
       
-      // Step 3: Finally update the project status with a small delay
-      // This delay helps ensure the previous operations have time to complete
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
+      // Step 3: Update the project status directly - no delay necessary
       console.log(`3. Updating project to ${newStatus}`, { projectId });
-      // Try first using db helper to see if it works better
-      try {
-        const { error: projectError } = await db.from("projects")
-          .update({ status: newStatus })
-          .eq("id", projectId);
-          
-        if (projectError) {
-          console.error(`Error updating project with db helper to ${newStatus}:`, projectError);
-          console.error(`Project update error details (db helper):`, JSON.stringify(projectError, null, 2));
-          throw projectError;
-        } else {
-          console.log(`✅ Successfully updated project to ${newStatus} using db helper`);
-        }
-      } catch (dbHelperError) {
-        console.error(`Failed with db helper, trying direct supabase client:`, dbHelperError);
+      
+      // Direct update to the projects table without referencing users table
+      const { error: projectError } = await supabase
+        .from("projects")
+        .update({ status: newStatus })
+        .eq("id", projectId);
         
-        // If the db helper fails, try with the direct supabase client
-        const { error: projectError } = await supabase
-          .from("projects")
-          .update({ status: newStatus })
-          .eq("id", projectId);
-          
-        if (projectError) {
-          console.error(`Error updating project to ${newStatus}:`, projectError);
-          console.error(`Project update error details:`, JSON.stringify(projectError, null, 2));
-          
-          // Try to get more details about the project record
-          const { data: projectData, error: fetchError } = await supabase
-            .from("projects")
-            .select("*")
-            .eq("id", projectId)
-            .single();
-            
-          if (fetchError) {
-            console.error("Could not fetch project details:", fetchError);
-          } else {
-            console.log("Current project record:", projectData);
-          }
-          
-          throw projectError;
-        }
-        
-        console.log(`✅ Successfully updated project to ${newStatus} using direct client`);
+      if (projectError) {
+        console.error(`Error updating project to ${newStatus}:`, projectError);
+        console.error(`Project update error details:`, JSON.stringify(projectError, null, 2));
+        throw projectError;
       }
+      
+      console.log(`✅ Successfully updated project to ${newStatus}`);
+      
+      // Update local project state to reflect the change
+      setProject({
+        ...project,
+        status: newStatus
+      });
       
       // Prepare toast message
       let toastMessage = "";
