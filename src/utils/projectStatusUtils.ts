@@ -38,10 +38,9 @@ export const updateProjectStatus = async (projectId: string, newStatus: string) 
     }
     
     // Step 3: Update the project status directly
-    console.log(`3. Updating project to ${newStatus}`, { projectId });
+    console.log(`3. Updating project to ${newStatus}`);
     
-    // Just update the status - don't try to read or modify user_id
-    // This avoids any permission issues with the users table
+    // Simple update with only the status field
     const { error: projectError } = await supabase
       .from("projects")
       .update({ status: newStatus })
