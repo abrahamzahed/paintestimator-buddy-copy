@@ -33,19 +33,24 @@ export const useProjectData = (projectId: string | undefined) => {
     }
   }, [projectId]);
   
-  // Define a safe navigation function
+  // Define a safe navigation function with safeguards against multiple calls
   const safeNavigate = useCallback(() => {
-    // Only navigate if we're not already doing so
-    if (!document.body.classList.contains('navigating')) {
-      // Add a small class to body to show navigation state if needed
-      document.body.classList.add('navigating');
-      
-      // Use window.location instead of React Router navigate for more reliable navigation
-      window.location.href = "/dashboard";
+    // Prevent navigation if already in progress
+    if (document.body.classList.contains('navigating')) {
+      console.log("Navigation already in progress");
+      return;
     }
+    
+    // Add a class to track navigation state
+    document.body.classList.add('navigating');
+    console.log("Navigating to dashboard...");
+    
+    // Use more reliable direct navigation rather than React Router
+    // This ensures a completely fresh load of the dashboard
+    window.location.href = "/dashboard";
   }, []);
   
-  // Use the updated status update hook with a callback that navigates after completion
+  // Use the status update hook with the safe navigation callback
   const { updateStatus, isUpdating: isUpdatingStatus } = useStatusUpdate(safeNavigate);
 
   useEffect(() => {
@@ -74,11 +79,11 @@ export const useProjectData = (projectId: string | undefined) => {
     loadProjectData();
   }, [projectId, toast]);
 
-  // Improved handler to securely manage dialog state and status updates
+  // Improved handler that properly manages dialog state during status updates
   const handleUpdateProjectStatus = async (newStatus: string) => {
     if (!projectId || !project) return;
     
-    // Close any open dialogs before starting the update
+    // Close all dialogs first to prevent UI thread blocking
     setShowDeleteDialog(false);
     setShowArchiveDialog(false);
     setShowRestoreDialog(false);
@@ -86,9 +91,9 @@ export const useProjectData = (projectId: string | undefined) => {
     // Optimistically update the UI immediately
     setProject(prev => prev ? { ...prev, status: newStatus } : null);
     
-    // Use the updated status update function
+    // Perform the actual status update
     await updateStatus(project, newStatus);
-    // Navigation is handled by the callback provided to useStatusUpdate
+    // Navigation is handled by the callback in useStatusUpdate
   };
 
   return {

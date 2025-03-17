@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { updateProjectStatus, getStatusUpdateMessage } from "@/utils/projectStatusUtils";
 import { Project } from "@/types";
@@ -9,17 +9,20 @@ export const useStatusUpdate = (onAfterUpdate?: () => void) => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  const updateStatus = async (project: Project, newStatus: string) => {
+  const updateStatus = useCallback(async (project: Project, newStatus: string) => {
     if (!project?.id) return false;
     
     // Prevent multiple concurrent update attempts
-    if (isUpdating) return false;
-    
-    // Set updating state to track progress
-    setIsUpdating(true);
-    setError(null);
+    if (isUpdating) {
+      console.log("Update already in progress, ignoring request");
+      return false;
+    }
     
     try {
+      // Set updating state to track progress - do this first
+      setIsUpdating(true);
+      setError(null);
+      
       // Show optimistic toast immediately for better UX
       toast({
         title: `Project ${newStatus}`,
@@ -31,18 +34,18 @@ export const useStatusUpdate = (onAfterUpdate?: () => void) => {
       
       // If we get here, the update was successful
       if (onAfterUpdate) {
-        // Execute callback immediately but don't await it
-        // This allows the UI to remain responsive
+        // To avoid navigation race conditions when the user might cancel the dialog,
+        // add a delay before executing the callback to ensure DOM operations complete
         setTimeout(() => {
           try {
             onAfterUpdate();
           } catch (callbackErr) {
             console.error("Error in update callback:", callbackErr);
           }
-        }, 350); // Slightly longer timeout to ensure dialog closes
+        }, 400);
       }
       
-      // Mark operation as complete regardless of callback outcome
+      // Reset updating state after a short delay to ensure UI has time to update
       setTimeout(() => {
         setIsUpdating(false);
       }, 500);
@@ -51,7 +54,6 @@ export const useStatusUpdate = (onAfterUpdate?: () => void) => {
     } catch (err) {
       console.error(`Error updating project status:`, err);
       setError(err instanceof Error ? err : new Error("Failed to update project status"));
-      setIsUpdating(false);
       
       toast({
         title: `Failed to update project`,
@@ -59,9 +61,11 @@ export const useStatusUpdate = (onAfterUpdate?: () => void) => {
         variant: "destructive",
       });
       
+      // Make sure we reset the updating state even in error cases
+      setIsUpdating(false);
       return false;
     }
-  };
+  }, [isUpdating, toast, onAfterUpdate]);
 
   return {
     updateStatus,

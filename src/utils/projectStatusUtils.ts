@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Project } from "@/types";
 
@@ -23,13 +24,21 @@ export const updateProjectStatus = async (projectId: string, newStatus: string) 
     
     console.log(`✅ Successfully updated project to ${newStatus}`);
     
-    // Don't await background updates - this ensures the main thread isn't blocked
-    setTimeout(() => {
-      backgroundUpdates(projectId, newStatus).catch(error => {
-        console.error("Error in background updates:", error);
-        // Don't throw from background task - we already updated the main project
+    // Schedule background updates to run later using requestIdleCallback if available
+    // or setTimeout as fallback - this ensures the main thread isn't blocked
+    if (typeof window.requestIdleCallback === 'function') {
+      window.requestIdleCallback(() => {
+        backgroundUpdates(projectId, newStatus).catch(error => {
+          console.error("Error in background updates:", error);
+        });
       });
-    }, 50);
+    } else {
+      setTimeout(() => {
+        backgroundUpdates(projectId, newStatus).catch(error => {
+          console.error("Error in background updates:", error);
+        });
+      }, 100);
+    }
     
     return newStatus;
   } catch (error) {
