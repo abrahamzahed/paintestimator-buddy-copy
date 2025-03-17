@@ -10,39 +10,8 @@ export const updateProjectStatus = async (projectId: string, newStatus: string) 
   console.log(`Starting status update process to: ${newStatus}`, { projectId });
   
   try {
-    // Create a transaction-like operation by breaking it into steps with proper error handling
-    
-    // Step 1: Update estimates first - if this fails, we'll know before touching other tables
-    const { error: estimatesError } = await supabase
-      .from("estimates")
-      .update({ status_type: newStatus })
-      .eq("project_id", projectId);
-      
-    if (estimatesError) {
-      console.error(`Error updating estimates to ${newStatus}:`, estimatesError);
-      // Just log the error but don't throw - we'll continue with other updates
-    } else {
-      console.log(`✅ Successfully updated estimates to ${newStatus}`);
-    }
-    
-    // Step 2: Update any leads associated with this project
-    console.log(`2. Updating leads to ${newStatus}`);
-    const { error: leadsError } = await supabase
-      .from("leads")
-      .update({ status: newStatus })
-      .eq("project_id", projectId);
-      
-    if (leadsError) {
-      console.error(`Error updating leads to ${newStatus}:`, leadsError);
-      // Log but continue with the process
-    } else {
-      console.log(`✅ Successfully updated leads to ${newStatus}`);
-    }
-    
-    // Step 3: Update the project status directly
-    console.log(`3. Updating project to ${newStatus}`);
-    
-    // Use a timeout to prevent UI blocking
+    // Directly update the project status first - this is the most important update
+    console.log(`Updating project to ${newStatus}`);
     const { error: projectError } = await supabase
       .from("projects")
       .update({ status: newStatus })
@@ -54,6 +23,34 @@ export const updateProjectStatus = async (projectId: string, newStatus: string) 
     }
     
     console.log(`✅ Successfully updated project to ${newStatus}`);
+    
+    // Now update estimates in the background - if this fails, at least the project status was updated
+    console.log(`Updating estimates to ${newStatus}`);
+    const { error: estimatesError } = await supabase
+      .from("estimates")
+      .update({ status_type: newStatus })
+      .eq("project_id", projectId);
+      
+    if (estimatesError) {
+      console.error(`Error updating estimates to ${newStatus}:`, estimatesError);
+      // Just log the error but don't throw - we've already updated the project
+    } else {
+      console.log(`✅ Successfully updated estimates to ${newStatus}`);
+    }
+    
+    // Now update leads in the background - if this fails, at least the project status was updated
+    console.log(`Updating leads to ${newStatus}`);
+    const { error: leadsError } = await supabase
+      .from("leads")
+      .update({ status: newStatus })
+      .eq("project_id", projectId);
+      
+    if (leadsError) {
+      console.error(`Error updating leads to ${newStatus}:`, leadsError);
+      // Log but continue
+    } else {
+      console.log(`✅ Successfully updated leads to ${newStatus}`);
+    }
     
     return newStatus;
   } catch (error) {

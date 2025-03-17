@@ -10,7 +10,7 @@ export const useStatusUpdate = (onAfterUpdate?: () => void) => {
   const [error, setError] = useState<Error | null>(null);
 
   const updateStatus = async (project: Project, newStatus: string) => {
-    if (!project?.id) return;
+    if (!project?.id) return false;
     
     setIsUpdating(true);
     setError(null);
@@ -23,12 +23,12 @@ export const useStatusUpdate = (onAfterUpdate?: () => void) => {
         description: getStatusUpdateMessage(project, newStatus),
       });
       
-      if (onAfterUpdate) {
-        // Delay navigation/refresh slightly to ensure state updates are processed
-        setTimeout(() => {
+      // Return true immediately to update UI
+      setTimeout(() => {
+        if (onAfterUpdate) {
           onAfterUpdate();
-        }, 100);
-      }
+        }
+      }, 300);
       
       return true;
     } catch (err) {

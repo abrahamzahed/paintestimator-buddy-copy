@@ -17,10 +17,11 @@ export const useProjectData = (projectId: string | undefined) => {
   const [showArchiveDialog, setShowArchiveDialog] = useState(false);
   const [showRestoreDialog, setShowRestoreDialog] = useState(false);
   
-  // Use the new status update hook
+  // Use the updated status update hook with a callback that only navigates
+  // after the status update is complete
   const { updateStatus, isUpdating: isUpdatingStatus } = useStatusUpdate(() => {
     // Navigate after status update is complete
-    navigate("/dashboard");
+    setTimeout(() => navigate("/dashboard"), 100);
   });
 
   useEffect(() => {
@@ -58,10 +59,12 @@ export const useProjectData = (projectId: string | undefined) => {
     setShowRestoreDialog(false);
     
     // Use the new status update function
-    await updateStatus(project, newStatus);
+    const success = await updateStatus(project, newStatus);
     
-    // Update local project state to reflect the change if we haven't navigated away
-    setProject(prev => prev ? { ...prev, status: newStatus } : null);
+    if (success) {
+      // Update local project state to reflect the change if we haven't navigated away
+      setProject(prev => prev ? { ...prev, status: newStatus } : null);
+    }
   };
 
   return {
