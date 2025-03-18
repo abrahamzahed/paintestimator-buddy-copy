@@ -12,6 +12,7 @@ import EstimateActionButtons from "@/components/estimate-detail/EstimateActionBu
 import EstimateHeader from "@/components/estimate-detail/EstimateHeader";
 import EstimateConfirmation from "@/components/estimate-detail/EstimateConfirmation";
 import EstimateDialogs from "@/components/estimate-detail/EstimateDialogs";
+import { calculateSingleRoomEstimate } from "@/utils/estimateUtils";
 
 export default function EstimateDetail() {
   const { id } = useParams<{ id: string }>();
@@ -23,13 +24,30 @@ export default function EstimateDetail() {
     loading, 
     error,
     clientInfo,
-    roomEstimates
+    roomEstimates: initialRoomEstimates
   } = useEstimateDetailData(id);
 
   const [showDetailedView, setShowDetailedView] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showEditOptions, setShowEditOptions] = useState(false);
+
+  // Calculate room estimates if not already provided
+  const roomEstimates = React.useMemo(() => {
+    if (Object.keys(initialRoomEstimates).length > 0) {
+      return initialRoomEstimates;
+    }
+    
+    // Calculate estimates for each room
+    const calculatedEstimates: Record<string, any> = {};
+    roomDetails.forEach(room => {
+      if (room.id) {
+        calculatedEstimates[room.id] = calculateSingleRoomEstimate(room);
+      }
+    });
+    
+    return calculatedEstimates;
+  }, [roomDetails, initialRoomEstimates]);
 
   if (loading) {
     return (
@@ -144,6 +162,8 @@ export default function EstimateDetail() {
           clientAddress={clientAddress}
           roomCount={roomDetails.length}
           estimate={estimate}
+          roomDetails={roomDetails}
+          roomEstimates={roomEstimates}
         />
         
         <EstimateActionButtons 
