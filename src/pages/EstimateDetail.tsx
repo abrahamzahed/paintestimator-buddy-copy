@@ -20,6 +20,7 @@ import { formatCurrency } from "@/utils/estimateUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import DetailedSummaryDialog from "@/components/estimate-detail/DetailedSummaryDialog";
+import RoomDetailCard from "@/components/estimate-detail/RoomDetailCard";
 import {
   Dialog,
   DialogContent,
@@ -161,17 +162,6 @@ export default function EstimateDetail() {
   // Calculate subtotal (total plus discount)
   const subtotal = estimate.total_cost + volumeDiscount;
 
-  // Get room type name for display
-  const getRoomTypeName = (roomTypeId: string) => {
-    return roomTypeId.charAt(0).toUpperCase() + roomTypeId.slice(1);
-  };
-
-  // Helper function to get individual room cost
-  const getRoomCost = (roomId: string) => {
-    const roomEstimate = roomEstimates[roomId];
-    return roomEstimate?.totalCost || 0;
-  };
-
   return (
     <EstimatePageLayout>
       <div className="space-y-6 animate-fade-in">
@@ -232,132 +222,142 @@ export default function EstimateDetail() {
         
         <Card className="border">
           <CardContent className="p-4">
-            <div className="mt-4">
-              <div className="flex items-center justify-between">
-                <h4 className="font-medium">Current Estimate:</h4>
-                <span className="text-xl font-bold text-blue-600">{formatCurrency(estimate.total_cost || 0)}</span>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              <div>
+                <p className="text-muted-foreground text-sm">Labor</p>
+                <p className="font-semibold">{formatCurrency(estimate.labor_cost || 0)}</p>
               </div>
-              
-              <h5 className="text-sm font-medium mt-6 mb-2">Rooms breakdown:</h5>
-              
-              {roomDetails.map((room, index) => {
-                const roomCost = getRoomCost(room.id);
-                const roomType = room.roomTypeId;
-                
-                return (
-                  <div key={room.id} className="border-t py-4">
-                    <div className="flex justify-between mb-2">
-                      <h6 className="font-medium">
-                        {getRoomTypeName(roomType)} (Room {index + 1})
-                      </h6>
-                      <span className="font-medium">{formatCurrency(roomCost)}</span>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-sm">
-                      <span className="text-muted-foreground">Size:</span>
-                      <span>{room.size.charAt(0).toUpperCase() + room.size.slice(1)}</span>
-                      
-                      <span className="text-muted-foreground">Paint Type:</span>
-                      <span>{room.paintType.charAt(0).toUpperCase() + room.paintType.slice(1)}</span>
-                      
-                      {room.hasHighCeiling && (
-                        <>
-                          <span className="text-muted-foreground">Ceiling:</span>
-                          <span>High ceiling</span>
-                        </>
-                      )}
-                      
-                      {room.twoColors && (
-                        <>
-                          <span className="text-muted-foreground">Wall Colors:</span>
-                          <span>Two colors</span>
-                        </>
-                      )}
-                      
-                      {(room.regularClosetCount > 0 || room.walkInClosetCount > 0) && (
-                        <>
-                          <span className="text-muted-foreground">Closets:</span>
-                          <span>
-                            {room.walkInClosetCount > 0 && `${room.walkInClosetCount} walk-in`}
-                            {room.walkInClosetCount > 0 && room.regularClosetCount > 0 && ', '}
-                            {room.regularClosetCount > 0 && `${room.regularClosetCount} regular`}
-                          </span>
-                        </>
-                      )}
-                      
-                      {room.doorPaintingMethod && room.doorPaintingMethod !== 'none' && (
-                        <>
-                          <span className="text-muted-foreground">Doors:</span>
-                          <span>{room.numberOfDoors} doors ({room.doorPaintingMethod})</span>
-                        </>
-                      )}
-                      
-                      {room.windowPaintingMethod && room.windowPaintingMethod !== 'none' && (
-                        <>
-                          <span className="text-muted-foreground">Windows:</span>
-                          <span>{room.numberOfWindows} windows ({room.windowPaintingMethod})</span>
-                        </>
-                      )}
-                      
-                      {room.fireplaceMethod && room.fireplaceMethod !== 'none' && (
-                        <>
-                          <span className="text-muted-foreground">Fireplace:</span>
-                          <span>{room.fireplaceMethod.charAt(0).toUpperCase() + room.fireplaceMethod.slice(1)} painting</span>
-                        </>
-                      )}
-                      
-                      {room.repairs && room.repairs !== 'none' && (
-                        <>
-                          <span className="text-muted-foreground">Repairs:</span>
-                          <span>{room.repairs.charAt(0).toUpperCase() + room.repairs.slice(1)}</span>
-                        </>
-                      )}
-                      
-                      {room.hasStairRailing && (
-                        <>
-                          <span className="text-muted-foreground">Stair Railing:</span>
-                          <span>Included</span>
-                        </>
-                      )}
-                      
-                      {room.baseboardType && room.baseboardType !== 'none' && (
-                        <>
-                          <span className="text-muted-foreground">Baseboards:</span>
-                          <span>{room.baseboardType.charAt(0).toUpperCase() + room.baseboardType.slice(1)} application</span>
-                        </>
-                      )}
-                      
-                      {room.baseboardInstallationLf > 0 && (
-                        <>
-                          <span className="text-muted-foreground">Baseboard Installation:</span>
-                          <span>{room.baseboardInstallationLf} linear feet</span>
-                        </>
-                      )}
-                      
-                      {room.millworkPrimingNeeded && (
-                        <>
-                          <span className="text-muted-foreground">Millwork Priming:</span>
-                          <span>Included</span>
-                        </>
-                      )}
-                      
-                      {room.isEmpty && (
-                        <>
-                          <span className="text-muted-foreground">Empty Room:</span>
-                          <span>Yes (Discounted)</span>
-                        </>
-                      )}
-                      
-                      {room.noFloorCovering && (
-                        <>
-                          <span className="text-muted-foreground">No Floor Covering:</span>
-                          <span>Yes (Discounted)</span>
-                        </>
-                      )}
-                    </div>
+              <div>
+                <p className="text-muted-foreground text-sm">Materials</p>
+                <p className="font-semibold">{formatCurrency(estimate.material_cost || 0)}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground text-sm">Paint</p>
+                <p className="font-semibold">{estimate.estimated_paint_gallons || 0} gallons</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground text-sm">Time</p>
+                <p className="font-semibold">{(estimate.estimated_hours || 0).toFixed(1)} hours</p>
+              </div>
+            </div>
+            
+            <h5 className="text-sm font-medium mb-3">Rooms breakdown:</h5>
+            <div className="space-y-6">
+              {roomDetails.map((room, index) => (
+                <div key={room.id} className="border-t pt-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h6 className="font-medium">
+                      {room.roomTypeId.charAt(0).toUpperCase() + room.roomTypeId.slice(1)} (Room {index + 1})
+                    </h6>
+                    <span className="font-semibold text-blue-600">
+                      {formatCurrency(roomEstimates[room.id]?.totalCost || 0)}
+                    </span>
                   </div>
-                );
-              })}
+                  
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-sm">
+                    <span className="text-muted-foreground">Size:</span>
+                    <span>{room.size.charAt(0).toUpperCase() + room.size.slice(1)}</span>
+                    
+                    <span className="text-muted-foreground">Paint Type:</span>
+                    <span>{room.paintType.charAt(0).toUpperCase() + room.paintType.slice(1)}</span>
+                    
+                    {room.hasHighCeiling && (
+                      <>
+                        <span className="text-muted-foreground">Ceiling:</span>
+                        <span>High ceiling</span>
+                      </>
+                    )}
+                    
+                    {room.twoColors && (
+                      <>
+                        <span className="text-muted-foreground">Wall Colors:</span>
+                        <span>Two colors</span>
+                      </>
+                    )}
+                    
+                    {(room.regularClosetCount > 0 || room.walkInClosetCount > 0) && (
+                      <>
+                        <span className="text-muted-foreground">Closets:</span>
+                        <span>
+                          {room.walkInClosetCount > 0 && `${room.walkInClosetCount} walk-in`}
+                          {room.walkInClosetCount > 0 && room.regularClosetCount > 0 && ', '}
+                          {room.regularClosetCount > 0 && `${room.regularClosetCount} regular`}
+                        </span>
+                      </>
+                    )}
+                    
+                    {room.doorPaintingMethod && room.doorPaintingMethod !== 'none' && room.numberOfDoors > 0 && (
+                      <>
+                        <span className="text-muted-foreground">Doors:</span>
+                        <span>{room.numberOfDoors} doors ({room.doorPaintingMethod})</span>
+                      </>
+                    )}
+                    
+                    {room.windowPaintingMethod && room.windowPaintingMethod !== 'none' && room.numberOfWindows > 0 && (
+                      <>
+                        <span className="text-muted-foreground">Windows:</span>
+                        <span>{room.numberOfWindows} windows ({room.windowPaintingMethod})</span>
+                      </>
+                    )}
+                    
+                    {room.fireplaceMethod && room.fireplaceMethod !== 'none' && (
+                      <>
+                        <span className="text-muted-foreground">Fireplace:</span>
+                        <span>{room.fireplaceMethod.charAt(0).toUpperCase() + room.fireplaceMethod.slice(1)} painting</span>
+                      </>
+                    )}
+                    
+                    {room.repairs && room.repairs !== 'none' && (
+                      <>
+                        <span className="text-muted-foreground">Repairs:</span>
+                        <span>{room.repairs.charAt(0).toUpperCase() + room.repairs.slice(1)}</span>
+                      </>
+                    )}
+                    
+                    {room.hasStairRailing && (
+                      <>
+                        <span className="text-muted-foreground">Stair Railing:</span>
+                        <span>Included</span>
+                      </>
+                    )}
+                    
+                    {room.baseboardType && room.baseboardType !== 'none' && (
+                      <>
+                        <span className="text-muted-foreground">Baseboards:</span>
+                        <span>{room.baseboardType.charAt(0).toUpperCase() + room.baseboardType.slice(1)} application</span>
+                      </>
+                    )}
+                    
+                    {room.baseboardInstallationLf > 0 && (
+                      <>
+                        <span className="text-muted-foreground">Baseboard Installation:</span>
+                        <span>{room.baseboardInstallationLf} linear feet</span>
+                      </>
+                    )}
+                    
+                    {room.millworkPrimingNeeded && (
+                      <>
+                        <span className="text-muted-foreground">Millwork Priming:</span>
+                        <span>Included</span>
+                      </>
+                    )}
+                    
+                    {room.isEmpty && (
+                      <>
+                        <span className="text-muted-foreground">Empty Room:</span>
+                        <span>Yes (Discounted)</span>
+                      </>
+                    )}
+                    
+                    {room.noFloorCovering && (
+                      <>
+                        <span className="text-muted-foreground">No Floor Covering:</span>
+                        <span>Yes (Discounted)</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              ))}
               
               {volumeDiscount > 0 && (
                 <div className="flex justify-between text-green-600 border-t pt-3 mt-3">
@@ -474,4 +474,3 @@ export default function EstimateDetail() {
     </EstimatePageLayout>
   );
 }
-
