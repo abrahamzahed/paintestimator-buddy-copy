@@ -8,6 +8,7 @@ import { SessionContextProvider } from "./context/session-provider";
 import { Toaster } from "./components/ui/toaster";
 import { useSyncUserData } from "./hooks/useSyncUserData";
 import HomeEstimator from "./components/HomeEstimator";
+import { FreeEstimator } from "./packages/free-estimator";
 
 // Create a wrapper component to use the hook at the right place
 // to avoid circular dependencies
@@ -35,6 +36,17 @@ function App() {
             <Route
               path="/estimate"
               element={<HomeEstimator />}
+            />
+            <Route
+              path="/dashboard/estimate"
+              element={
+                <ProtectedRoute>
+                  <div className="container mx-auto py-8">
+                    <h1 className="text-2xl font-bold mb-6">Create New Estimate</h1>
+                    <FreeEstimator isAuthenticated={true} />
+                  </div>
+                </ProtectedRoute>
+              }
             />
             <Route path="*" element={<div className="container mx-auto py-16 text-center">
               <h1 className="text-2xl font-bold mb-4">Page Not Found</h1>
