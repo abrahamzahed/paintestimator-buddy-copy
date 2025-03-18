@@ -25,7 +25,14 @@ export const formatDate = (dateString: string | null | undefined): string => {
   });
 };
 
-// Added to fix build errors
+// Updated to return the expected structure with project, estimates, and invoices
 export const fetchProjectWithRelated = async (projectId: string) => {
-  return { id: projectId, name: 'Project', status: 'pending' };
+  // This is a placeholder implementation
+  const mockProject = { id: projectId, name: 'Project', status: 'pending' };
+  
+  return { 
+    project: mockProject, 
+    estimates: [], 
+    invoices: [] 
+  };
 };
