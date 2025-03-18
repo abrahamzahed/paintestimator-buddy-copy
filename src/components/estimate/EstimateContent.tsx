@@ -46,17 +46,8 @@ const EstimateContent = ({
 
   const { totalRoomCosts, discountAmount, calculatedTotal } = calculateTotals();
 
-  // Use the EstimateResult format for EstimateSummary component
-  const currentEstimate = {
-    roomPrice: estimate.total_cost * 0.85,
-    laborCost: estimate.labor_cost || 0,
-    materialCost: estimate.material_cost || 0,
-    totalCost: estimate.total_cost || 0,
-    timeEstimate: estimate.estimated_hours || 0,
-    paintCans: estimate.estimated_paint_gallons || 0,
-    additionalCosts: {},
-    discounts: { volumeDiscount: estimate.discount || 0 }
-  };
+  // Use the exact same EstimateResult format that was shown to the customer initially
+  const estimateResult = getEstimateResult();
 
   return (
     <div className="space-y-6">
@@ -141,7 +132,7 @@ const EstimateContent = ({
       <DetailedSummaryDialog
         open={showDetailedView}
         onOpenChange={setShowDetailedView}
-        currentEstimate={getEstimateResult()}
+        currentEstimate={estimateResult}
         roomDetails={roomDetails}
         roomEstimates={roomEstimates}
       />
