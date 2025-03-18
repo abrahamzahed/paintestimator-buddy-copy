@@ -1,12 +1,13 @@
+
 import React from "react";
 import { Estimate, LineItem, RoomDetail, EstimateResult } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import EstimateHeader from "@/components/estimate-detail/EstimateHeader";
-import EstimateCostSummary from "@/components/estimate-detail/EstimateCostSummary";
 import RoomDetailsList from "@/components/estimate-detail/RoomDetailsList";
 import LineItemsTable from "@/components/estimate-detail/LineItemsTable";
 import EstimateFooter from "@/components/estimate-detail/EstimateFooter";
 import DetailedSummaryDialog from "@/components/estimate-detail/DetailedSummaryDialog";
+import EstimateSummary from "@/components/estimator/EstimateSummary";
 
 interface EstimateContentProps {
   estimate: Estimate;
@@ -45,6 +46,18 @@ const EstimateContent = ({
 
   const { totalRoomCosts, discountAmount, calculatedTotal } = calculateTotals();
 
+  // Use the EstimateResult format for EstimateSummary component
+  const currentEstimate = {
+    roomPrice: estimate.total_cost * 0.85,
+    laborCost: estimate.labor_cost || 0,
+    materialCost: estimate.material_cost || 0,
+    totalCost: estimate.total_cost || 0,
+    timeEstimate: estimate.estimated_hours || 0,
+    paintCans: estimate.estimated_paint_gallons || 0,
+    additionalCosts: {},
+    discounts: { volumeDiscount: estimate.discount || 0 }
+  };
+
   return (
     <div className="space-y-6">
       <EstimateHeader 
@@ -66,7 +79,38 @@ const EstimateContent = ({
             </div>
             <div>
               <h3 className="font-semibold mb-2">Cost Summary</h3>
-              <EstimateCostSummary estimate={estimate} />
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Total Labor Cost:</span>
+                  <span>${estimate.labor_cost?.toFixed(2) || '0.00'}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Total Material Cost:</span>
+                  <span>${estimate.material_cost?.toFixed(2) || '0.00'}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Total Paint Required:</span>
+                  <span>{estimate.estimated_paint_gallons || 0} gallons</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Estimated Time:</span>
+                  <span>{estimate.estimated_hours?.toFixed(1) || 0} hours</span>
+                </div>
+                
+                {estimate.discount > 0 && (
+                  <div className="flex justify-between items-center text-green-600">
+                    <span>Volume Discount:</span>
+                    <span>-${estimate.discount.toFixed(2)}</span>
+                  </div>
+                )}
+                
+                <div className="border-t my-2"></div>
+                
+                <div className="flex justify-between items-center font-bold text-lg">
+                  <span>Total Cost:</span>
+                  <span className="text-paint">${estimate.total_cost?.toFixed(2) || '0.00'}</span>
+                </div>
+              </div>
             </div>
           </div>
 
