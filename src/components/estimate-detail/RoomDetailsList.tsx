@@ -4,19 +4,38 @@ import { formatCurrency } from "@/utils/estimateUtils";
 import { RoomDetail } from "@/types";
 import RoomDetailItem from "./RoomDetailItem";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 interface RoomsListProps {
   roomDetails: RoomDetail[];
   roomEstimates: Record<string, any>;
   discountAmount: number;
   calculatedTotal: number;
+  onViewDetailedSummary?: () => void;
 }
 
-const RoomsList = ({ roomDetails, roomEstimates, discountAmount, calculatedTotal }: RoomsListProps) => {
+const RoomsList = ({ 
+  roomDetails, 
+  roomEstimates, 
+  discountAmount, 
+  calculatedTotal,
+  onViewDetailedSummary
+}: RoomsListProps) => {
   return (
     <Card className="border">
       <CardContent className="p-4">
-        <h3 className="font-semibold mb-4">Current Estimate</h3>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="font-semibold">Current Estimate</h3>
+          {onViewDetailedSummary && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={onViewDetailedSummary}
+            >
+              View Detailed Summary
+            </Button>
+          )}
+        </div>
         
         <div className="space-y-6">
           {roomDetails.map((room) => {

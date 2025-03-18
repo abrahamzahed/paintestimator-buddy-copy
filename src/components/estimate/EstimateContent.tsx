@@ -28,6 +28,24 @@ const EstimateContent = ({
   setShowDetailedView,
   getEstimateResult
 }: EstimateContentProps) => {
+  // Calculate total costs and discount for the RoomDetailsList component
+  const calculateTotals = () => {
+    const totalRoomCosts = Object.values(roomEstimates).reduce(
+      (sum, roomEst: any) => sum + (roomEst.totalCost || 0), 0
+    );
+    
+    const discountAmount = estimate.discount || 0;
+    const calculatedTotal = Math.max(totalRoomCosts - discountAmount, 0);
+    
+    return {
+      totalRoomCosts,
+      discountAmount,
+      calculatedTotal
+    };
+  };
+
+  const { totalRoomCosts, discountAmount, calculatedTotal } = calculateTotals();
+
   return (
     <div className="space-y-6">
       <EstimateHeader estimate={estimate} />
@@ -52,7 +70,10 @@ const EstimateContent = ({
 
           {roomDetails.length > 0 && (
             <RoomDetailsList 
-              roomDetails={roomDetails} 
+              roomDetails={roomDetails}
+              roomEstimates={roomEstimates}
+              discountAmount={discountAmount}
+              calculatedTotal={calculatedTotal}
               onViewDetailedSummary={() => setShowDetailedView(true)} 
             />
           )}
