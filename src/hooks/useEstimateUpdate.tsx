@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,7 +19,7 @@ export const useEstimateUpdate = (estimateId: string | undefined, estimate: Esti
     setIsSubmitting(true);
     
     try {
-      // Convert rooms to a simpler structure that's Json compatible
+      // Convert rooms to a simpler structure that's JSON compatible
       const simplifiedRooms = updatedRooms.map(room => ({
         id: room.id,
         roomTypeId: room.roomTypeId,
@@ -55,12 +54,13 @@ export const useEstimateUpdate = (estimateId: string | undefined, estimate: Esti
           roomCosts: Object.values(roomEstimates).map(roomEstimate => ({
             totalBeforeVolume: roomEstimate.totalCost || 0
           }))
-        },
-        // Keep userInfo if it exists
-        userInfo: estimate.details && typeof estimate.details === 'object' && 'userInfo' in estimate.details 
-          ? estimate.details.userInfo 
-          : undefined
+        }
       };
+      
+      // Keep userInfo if it exists in the original estimate
+      if (estimate.details && typeof estimate.details === 'object' && 'userInfo' in estimate.details) {
+        detailsObject['userInfo'] = estimate.details.userInfo;
+      }
       
       // Update only the necessary fields in the database
       const { error: updateError } = await supabase

@@ -151,6 +151,15 @@ export default function EstimateDetail() {
   const projectName = estimate.project_name || "Painting Project";
   const clientName = clientInfo.name || "Client Name";
   const clientAddress = clientInfo.address || "Client Address";
+  
+  // Extract volume discount from the estimate details if available
+  const volumeDiscount = estimate.details && 
+    typeof estimate.details === 'object' && 
+    'estimateSummary' in estimate.details && 
+    estimate.details.estimateSummary?.volumeDiscount || estimate.discount || 0;
+
+  // Calculate subtotal (total plus discount)
+  const subtotal = estimate.total_cost + volumeDiscount;
 
   return (
     <EstimatePageLayout>
@@ -212,75 +221,148 @@ export default function EstimateDetail() {
         
         <Card className="border">
           <CardContent className="p-4">
-            <div className="grid grid-cols-4 gap-4">
-              <div>
-                <p className="text-muted-foreground text-sm">Labor</p>
-                <p className="font-semibold">{formatCurrency(estimate.labor_cost || 0)}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground text-sm">Materials</p>
-                <p className="font-semibold">{formatCurrency(estimate.material_cost || 0)}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground text-sm">Paint</p>
-                <p className="font-semibold">{estimate.estimated_paint_gallons || 0} gallons</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground text-sm">Time</p>
-                <p className="font-semibold">{(estimate.estimated_hours || 0).toFixed(1)} hours</p>
-              </div>
-            </div>
-            
-            <div className="border-t mt-3 pt-3">
-              <div className="flex justify-between items-center">
-                <span className="font-medium">Subtotal</span>
-                <span className="font-medium">{formatCurrency((estimate.total_cost || 0) + (estimate.discount || 0))}</span>
+            <div className="mt-4">
+              <div className="flex items-center justify-between">
+                <h4 className="font-medium">Current Estimate:</h4>
+                <span className="text-xl font-bold text-blue-600">{formatCurrency(estimate.total_cost || 0)}</span>
               </div>
               
-              {estimate.discount > 0 && (
-                <div className="flex justify-between items-center mt-1 text-green-600">
-                  <span className="font-medium">Discount</span>
-                  <span className="font-medium">-{formatCurrency(estimate.discount || 0)}</span>
+              <h5 className="text-sm font-medium mt-6 mb-2">Rooms breakdown:</h5>
+              
+              {roomDetails.map((room, index) => {
+                const roomEstimate = roomEstimates[room.id] || { totalCost: 0 };
+                const roomType = room.roomTypeId;
+                const roomSize = room.size;
+                
+                return (
+                  <div key={room.id || index} className="border-t py-4">
+                    <div className="flex justify-between mb-2">
+                      <h6 className="font-medium">
+                        {roomType.charAt(0).toUpperCase() + roomType.slice(1)} (Room {index + 1})
+                      </h6>
+                      <span className="font-medium">{formatCurrency(roomEstimate.totalCost || 0)}</span>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-sm">
+                      <span className="text-muted-foreground">Size:</span>
+                      <span>{roomSize.charAt(0).toUpperCase() + roomSize.slice(1)}</span>
+                      
+                      <span className="text-muted-foreground">Paint Type:</span>
+                      <span>{room.paintType.charAt(0).toUpperCase() + room.paintType.slice(1)}</span>
+                      
+                      {room.hasHighCeiling && (
+                        <>
+                          <span className="text-muted-foreground">Ceiling:</span>
+                          <span>High ceiling</span>
+                        </>
+                      )}
+                      
+                      {room.twoColors && (
+                        <>
+                          <span className="text-muted-foreground">Wall Colors:</span>
+                          <span>Two colors</span>
+                        </>
+                      )}
+                      
+                      {(room.regularClosetCount > 0 || room.walkInClosetCount > 0) && (
+                        <>
+                          <span className="text-muted-foreground">Closets:</span>
+                          <span>
+                            {room.walkInClosetCount > 0 && `${room.walkInClosetCount} walk-in`}
+                            {room.walkInClosetCount > 0 && room.regularClosetCount > 0 && ', '}
+                            {room.regularClosetCount > 0 && `${room.regularClosetCount} regular`}
+                          </span>
+                        </>
+                      )}
+                      
+                      {room.doorPaintingMethod && room.doorPaintingMethod !== 'none' && (
+                        <>
+                          <span className="text-muted-foreground">Doors:</span>
+                          <span>{room.numberOfDoors} doors</span>
+                        </>
+                      )}
+                      
+                      {room.windowPaintingMethod && room.windowPaintingMethod !== 'none' && (
+                        <>
+                          <span className="text-muted-foreground">Windows:</span>
+                          <span>{room.numberOfWindows} windows</span>
+                        </>
+                      )}
+                      
+                      {room.fireplaceMethod && room.fireplaceMethod !== 'none' && (
+                        <>
+                          <span className="text-muted-foreground">Fireplace:</span>
+                          <span>{room.fireplaceMethod.charAt(0).toUpperCase() + room.fireplaceMethod.slice(1)} painting</span>
+                        </>
+                      )}
+                      
+                      {room.repairs && room.repairs !== 'none' && (
+                        <>
+                          <span className="text-muted-foreground">Repairs:</span>
+                          <span>{room.repairs.charAt(0).toUpperCase() + room.repairs.slice(1)}</span>
+                        </>
+                      )}
+                      
+                      {room.hasStairRailing && (
+                        <>
+                          <span className="text-muted-foreground">Stair Railing:</span>
+                          <span>Included</span>
+                        </>
+                      )}
+                      
+                      {room.baseboardType && room.baseboardType !== 'none' && (
+                        <>
+                          <span className="text-muted-foreground">Baseboards:</span>
+                          <span>{room.baseboardType.charAt(0).toUpperCase() + room.baseboardType.slice(1)} application</span>
+                        </>
+                      )}
+                      
+                      {room.baseboardInstallationLf > 0 && (
+                        <>
+                          <span className="text-muted-foreground">Baseboard Installation:</span>
+                          <span>{room.baseboardInstallationLf} linear feet</span>
+                        </>
+                      )}
+                      
+                      {room.millworkPrimingNeeded && (
+                        <>
+                          <span className="text-muted-foreground">Millwork Priming:</span>
+                          <span>Included</span>
+                        </>
+                      )}
+                      
+                      {room.isEmpty && (
+                        <>
+                          <span className="text-muted-foreground">Empty Room:</span>
+                          <span>Yes (Discounted)</span>
+                        </>
+                      )}
+                      
+                      {room.noFloorCovering && (
+                        <>
+                          <span className="text-muted-foreground">No Floor Covering:</span>
+                          <span>Yes (Discounted)</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+              
+              {volumeDiscount > 0 && (
+                <div className="flex justify-between text-green-600 border-t pt-3 mt-3">
+                  <span className="font-medium">Volume Discount:</span>
+                  <span className="font-medium">-{formatCurrency(volumeDiscount)}</span>
                 </div>
               )}
               
-              <div className="flex justify-between items-center mt-3 pt-3 border-t">
+              <div className="flex justify-between items-center border-t pt-4 mt-4">
                 <span className="font-bold">Total Cost</span>
-                <span className="font-bold text-xl text-paint">{formatCurrency(estimate.total_cost || 0)}</span>
+                <span className="font-bold text-xl text-blue-600">{formatCurrency(estimate.total_cost || 0)}</span>
               </div>
             </div>
           </CardContent>
         </Card>
-        
-        <div className="flex flex-col sm:flex-row sm:justify-between gap-4">
-          {roomDetails.map((room, index) => (
-            <Card key={room.id || index} className="border flex-1">
-              <CardContent className="p-4">
-                <h3 className="font-medium mb-2">{room.roomType}</h3>
-                <div className="text-sm space-y-1">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Size:</span>
-                    <span>{room.roomSize}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Walls:</span>
-                    <span>{room.wallsCount}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Paint Type:</span>
-                    <span>{room.paintType}</span>
-                  </div>
-                  {room.includeCeiling && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Ceiling:</span>
-                      <span>Included</span>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
         
         <div className="border-t pt-4 mt-4">
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
