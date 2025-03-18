@@ -53,6 +53,23 @@ export interface RoomDetail {
   baseboardType: string;
   walkInClosetCount: number;
   regularClosetCount: number;
+  
+  // Backward compatibility fields
+  roomType?: string;
+  roomSize?: string;
+  wallsCount?: number;
+  wallHeight?: number;
+  wallWidth?: number;
+  condition?: string;
+  includeCeiling?: boolean;
+  includeBaseboards?: boolean;
+  baseboardsMethod?: string;
+  includeCrownMolding?: boolean;
+  includeCloset?: boolean;
+  isEmptyHouse?: boolean;
+  needFloorCovering?: boolean;
+  doorsCount?: number;
+  windowsCount?: number;
 }
 
 export interface RoomDetailsData {

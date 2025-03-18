@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,9 +20,34 @@ export const useEstimateUpdate = (estimateId: string | undefined, estimate: Esti
     setIsSubmitting(true);
     
     try {
+      // Convert rooms to a simpler structure that's Json compatible
+      const simplifiedRooms = updatedRooms.map(room => ({
+        id: room.id,
+        roomTypeId: room.roomTypeId,
+        size: room.size,
+        addons: room.addons,
+        hasHighCeiling: room.hasHighCeiling,
+        paintType: room.paintType,
+        isEmpty: room.isEmpty,
+        noFloorCovering: room.noFloorCovering,
+        doorPaintingMethod: room.doorPaintingMethod,
+        numberOfDoors: room.numberOfDoors,
+        windowPaintingMethod: room.windowPaintingMethod,
+        numberOfWindows: room.numberOfWindows,
+        fireplaceMethod: room.fireplaceMethod,
+        hasStairRailing: room.hasStairRailing,
+        twoColors: room.twoColors,
+        millworkPrimingNeeded: room.millworkPrimingNeeded,
+        repairs: room.repairs,
+        baseboardInstallationLf: room.baseboardInstallationLf,
+        baseboardType: room.baseboardType,
+        walkInClosetCount: room.walkInClosetCount,
+        regularClosetCount: room.regularClosetCount
+      }));
+      
       // Store all data in the details JSONB column
       const detailsObject = {
-        rooms: updatedRooms,
+        rooms: simplifiedRooms,
         estimateSummary: {
           subtotal: updatedEstimate.totalCost + (updatedEstimate.discounts.volumeDiscount || 0),
           volumeDiscount: updatedEstimate.discounts.volumeDiscount || 0,

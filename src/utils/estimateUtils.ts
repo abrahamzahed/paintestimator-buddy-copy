@@ -1,5 +1,5 @@
 
-import { RoomDetails, RoomDetail, EstimateResult } from '../types';
+import { RoomDetail, EstimateResult, RoomDetailsData } from '../types';
 import { 
   roomBasePrices, 
   additionalCosts, 
@@ -28,7 +28,10 @@ const CONDITION_MULTIPLIERS = {
  * Calculate the total area to be painted for a single room
  */
 export const calculateArea = (details: RoomDetail): number => {
-  const { wallsCount, wallHeight, wallWidth } = details;
+  // Default values if old properties don't exist
+  const wallsCount = details.wallsCount || 4;
+  const wallHeight = details.wallHeight || 8;
+  const wallWidth = details.wallWidth || 10;
   return wallsCount * wallHeight * wallWidth;
 };
 
@@ -44,18 +47,21 @@ export const calculatePaintNeeded = (area: number): number => {
 /**
  * Calculate the time needed for the job in hours
  */
-export const calculateTimeNeeded = (area: number, condition: RoomDetail['condition']): number => {
+export const calculateTimeNeeded = (area: number, condition: string = 'good'): number => {
   // Base time: 1 hour per 100 sq ft
   const baseTime = area / 100;
   // Apply condition multiplier
-  return baseTime * CONDITION_MULTIPLIERS[condition];
+  const multiplier = CONDITION_MULTIPLIERS[condition as keyof typeof CONDITION_MULTIPLIERS] || 1;
+  return baseTime * multiplier;
 };
 
 /**
  * Get base room price based on room type and size
  */
 const getRoomBasePrice = (details: RoomDetail): number => {
-  const { roomType, roomSize } = details;
+  // Use roomTypeId if available, fall back to roomType for compatibility
+  const roomType = details.roomTypeId || details.roomType || 'bedroom';
+  const roomSize = details.size || details.roomSize || 'average';
   
   // Convert to key compatible with our pricing object
   let type = roomType.toLowerCase().replace(/\s+/g, '');
@@ -102,7 +108,7 @@ export const calculateSingleRoomEstimate = (room: RoomDetail): {
 } => {
   const area = calculateArea(room);
   const paintCans = calculatePaintNeeded(area);
-  const timeEstimate = calculateTimeNeeded(area, room.condition);
+  const timeEstimate = calculateTimeNeeded(area, room.condition || 'good');
   
   // Get base room price
   const roomPrice = getRoomBasePrice(room);
@@ -111,20 +117,21 @@ export const calculateSingleRoomEstimate = (room: RoomDetail): {
   const additionalCostsObj: EstimateResult['additionalCosts'] = {};
   
   // Add ceiling cost if selected
-  if (room.includeCeiling) {
+  if (room.includeCeiling || room.addons?.includes('ceiling')) {
     additionalCostsObj.ceiling = roomPrice * additionalCosts.ceiling;
   }
   
   // Add baseboards cost if selected
-  if (room.includeBaseboards) {
-    const baseboardRate = room.baseboardsMethod === 'brush' ? 
+  if (room.includeBaseboards || room.baseboardType !== 'none') {
+    const baseboardMethod = room.baseboardsMethod || room.baseboardType || 'brush';
+    const baseboardRate = baseboardMethod === 'brush' ? 
       additionalCosts.baseboardsBrush : 
       additionalCosts.baseboardsSpray;
     additionalCostsObj.baseboards = roomPrice * baseboardRate;
   }
   
   // Add crown molding if selected
-  if (room.includeCrownMolding) {
+  if (room.includeCrownMolding || room.addons?.includes('crownMolding')) {
     additionalCostsObj.crownMolding = roomPrice * additionalCosts.crownMolding;
   }
   
@@ -135,41 +142,61 @@ export const calculateSingleRoomEstimate = (room: RoomDetail): {
   }
   
   // Add closet cost if selected
-  if (room.includeCloset) {
-    const closetCostRange = room.roomType.toLowerCase().includes('master') ?
-      additionalCosts.walkInCloset :
-      additionalCosts.closet;
+  if (room.includeCloset || room.walkInClosetCount > 0 || room.regularClosetCount > 0) {
+    let closetCost = 0;
     
-    additionalCostsObj.closet = 
-      (closetCostRange.minimum + closetCostRange.maximum) / 2;
+    // Calculate for walk-in closets
+    if (room.walkInClosetCount > 0) {
+      closetCost += room.walkInClosetCount * 
+        ((additionalCosts.walkInCloset.minimum + additionalCosts.walkInCloset.maximum) / 2);
+    }
+    
+    // Calculate for regular closets
+    if (room.regularClosetCount > 0) {
+      closetCost += room.regularClosetCount * 
+        ((additionalCosts.closet.minimum + additionalCosts.closet.maximum) / 2);
+    }
+    
+    // Fallback for older format
+    if (!closetCost && room.includeCloset) {
+      const closetCostRange = (room.roomType || room.roomTypeId || '').toLowerCase().includes('master') ?
+        additionalCosts.walkInCloset :
+        additionalCosts.closet;
+      
+      closetCost = (closetCostRange.minimum + closetCostRange.maximum) / 2;
+    }
+    
+    additionalCostsObj.closet = closetCost;
   }
   
   // Add door costs
-  if (room.doorsCount > 0) {
+  const doorCount = room.numberOfDoors || room.doorsCount || 0;
+  if (doorCount > 0) {
     const doorPricing = additionalCosts.doorFrame.brushed; // Default to brushed
     
     let doorLaborCost;
-    if (room.doorsCount <= 10) {
+    if (doorCount <= 10) {
       doorLaborCost = doorPricing.laborCost.few;
-    } else if (room.doorsCount <= 19) {
+    } else if (doorCount <= 19) {
       doorLaborCost = doorPricing.laborCost.medium;
-    } else if (room.doorsCount <= 29) {
+    } else if (doorCount <= 29) {
       doorLaborCost = doorPricing.laborCost.many;
     } else {
       doorLaborCost = doorPricing.laborCost.lots;
     }
     
-    additionalCostsObj.doors = doorPricing.paintCost + (doorLaborCost * room.doorsCount);
+    additionalCostsObj.doors = doorPricing.paintCost + (doorLaborCost * doorCount);
   }
   
   // Add window costs
-  if (room.windowsCount > 0) {
+  const windowCount = room.numberOfWindows || room.windowsCount || 0;
+  if (windowCount > 0) {
     const windowPricing = additionalCosts.windowTrim.brushed;
-    additionalCostsObj.windows = windowPricing.paintCost + (windowPricing.perWindow * room.windowsCount);
+    additionalCostsObj.windows = windowPricing.paintCost + (windowPricing.perWindow * windowCount);
   }
   
   // Calculate material cost
-  const materialCost = paintCans * PAINT_COSTS[room.paintType];
+  const materialCost = paintCans * PAINT_COSTS[room.paintType as keyof typeof PAINT_COSTS] || PAINT_COSTS.standard;
   
   // Total additional costs
   const totalAdditionalCosts = Object.values(additionalCostsObj).reduce((sum, cost) => sum + cost, 0);
@@ -182,14 +209,14 @@ export const calculateSingleRoomEstimate = (room: RoomDetail): {
   let totalRoomDiscounts = 0;
   
   // Empty house discount (15%)
-  if (room.isEmptyHouse) {
+  if (room.isEmpty || room.isEmptyHouse) {
     const emptyRoomDiscount = (roomPrice + totalAdditionalCosts) * discounts.emptyHouse;
     roomDiscounts.emptyHouse = emptyRoomDiscount;
     totalRoomDiscounts += emptyRoomDiscount;
   }
   
   // No floor covering discount (5%)
-  if (!room.needFloorCovering) {
+  if (room.noFloorCovering || (room.needFloorCovering === false)) {
     const noFloorDiscount = (roomPrice + totalAdditionalCosts) * discounts.noFloorCovering;
     roomDiscounts.noFloorCovering = noFloorDiscount;
     totalRoomDiscounts += noFloorDiscount;
@@ -216,7 +243,7 @@ export const calculateSingleRoomEstimate = (room: RoomDetail): {
 /**
  * Calculate complete estimate based on multiple rooms
  */
-export const calculateMultiRoomEstimate = (details: RoomDetails): EstimateResult => {
+export const calculateMultiRoomEstimate = (details: RoomDetailsData): EstimateResult => {
   // Calculate estimates for each room
   const roomEstimates = details.rooms.map(room => calculateSingleRoomEstimate(room));
   
@@ -232,8 +259,10 @@ export const calculateMultiRoomEstimate = (details: RoomDetails): EstimateResult
   const additionalCostsObj: EstimateResult['additionalCosts'] = {};
   for (const estimate of roomEstimates) {
     for (const [key, value] of Object.entries(estimate.additionalCosts)) {
-      additionalCostsObj[key as keyof EstimateResult['additionalCosts']] = 
-        (additionalCostsObj[key as keyof EstimateResult['additionalCosts']] || 0) + value;
+      if (value !== undefined) {
+        additionalCostsObj[key as keyof EstimateResult['additionalCosts']] = 
+          (additionalCostsObj[key as keyof EstimateResult['additionalCosts']] || 0) + Number(value);
+      }
     }
   }
   
@@ -244,31 +273,33 @@ export const calculateMultiRoomEstimate = (details: RoomDetails): EstimateResult
   for (const estimate of roomEstimates) {
     if (estimate.discounts) {
       for (const [key, value] of Object.entries(estimate.discounts)) {
-        discountObj[key as keyof EstimateResult['discounts']] = 
-          (discountObj[key as keyof EstimateResult['discounts']] || 0) + value;
+        if (value !== undefined) {
+          discountObj[key as keyof EstimateResult['discounts']] = 
+            (discountObj[key as keyof EstimateResult['discounts']] || 0) + Number(value);
+        }
       }
     }
   }
   
   // Add global discounts
   if (details.isEmptyHouse) {
+    const additionalCostsSum = Object.values(additionalCostsObj).reduce((sum, cost) => sum + (Number(cost) || 0), 0);
     discountObj.emptyHouse = (discountObj.emptyHouse || 0) + 
-      (totalRoomPrice + Object.values(additionalCostsObj).reduce((sum, cost) => sum + cost, 0)) * discounts.emptyHouse;
+      (totalRoomPrice + additionalCostsSum) * discounts.emptyHouse;
   }
   
   if (!details.needFloorCovering) {
+    const additionalCostsSum = Object.values(additionalCostsObj).reduce((sum, cost) => sum + (Number(cost) || 0), 0);
     discountObj.noFloorCovering = (discountObj.noFloorCovering || 0) + 
-      (totalRoomPrice + Object.values(additionalCostsObj).reduce((sum, cost) => sum + cost, 0)) * discounts.noFloorCovering;
+      (totalRoomPrice + additionalCostsSum) * discounts.noFloorCovering;
   }
   
   // Calculate total discounts
-  const totalDiscounts = Object.values(discountObj).reduce((sum, discount) => sum + discount, 0);
+  const totalDiscounts = Object.values(discountObj).reduce((sum, discount) => sum + (Number(discount) || 0), 0);
   
   // Calculate total before volume discount
-  let totalBeforeVolumeDiscount = totalRoomPrice + 
-    Object.values(additionalCostsObj).reduce((sum, cost) => sum + cost, 0) - 
-    totalDiscounts + 
-    totalMaterialCost;
+  const additionalCostsSum = Object.values(additionalCostsObj).reduce((sum, cost) => sum + (Number(cost) || 0), 0);
+  let totalBeforeVolumeDiscount = totalRoomPrice + additionalCostsSum - totalDiscounts + totalMaterialCost;
   
   // Apply volume discount if eligible
   const totalAfterVolumeDiscount = calculateVolumeDiscount(totalBeforeVolumeDiscount);

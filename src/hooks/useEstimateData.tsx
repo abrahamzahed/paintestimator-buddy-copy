@@ -52,29 +52,51 @@ export const useEstimateData = (estimateId: string | undefined) => {
           if (details && 'rooms' in details && Array.isArray(details.rooms)) {
             const roomsArray = details.rooms;
             
-            const typedRoomDetails = roomsArray.map((room: any) => ({
-              id: room.id || '',
-              roomTypeId: room.roomTypeId || '',
-              size: room.size || 'average',
-              addons: room.addons || [],
-              hasHighCeiling: !!room.hasHighCeiling,
-              paintType: room.paintType || 'standard',
-              isEmpty: !!room.isEmpty,
-              noFloorCovering: !!room.noFloorCovering,
-              doorPaintingMethod: room.doorPaintingMethod || 'none',
-              numberOfDoors: room.numberOfDoors || 0,
-              windowPaintingMethod: room.windowPaintingMethod || 'none',
-              numberOfWindows: room.numberOfWindows || 0,
-              fireplaceMethod: room.fireplaceMethod || 'none',
-              hasStairRailing: !!room.hasStairRailing,
-              twoColors: !!room.twoColors,
-              millworkPrimingNeeded: !!room.millworkPrimingNeeded,
-              repairs: room.repairs || 'none',
-              baseboardInstallationLf: room.baseboardInstallationLf || 0,
-              baseboardType: room.baseboardType || 'none',
-              walkInClosetCount: room.walkInClosetCount || 0,
-              regularClosetCount: room.regularClosetCount || 0
-            }));
+            const typedRoomDetails = roomsArray.map((room: any) => {
+              // Create room with new properties first
+              const typedRoom: RoomDetail = {
+                id: room.id || '',
+                roomTypeId: room.roomTypeId || '',
+                size: room.size || 'average',
+                addons: room.addons || [],
+                hasHighCeiling: !!room.hasHighCeiling,
+                paintType: room.paintType || 'standard',
+                isEmpty: !!room.isEmpty,
+                noFloorCovering: !!room.noFloorCovering,
+                doorPaintingMethod: room.doorPaintingMethod || 'none',
+                numberOfDoors: room.numberOfDoors || 0,
+                windowPaintingMethod: room.windowPaintingMethod || 'none',
+                numberOfWindows: room.numberOfWindows || 0,
+                fireplaceMethod: room.fireplaceMethod || 'none',
+                hasStairRailing: !!room.hasStairRailing,
+                twoColors: !!room.twoColors,
+                millworkPrimingNeeded: !!room.millworkPrimingNeeded,
+                repairs: room.repairs || 'none',
+                baseboardInstallationLf: room.baseboardInstallationLf || 0,
+                baseboardType: room.baseboardType || 'none',
+                walkInClosetCount: room.walkInClosetCount || 0,
+                regularClosetCount: room.regularClosetCount || 0,
+                
+                // Add backward compatibility fields
+                roomType: room.roomTypeId || '',
+                roomSize: room.size || 'average',
+                wallsCount: 4, // Default value
+                wallHeight: 8, // Default value
+                wallWidth: 10, // Default value
+                condition: 'good', // Default value
+                includeCeiling: !!room.addons?.includes('ceiling'),
+                includeBaseboards: room.baseboardType !== 'none',
+                baseboardsMethod: room.baseboardType || 'brush',
+                includeCrownMolding: !!room.addons?.includes('crownMolding'),
+                includeCloset: room.walkInClosetCount > 0 || room.regularClosetCount > 0,
+                isEmptyHouse: !!room.isEmpty,
+                needFloorCovering: !room.noFloorCovering,
+                doorsCount: room.numberOfDoors || 0,
+                windowsCount: room.numberOfWindows || 0
+              };
+              
+              return typedRoom;
+            });
             
             setRoomDetails(typedRoomDetails);
           }
