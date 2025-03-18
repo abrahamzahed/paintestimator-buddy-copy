@@ -1,9 +1,9 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Estimate, EstimateResult, RoomDetail } from "@/types";
-import { RoomDetails } from "@/types/estimator";
 
 export const useEstimateUpdate = (estimateId: string | undefined, estimate: Estimate | null) => {
   const navigate = useNavigate();

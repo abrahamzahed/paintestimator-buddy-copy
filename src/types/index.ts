@@ -1,6 +1,7 @@
 
 import { Json } from "@/integrations/supabase/types";
-import { RoomDetails } from "./estimator";
+// Remove the conflicting import
+// import { RoomDetails } from "./estimator";
 
 export interface Message {
   id: string;
@@ -74,7 +75,8 @@ export interface RoomDetail {
   windowsCount?: number;
 }
 
-export interface RoomDetails {
+// We'll import the RoomDetails type from estimator.ts but define our own interface here to avoid conflicts
+export interface RoomDetailsData {
   rooms: RoomDetail[];
   isEmptyHouse: boolean;
   needFloorCovering: boolean;

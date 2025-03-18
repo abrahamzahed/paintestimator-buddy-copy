@@ -45,8 +45,7 @@ export const useEstimateData = (estimateId: string | undefined) => {
         setEstimate(typedEstimate);
 
         // Extract room details from the JSONB details field
-        if (estimateData.details && 
-            typeof estimateData.details === 'object') {
+        if (estimateData.details && typeof estimateData.details === 'object') {
           
           const details = estimateData.details;
           
@@ -54,15 +53,15 @@ export const useEstimateData = (estimateId: string | undefined) => {
           if (details && 'rooms' in details && Array.isArray(details.rooms)) {
             const roomsArray = details.rooms;
             
-            const typedRoomDetails = roomsArray.map(room => ({
-              id: room.id,
-              roomTypeId: room.roomTypeId,
-              roomType: room.roomTypeId, // For backward compatibility
-              size: room.size,
-              roomSize: room.size, // For backward compatibility
+            const typedRoomDetails = roomsArray.map((room: any) => ({
+              id: room.id || '',
+              roomTypeId: room.roomTypeId || '',
+              roomType: room.roomTypeId || '', // For backward compatibility
+              size: room.size || 'average',
+              roomSize: room.size || 'average', // For backward compatibility
               addons: room.addons || [],
               hasHighCeiling: !!room.hasHighCeiling,
-              paintType: room.paintType,
+              paintType: room.paintType || 'standard',
               isEmpty: !!room.isEmpty,
               noFloorCovering: !!room.noFloorCovering,
               doorPaintingMethod: room.doorPaintingMethod || 'none',
