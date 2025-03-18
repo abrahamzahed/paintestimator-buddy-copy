@@ -1,9 +1,8 @@
-
 import React from "react";
 import { Estimate, LineItem, RoomDetail, EstimateResult } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import EstimateHeader from "@/components/estimate-detail/EstimateHeader";
-import CostSummary from "@/components/estimate-detail/CostSummary";
+import EstimateCostSummary from "@/components/estimate-detail/EstimateCostSummary";
 import RoomDetailsList from "@/components/estimate-detail/RoomDetailsList";
 import LineItemsTable from "@/components/estimate-detail/LineItemsTable";
 import EstimateFooter from "@/components/estimate-detail/EstimateFooter";
@@ -67,7 +66,7 @@ const EstimateContent = ({
             </div>
             <div>
               <h3 className="font-semibold mb-2">Cost Summary</h3>
-              <CostSummary estimate={estimate} />
+              <EstimateCostSummary estimate={estimate} />
             </div>
           </div>
 

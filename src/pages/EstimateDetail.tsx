@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useEstimateDetailData } from "@/hooks/useEstimateDetailData";
@@ -32,13 +31,11 @@ export default function EstimateDetail() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showEditOptions, setShowEditOptions] = useState(false);
 
-  // Calculate room estimates if not already provided
   const roomEstimates = React.useMemo(() => {
     if (Object.keys(initialRoomEstimates).length > 0) {
       return initialRoomEstimates;
     }
     
-    // Calculate estimates for each room
     const calculatedEstimates: Record<string, any> = {};
     roomDetails.forEach(room => {
       if (room.id) {
