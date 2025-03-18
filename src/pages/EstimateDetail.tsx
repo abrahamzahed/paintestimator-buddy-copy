@@ -143,6 +143,7 @@ export default function EstimateDetail() {
           clientName={clientName}
           clientAddress={clientAddress}
           roomCount={roomDetails.length}
+          estimate={estimate}
         />
         
         <EstimateActionButtons 
