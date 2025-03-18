@@ -48,7 +48,10 @@ const EstimateContent = ({
 
   return (
     <div className="space-y-6">
-      <EstimateHeader estimate={estimate} />
+      <EstimateHeader 
+        onBack={() => {}} 
+        onShowDetailedView={() => setShowDetailedView(true)} 
+      />
 
       <Card className="border border-gray-100 shadow-sm">
         <CardHeader className="bg-secondary/20">
