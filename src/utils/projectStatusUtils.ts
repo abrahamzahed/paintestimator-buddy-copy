@@ -1,4 +1,3 @@
-
 export const PROJECT_STATUSES = [
   { value: 'active', label: 'Active' },
   { value: 'pending', label: 'Pending' },
@@ -23,4 +22,13 @@ export const getStatusLabel = (status: string, type: 'project' | 'estimate' = 'p
 
 export const getStatusOptions = (type: 'project' | 'estimate' = 'project') => {
   return type === 'project' ? PROJECT_STATUSES : ESTIMATE_STATUSES;
+};
+
+export const updateProjectStatus = async (projectId: string, status: string) => {
+  console.log(`Updating project ${projectId} to status ${status}`);
+  return { success: true };
+};
+
+export const getStatusUpdateMessage = (status: string) => {
+  return `Project status updated to ${status}`;
 };

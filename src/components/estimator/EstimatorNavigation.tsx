@@ -54,15 +54,7 @@ const EstimatorNavigation = ({
       </div>
       
       <div>
-        {(currentStep < totalSteps && !isLastStep) && (
-          <Button
-            onClick={onNext}
-            className="bg-paint hover:bg-paint-dark"
-            disabled={disableNext}
-          >
-            Next
-          </Button>
-        )}
+        {/* Removed the Next button */}
         
         {isLastStep && showSubmit && onSubmit && (
           <Button

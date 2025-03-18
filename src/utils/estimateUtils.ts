@@ -1,4 +1,3 @@
-
 import { RoomDetails, EstimatorSummary } from "@/types/estimator";
 
 export const getEstimateResult = (estimate: any) => {
@@ -29,5 +28,13 @@ export const calculateTotalEstimate = (roomDetails: RoomDetails[]): EstimatorSum
     volumeDiscount: 0,
     finalTotal: 0,
     roomCosts: []
+  };
+};
+
+export const calculateSingleRoomEstimate = (roomDetails: any) => {
+  return {
+    totalCost: 0,
+    laborHours: 0,
+    paintCans: 0
   };
 };
