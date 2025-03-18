@@ -1,33 +1,34 @@
 
-import { Estimate } from "@/types";
+import React from "react";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
-import { ChevronLeft } from "lucide-react";
+import { ArrowLeft, Printer } from "lucide-react";
 
 interface EstimateHeaderProps {
-  estimate: Estimate;
+  onBack: () => void;
+  onShowDetailedView: () => void;
 }
 
-const EstimateHeader = ({ estimate }: EstimateHeaderProps) => {
+const EstimateHeader = ({ onBack, onShowDetailedView }: EstimateHeaderProps) => {
   return (
-    <div className="flex justify-between items-center">
-      <div className="flex items-center gap-2">
-        <Button variant="outline" size="sm" asChild>
-          <Link to={`/project/${estimate?.project_id}`}>
-            <ChevronLeft className="h-4 w-4" />
-            Back to Project
-          </Link>
+    <div className="flex items-center justify-between">
+      <Button 
+        variant="outline" 
+        size="sm" 
+        onClick={onBack}
+        className="flex items-center"
+      >
+        <ArrowLeft className="mr-2 h-4 w-4" /> Back
+      </Button>
+      
+      <div className="flex space-x-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onShowDetailedView}
+          className="flex items-center"
+        >
+          <Printer className="mr-2 h-4 w-4" /> Print Details
         </Button>
-        <h1 className="text-2xl font-bold">Estimate #{estimate?.id?.substring(0, 8)}</h1>
-      </div>
-      <div className={`px-3 py-1 rounded text-sm ${
-        estimate?.status === "pending" 
-          ? "bg-yellow-100 text-yellow-800" 
-          : estimate?.status === "approved" 
-          ? "bg-green-100 text-green-800"
-          : "bg-gray-100 text-gray-800"
-      }`}>
-        {estimate?.status?.toUpperCase()}
       </div>
     </div>
   );

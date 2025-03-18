@@ -1,18 +1,17 @@
+
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useEstimateDetailData } from "@/hooks/useEstimateDetailData";
 import EstimatePageLayout from "@/components/estimate/EstimatePageLayout";
 import LoadingState from "@/components/estimate/LoadingState";
 import EstimateNotFound from "@/components/estimate/EstimateNotFound";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft, CheckCircle, Printer } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import DetailedSummaryDialog from "@/components/estimate-detail/DetailedSummaryDialog";
 import ProjectDetailsSection from "@/components/estimate-detail/ProjectDetailsSection";
-import EditOptionsDialog from "@/components/estimate-detail/EditOptionsDialog";
-import DeleteConfirmationDialog from "@/components/estimate-detail/DeleteConfirmationDialog";
 import EstimateActionButtons from "@/components/estimate-detail/EstimateActionButtons";
+import EstimateHeader from "@/components/estimate-detail/EstimateHeader";
+import EstimateConfirmation from "@/components/estimate-detail/EstimateConfirmation";
+import EstimateDialogs from "@/components/estimate-detail/EstimateDialogs";
 
 export default function EstimateDetail() {
   const { id } = useParams<{ id: string }>();
@@ -65,13 +64,7 @@ export default function EstimateDetail() {
   };
 
   const handleEditEstimate = () => {
-    // Navigate to the edit page and pass the estimate ID
     navigate(`/estimate/edit/${estimate.id}?step=2`);
-    setShowEditOptions(false);
-  };
-
-  const handleDeleteClick = () => {
-    setIsDeleteDialogOpen(true);
     setShowEditOptions(false);
   };
 
@@ -81,7 +74,6 @@ export default function EstimateDetail() {
     setIsDeleting(true);
     
     try {
-      // Instead of deleting, update the status_type to 'deleted'
       const { error: estimateError } = await supabase
         .from("estimates")
         .update({ status_type: 'deleted' })
@@ -94,11 +86,9 @@ export default function EstimateDetail() {
         description: "The estimate has been successfully deleted.",
       });
       
-      // Update UI state first
       setIsDeleting(false);
       setIsDeleteDialogOpen(false);
       
-      // Add a short delay before navigating to prevent loading issues
       setTimeout(() => {
         if (estimate.project_id) {
           navigate(`/project/${estimate.project_id}`);
@@ -132,52 +122,21 @@ export default function EstimateDetail() {
     };
   };
 
-  // Get client information from either clientInfo state or estimate details
   const projectName = estimate.project_name || "Painting Project";
   const clientName = clientInfo.name || "Client Name";
   const clientAddress = clientInfo.address || "Client Address";
-  
-  // Extract volume discount from the estimate details if available
-  const volumeDiscount = estimate.details && 
-    typeof estimate.details === 'object' && 
-    'estimateSummary' in estimate.details && 
-    estimate.details.estimateSummary?.volumeDiscount || estimate.discount || 0;
 
   return (
     <EstimatePageLayout>
       <div className="space-y-6 animate-fade-in">
-        <div className="flex items-center justify-between">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={handleBack}
-            className="flex items-center"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back
-          </Button>
-          
-          <div className="flex space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowDetailedView(true)}
-              className="flex items-center"
-            >
-              <Printer className="mr-2 h-4 w-4" /> Print Details
-            </Button>
-          </div>
-        </div>
+        <EstimateHeader 
+          onBack={handleBack}
+          onShowDetailedView={() => setShowDetailedView(true)}
+        />
         
-        <div className="flex items-center justify-center text-green-500 mb-4">
-          <CheckCircle className="h-16 w-16" />
-        </div>
-        
-        <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold mb-2">Estimate #{estimate.id?.substring(0, 8)}</h1>
-          <p className="text-muted-foreground">
-            Your painting estimate has been saved and is ready for review.
-          </p>
-        </div>
+        <EstimateConfirmation 
+          estimateId={estimate.id || ''}
+        />
         
         <ProjectDetailsSection 
           projectName={projectName}
@@ -192,26 +151,19 @@ export default function EstimateDetail() {
           onEdit={handleEditClick}
         />
         
-        <DetailedSummaryDialog
-          open={showDetailedView}
-          onOpenChange={setShowDetailedView}
+        <EstimateDialogs
+          showDetailedView={showDetailedView}
+          setShowDetailedView={setShowDetailedView}
+          showEditOptions={showEditOptions}
+          setShowEditOptions={setShowEditOptions}
+          isDeleteDialogOpen={isDeleteDialogOpen}
+          setIsDeleteDialogOpen={setIsDeleteDialogOpen}
+          onEditEstimate={handleEditEstimate}
+          onDeleteEstimate={handleDeleteEstimate}
+          isDeleting={isDeleting}
           currentEstimate={getEstimateResult()}
           roomDetails={roomDetails}
           roomEstimates={roomEstimates}
-        />
-        
-        <EditOptionsDialog
-          open={showEditOptions}
-          onOpenChange={setShowEditOptions}
-          onEditEstimate={handleEditEstimate}
-          onDeleteClick={handleDeleteClick}
-        />
-        
-        <DeleteConfirmationDialog
-          open={isDeleteDialogOpen}
-          onOpenChange={setIsDeleteDialogOpen}
-          onDeleteEstimate={handleDeleteEstimate}
-          isDeleting={isDeleting}
         />
       </div>
     </EstimatePageLayout>
