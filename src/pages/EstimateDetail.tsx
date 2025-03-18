@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useEstimateDetailData } from "@/hooks/useEstimateDetailData";
@@ -11,7 +10,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import DetailedSummaryDialog from "@/components/estimate-detail/DetailedSummaryDialog";
 import ProjectDetailsSection from "@/components/estimate-detail/ProjectDetailsSection";
-import EstimateCostSummary from "@/components/estimate-detail/EstimateCostSummary";
 import EditOptionsDialog from "@/components/estimate-detail/EditOptionsDialog";
 import DeleteConfirmationDialog from "@/components/estimate-detail/DeleteConfirmationDialog";
 import EstimateActionButtons from "@/components/estimate-detail/EstimateActionButtons";
@@ -186,17 +184,6 @@ export default function EstimateDetail() {
           clientName={clientName}
           clientAddress={clientAddress}
           roomCount={roomDetails.length}
-        />
-        
-        <EstimateCostSummary 
-          laborCost={estimate.labor_cost || 0}
-          materialCost={estimate.material_cost || 0}
-          paintGallons={estimate.estimated_paint_gallons || 0}
-          estimatedHours={estimate.estimated_hours || 0}
-          roomDetails={roomDetails}
-          roomEstimates={roomEstimates}
-          volumeDiscount={volumeDiscount}
-          totalCost={estimate.total_cost || 0}
         />
         
         <EstimateActionButtons 
