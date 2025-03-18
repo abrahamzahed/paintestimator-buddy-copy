@@ -1,15 +1,17 @@
 
 import React, { useState, useEffect } from "react";
 import { EstimateResult, RoomDetail, LineItem } from "@/types";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Card, CardContent } from "@/components/ui/card";
-import { formatCurrency } from "@/utils/estimateUtils";
-import { CalendarIcon, PrinterIcon, HomeIcon } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { CalendarIcon, PrinterIcon } from "lucide-react";
 import LineItemsTable from "./LineItemsTable";
 import { useParams } from "react-router-dom";
 import { calculateSingleRoomEstimate } from "@/utils/estimateUtils";
 import { supabase } from "@/integrations/supabase/client";
+import ClientInfoSection from "./ClientInfoSection";
+import ServiceProviderSection from "./ServiceProviderSection";
+import RoomsList from "./RoomDetailsList";
+import EstimateFooterInfo from "./EstimateFooterInfo";
 
 interface DetailedSummaryDialogProps {
   open: boolean;
@@ -286,185 +288,22 @@ const DetailedSummaryDialog = ({
         
         <div className="print-content py-6 space-y-6">
           <div className="grid grid-cols-2 gap-8">
-            <div>
-              <h3 className="text-sm font-medium text-muted-foreground mb-2">SERVICE PROVIDER</h3>
-              <div className="text-sm">
-                <p className="font-semibold">Premium Paint Contractors</p>
-                <p>123 Brush Street</p>
-                <p>Paintsville, CA 94123</p>
-                <p>contact@premiumpaint.com</p>
-              </div>
-            </div>
-            <div>
-              <h3 className="text-sm font-medium text-muted-foreground mb-2">CLIENT</h3>
-              <div className="text-sm">
-                <p className="font-semibold">{clientInfo.name}</p>
-                <p>{clientInfo.address}</p>
-                <p>{clientInfo.city}, {clientInfo.state} {clientInfo.zip}</p>
-              </div>
-            </div>
+            <ServiceProviderSection />
+            <ClientInfoSection clientInfo={clientInfo} />
           </div>
 
-          <Card className="border">
-            <CardContent className="p-4">
-              <h3 className="font-semibold mb-4">Current Estimate</h3>
-              
-              <div className="space-y-6">
-                {roomDetails.map((room) => {
-                  const roomEstimate = calculatedRoomEstimates[room.id] || { 
-                    totalCost: 0, 
-                    laborCost: 0, 
-                    materialCost: 0, 
-                    additionalCosts: {} 
-                  };
-                  
-                  return (
-                    <Card key={room.id} className="border overflow-hidden">
-                      <div className="p-3 bg-muted/30 flex items-center">
-                        <HomeIcon className="h-4 w-4 mr-2 text-muted-foreground" />
-                        <h4 className="font-medium flex-1">
-                          {room.roomTypeId.charAt(0).toUpperCase() + room.roomTypeId.slice(1)} 
-                        </h4>
-                        <span className="font-semibold">{formatCurrency(roomEstimate.totalCost || 0)}</span>
-                      </div>
-                      
-                      <div className="p-3 bg-white">
-                        <div className="grid grid-cols-2 text-sm gap-x-2 gap-y-1">
-                          <span className="text-muted-foreground">Size:</span> 
-                          <span>{room.size.charAt(0).toUpperCase() + room.size.slice(1)}</span>
-                          
-                          <span className="text-muted-foreground">Paint Type:</span> 
-                          <span>{room.paintType.charAt(0).toUpperCase() + room.paintType.slice(1)}</span>
-                          
-                          {room.hasHighCeiling && (
-                            <>
-                              <span className="text-muted-foreground">Ceiling:</span> 
-                              <span>High ceiling</span>
-                            </>
-                          )}
-                          
-                          {room.twoColors && (
-                            <>
-                              <span className="text-muted-foreground">Wall Colors:</span> 
-                              <span>Two colors</span>
-                            </>
-                          )}
-                          
-                          {(room.regularClosetCount > 0 || room.walkInClosetCount > 0) && (
-                            <>
-                              <span className="text-muted-foreground">Closets:</span>
-                              <span>
-                                {room.walkInClosetCount > 0 && `${room.walkInClosetCount} walk-in`}
-                                {room.walkInClosetCount > 0 && room.regularClosetCount > 0 && ', '}
-                                {room.regularClosetCount > 0 && `${room.regularClosetCount} regular`}
-                              </span>
-                            </>
-                          )}
-                          
-                          {room.doorPaintingMethod && room.doorPaintingMethod !== 'none' && (
-                            <>
-                              <span className="text-muted-foreground">Doors:</span>
-                              <span>{room.numberOfDoors} ({room.doorPaintingMethod} painting)</span>
-                            </>
-                          )}
-                          
-                          {room.windowPaintingMethod && room.windowPaintingMethod !== 'none' && (
-                            <>
-                              <span className="text-muted-foreground">Windows:</span>
-                              <span>{room.numberOfWindows} ({room.windowPaintingMethod} painting)</span>
-                            </>
-                          )}
-                          
-                          {room.fireplaceMethod && room.fireplaceMethod !== 'none' && (
-                            <>
-                              <span className="text-muted-foreground">Fireplace:</span>
-                              <span>{room.fireplaceMethod} painting</span>
-                            </>
-                          )}
-                          
-                          {room.repairs && room.repairs !== 'none' && (
-                            <>
-                              <span className="text-muted-foreground">Repairs:</span>
-                              <span>{room.repairs}</span>
-                            </>
-                          )}
-                          
-                          {room.hasStairRailing && (
-                            <>
-                              <span className="text-muted-foreground">Stair Railing:</span>
-                              <span>Included</span>
-                            </>
-                          )}
-                          
-                          {room.baseboardType && room.baseboardType !== 'none' && (
-                            <>
-                              <span className="text-muted-foreground">Baseboards:</span>
-                              <span>{room.baseboardType} application</span>
-                            </>
-                          )}
-                          
-                          {room.baseboardInstallationLf > 0 && (
-                            <>
-                              <span className="text-muted-foreground">Baseboard Installation:</span>
-                              <span>{room.baseboardInstallationLf} linear feet</span>
-                            </>
-                          )}
-                          
-                          {room.millworkPrimingNeeded && (
-                            <>
-                              <span className="text-muted-foreground">Millwork Priming:</span>
-                              <span>Included</span>
-                            </>
-                          )}
-                          
-                          {room.isEmpty && (
-                            <>
-                              <span className="text-muted-foreground">Empty Room:</span>
-                              <span>Yes (Discounted)</span>
-                            </>
-                          )}
-                          
-                          {room.noFloorCovering && (
-                            <>
-                              <span className="text-muted-foreground">No Floor Covering:</span>
-                              <span>Yes (Discounted)</span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </Card>
-                  );
-                })}
-                
-                {discountAmount > 0 && (
-                  <div className="flex justify-between text-green-600 mt-2">
-                    <span className="font-medium">Volume Discount:</span>
-                    <span className="font-medium">-{formatCurrency(discountAmount)}</span>
-                  </div>
-                )}
-                
-                <div className="flex justify-between items-center border-t pt-4 mt-4">
-                  <span className="font-bold">Total Cost</span>
-                  <span className="font-bold text-xl text-blue-600">{formatCurrency(calculatedTotal)}</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <RoomsList 
+            roomDetails={roomDetails} 
+            roomEstimates={calculatedRoomEstimates} 
+            discountAmount={discountAmount} 
+            calculatedTotal={calculatedTotal} 
+          />
           
           {lineItems.length > 0 && (
             <LineItemsTable lineItems={lineItems} />
           )}
           
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <h3 className="text-sm font-medium mb-1">PAYMENT TERMS</h3>
-              <p className="text-sm">Payment is due within 30 days of service completion. Please make checks payable to Premium Paint Contractors.</p>
-            </div>
-            <div>
-              <h3 className="text-sm font-medium mb-1">NOTES</h3>
-              <p className="text-sm">This estimate is valid for 30 days from the date issued. Thank you for choosing Premium Paint Contractors!</p>
-            </div>
-          </div>
+          <EstimateFooterInfo />
         </div>
       </DialogContent>
     </Dialog>
