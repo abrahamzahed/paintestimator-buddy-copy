@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,7 +25,7 @@ export const useEstimateUpdate = (estimateId: string | undefined, estimate: Esti
         id: room.id,
         roomTypeId: room.roomTypeId,
         size: room.size,
-        addons: room.addons,
+        addons: room.addons || [],
         hasHighCeiling: room.hasHighCeiling,
         paintType: room.paintType,
         isEmpty: room.isEmpty,

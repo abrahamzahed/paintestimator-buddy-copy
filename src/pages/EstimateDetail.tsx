@@ -161,6 +161,17 @@ export default function EstimateDetail() {
   // Calculate subtotal (total plus discount)
   const subtotal = estimate.total_cost + volumeDiscount;
 
+  // Get room type name for display
+  const getRoomTypeName = (roomTypeId: string) => {
+    return roomTypeId.charAt(0).toUpperCase() + roomTypeId.slice(1);
+  };
+
+  // Helper function to get individual room cost
+  const getRoomCost = (roomId: string) => {
+    const roomEstimate = roomEstimates[roomId];
+    return roomEstimate?.totalCost || 0;
+  };
+
   return (
     <EstimatePageLayout>
       <div className="space-y-6 animate-fade-in">
@@ -230,22 +241,21 @@ export default function EstimateDetail() {
               <h5 className="text-sm font-medium mt-6 mb-2">Rooms breakdown:</h5>
               
               {roomDetails.map((room, index) => {
-                const roomEstimate = roomEstimates[room.id] || { totalCost: 0 };
+                const roomCost = getRoomCost(room.id);
                 const roomType = room.roomTypeId;
-                const roomSize = room.size;
                 
                 return (
-                  <div key={room.id || index} className="border-t py-4">
+                  <div key={room.id} className="border-t py-4">
                     <div className="flex justify-between mb-2">
                       <h6 className="font-medium">
-                        {roomType.charAt(0).toUpperCase() + roomType.slice(1)} (Room {index + 1})
+                        {getRoomTypeName(roomType)} (Room {index + 1})
                       </h6>
-                      <span className="font-medium">{formatCurrency(roomEstimate.totalCost || 0)}</span>
+                      <span className="font-medium">{formatCurrency(roomCost)}</span>
                     </div>
                     
                     <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-sm">
                       <span className="text-muted-foreground">Size:</span>
-                      <span>{roomSize.charAt(0).toUpperCase() + roomSize.slice(1)}</span>
+                      <span>{room.size.charAt(0).toUpperCase() + room.size.slice(1)}</span>
                       
                       <span className="text-muted-foreground">Paint Type:</span>
                       <span>{room.paintType.charAt(0).toUpperCase() + room.paintType.slice(1)}</span>
@@ -278,14 +288,14 @@ export default function EstimateDetail() {
                       {room.doorPaintingMethod && room.doorPaintingMethod !== 'none' && (
                         <>
                           <span className="text-muted-foreground">Doors:</span>
-                          <span>{room.numberOfDoors} doors</span>
+                          <span>{room.numberOfDoors} doors ({room.doorPaintingMethod})</span>
                         </>
                       )}
                       
                       {room.windowPaintingMethod && room.windowPaintingMethod !== 'none' && (
                         <>
                           <span className="text-muted-foreground">Windows:</span>
-                          <span>{room.numberOfWindows} windows</span>
+                          <span>{room.numberOfWindows} windows ({room.windowPaintingMethod})</span>
                         </>
                       )}
                       
@@ -464,3 +474,4 @@ export default function EstimateDetail() {
     </EstimatePageLayout>
   );
 }
+
