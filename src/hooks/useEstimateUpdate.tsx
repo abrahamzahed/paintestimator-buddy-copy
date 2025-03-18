@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,34 +19,9 @@ export const useEstimateUpdate = (estimateId: string | undefined, estimate: Esti
     setIsSubmitting(true);
     
     try {
-      // Convert the rooms to the new format
-      const roomsInNewFormat = updatedRooms.map(room => ({
-        id: room.id,
-        roomTypeId: room.roomTypeId || room.roomType,
-        size: room.size || room.roomSize || 'average',
-        addons: room.addons || [],
-        hasHighCeiling: !!room.hasHighCeiling,
-        paintType: room.paintType,
-        isEmpty: room.isEmpty || room.isEmptyHouse || false,
-        noFloorCovering: room.noFloorCovering || !room.needFloorCovering || false,
-        doorPaintingMethod: room.doorPaintingMethod || (room.doorsCount && room.doorsCount > 0 ? 'brush' : 'none'),
-        numberOfDoors: room.numberOfDoors || room.doorsCount || 0,
-        windowPaintingMethod: room.windowPaintingMethod || (room.windowsCount && room.windowsCount > 0 ? 'brush' : 'none'),
-        numberOfWindows: room.numberOfWindows || room.windowsCount || 0,
-        fireplaceMethod: room.fireplaceMethod || 'none',
-        hasStairRailing: !!room.hasStairRailing,
-        twoColors: !!room.twoColors,
-        millworkPrimingNeeded: !!room.millworkPrimingNeeded,
-        repairs: room.repairs || 'none',
-        baseboardInstallationLf: room.baseboardInstallationLf || 0,
-        baseboardType: room.baseboardType || (room.includeBaseboards ? room.baseboardsMethod || 'brush' : 'none'),
-        walkInClosetCount: room.walkInClosetCount || 0,
-        regularClosetCount: room.regularClosetCount || 0
-      }));
-      
       // Store all data in the details JSONB column
       const detailsObject = {
-        rooms: roomsInNewFormat,
+        rooms: updatedRooms,
         estimateSummary: {
           subtotal: updatedEstimate.totalCost + (updatedEstimate.discounts.volumeDiscount || 0),
           volumeDiscount: updatedEstimate.discounts.volumeDiscount || 0,

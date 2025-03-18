@@ -1,7 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { RoomDetails as OldRoomDetail, RoomDetail, EstimateResult } from "../types";
-import { calculateMultiRoomEstimate, calculateSingleRoomEstimate } from "../utils/estimateUtils";
+import { RoomDetail, EstimateResult } from "@/types";
 import ProgressIndicator from "./estimator/ProgressIndicator";
 import FormStep from "./estimator/FormStep";
 import MultiRoomSelector from "./estimator/MultiRoomSelector";
@@ -11,11 +10,10 @@ import CurrentEstimatePanel from "./estimator/CurrentEstimatePanel";
 import EstimatorNavigation from "./estimator/EstimatorNavigation";
 import EstimateSummary from "./estimator/EstimateSummary";
 import { useLocation } from "react-router-dom";
-import { saveTemporaryEstimate, getTemporaryEstimate, getTemporaryProjectName } from "@/utils/estimateStorage";
+import { saveTemporaryEstimate, getTemporaryEstimate } from "@/utils/estimateStorage";
 import { useSession } from "@/context/SessionContext";
 import DynamicEstimatorForm from "./DynamicEstimatorForm";
 import { RoomDetails, EstimatorSummary } from "@/types/estimator";
-import AddressAutocomplete from "./AddressAutocomplete";
 
 interface EstimateCalculatorProps {
   onEstimateComplete: (
@@ -53,9 +51,9 @@ const EstimateCalculator = ({
   const [internalStep, setInternalStep] = useState(1);
   const step = externalStep !== undefined ? externalStep : internalStep;
   
-  const TOTAL_STEPS = 3; // For editing, we show all steps: 1. Info, 2. Rooms, 3. Summary
+  const TOTAL_STEPS = 3;
   const [currentEstimate, setCurrentEstimate] = useState<EstimateResult | null>(null);
-  const [roomEstimates, setRoomEstimates] = useState<Record<string, ReturnType<typeof calculateSingleRoomEstimate>>>({});
+  const [roomEstimates, setRoomEstimates] = useState<Record<string, any>>({});
   
   const searchParams = new URLSearchParams(location.search);
   const saveEstimate = searchParams.get("saveEstimate") === "true";
@@ -66,10 +64,7 @@ const EstimateCalculator = ({
       const savedEstimate = getTemporaryEstimate();
       if (savedEstimate) {
         // Use the saved estimate data
-        setRoomDetails({
-          ...roomDetails,
-          rooms: savedEstimate.roomDetails
-        });
+        setRooms(savedEstimate.roomDetails);
         setRoomEstimates(savedEstimate.roomEstimates);
         setCurrentEstimate(savedEstimate.estimateResult);
         
@@ -79,64 +74,69 @@ const EstimateCalculator = ({
         });
       }
     }
-  }, [user, saveEstimate]);
+  }, [user, saveEstimate, toast]);
   
-  const [roomDetails, setRoomDetails] = useState<{ 
-    rooms: RoomDetail[];
-    isEmptyHouse: boolean;
-    needFloorCovering: boolean;
-  }>({
-    rooms: initialRoomDetails || [
-      {
-        id: uuidv4(),
-        roomType: "bedroom",
-        roomSize: "average", // Default, but will be removed from UI
-        wallsCount: 4,
-        wallHeight: 8,
-        wallWidth: 10,
-        condition: "good",
-        paintType: "standard",
-        includeCeiling: false,
-        includeBaseboards: false,
-        baseboardsMethod: "brush",
-        includeCrownMolding: false,
-        hasHighCeiling: false,
-        includeCloset: false,
-        isEmptyHouse: false,
-        needFloorCovering: true,
-        doorsCount: 0,
-        windowsCount: 0
-      }
-    ],
-    isEmptyHouse: false,
-    needFloorCovering: true
-  });
+  const [rooms, setRooms] = useState<RoomDetail[]>(
+    initialRoomDetails || [{
+      id: uuidv4(),
+      roomTypeId: "bedroom",
+      size: "average",
+      addons: [],
+      hasHighCeiling: false,
+      paintType: "standard",
+      isEmpty: false,
+      noFloorCovering: false,
+      doorPaintingMethod: "none",
+      numberOfDoors: 0,
+      windowPaintingMethod: "none",
+      numberOfWindows: 0,
+      fireplaceMethod: "none",
+      hasStairRailing: false,
+      twoColors: false,
+      millworkPrimingNeeded: false,
+      repairs: "none",
+      baseboardInstallationLf: 0,
+      baseboardType: "none",
+      walkInClosetCount: 0,
+      regularClosetCount: 0
+    }]
+  );
 
+  // When using dynamic estimator (which is the default for production)
+  // This happens when direct API calls to Supabase, not using the internal calculator
   useEffect(() => {
     if (!useDynamicEstimator) {
-      try {
-        if (roomDetails.rooms.length > 0) {
-          const estimates: Record<string, ReturnType<typeof calculateSingleRoomEstimate>> = {};
-          
-          for (const room of roomDetails.rooms) {
-            estimates[room.id] = calculateSingleRoomEstimate(room);
-          }
-          
-          setRoomEstimates(estimates);
-          
-          const estimate = calculateMultiRoomEstimate(roomDetails);
-          setCurrentEstimate(estimate);
-        }
-      } catch (error) {
-        console.error("Error calculating estimate:", error);
-        toast({
-          title: "Error calculating estimate",
-          description: "Please check your inputs and try again",
-          variant: "destructive"
-        });
-      }
+      // This is a placeholder for the basic estimator logic
+      // In production, we use the DynamicEstimatorForm
+      console.log("Using basic estimator - this is a fallback only");
+      
+      // Simple mock implementation for development purposes
+      const mockEstimate: EstimateResult = {
+        roomPrice: rooms.length * 500,
+        laborCost: rooms.length * 350,
+        materialCost: rooms.length * 150,
+        totalCost: rooms.length * 500,
+        timeEstimate: rooms.length * 6,
+        paintCans: rooms.length * 2,
+        additionalCosts: {},
+        discounts: {}
+      };
+      
+      setCurrentEstimate(mockEstimate);
+      
+      // Generate mock room estimates
+      const estimates: Record<string, any> = {};
+      rooms.forEach(room => {
+        estimates[room.id] = {
+          totalCost: 500,
+          laborHours: 6,
+          paintCans: 2
+        };
+      });
+      
+      setRoomEstimates(estimates);
     }
-  }, [roomDetails, toast, useDynamicEstimator]);
+  }, [rooms, useDynamicEstimator]);
 
   const handleNextStep = () => {
     if (externalStep !== undefined && onStepChange) {
@@ -185,44 +185,34 @@ const EstimateCalculator = ({
     
     // Reset to default room if not in edit mode
     if (!isEditMode) {
-      setRoomDetails({
-        rooms: [
-          {
-            id: uuidv4(),
-            roomType: "bedroom",
-            roomSize: "average",
-            wallsCount: 4,
-            wallHeight: 8,
-            wallWidth: 10,
-            condition: "good",
-            paintType: "standard",
-            includeCeiling: false,
-            includeBaseboards: false,
-            baseboardsMethod: "brush",
-            includeCrownMolding: false,
-            hasHighCeiling: false,
-            includeCloset: false,
-            isEmptyHouse: false,
-            needFloorCovering: true,
-            doorsCount: 0,
-            windowsCount: 0
-          }
-        ],
-        isEmptyHouse: false,
-        needFloorCovering: true
-      });
+      setRooms([{
+        id: uuidv4(),
+        roomTypeId: "bedroom",
+        size: "average",
+        addons: [],
+        hasHighCeiling: false,
+        paintType: "standard",
+        isEmpty: false,
+        noFloorCovering: false,
+        doorPaintingMethod: "none",
+        numberOfDoors: 0,
+        windowPaintingMethod: "none",
+        numberOfWindows: 0,
+        fireplaceMethod: "none",
+        hasStairRailing: false,
+        twoColors: false,
+        millworkPrimingNeeded: false,
+        repairs: "none",
+        baseboardInstallationLf: 0,
+        baseboardType: "none",
+        walkInClosetCount: 0,
+        regularClosetCount: 0
+      }]);
     }
     
     toast({
       title: "Estimator reset",
       description: "All rooms have been reset to default"
-    });
-  };
-
-  const updateRooms = (rooms: RoomDetail[]) => {
-    setRoomDetails({
-      ...roomDetails,
-      rooms
     });
   };
 
@@ -250,10 +240,10 @@ const EstimateCalculator = ({
     if (currentEstimate) {
       if (!user) {
         // For non-logged in users, save the estimate to localStorage
-        saveTemporaryEstimate(currentEstimate, roomDetails.rooms, roomEstimates);
+        saveTemporaryEstimate(currentEstimate, rooms, roomEstimates);
       }
       
-      onEstimateComplete(currentEstimate, roomDetails.rooms, roomEstimates);
+      onEstimateComplete(currentEstimate, rooms, roomEstimates);
     }
   };
 
@@ -278,8 +268,8 @@ const EstimateCalculator = ({
             Add all rooms you want to paint and their details. You can add multiple rooms.
           </p>
           <MultiRoomSelector 
-            rooms={roomDetails.rooms} 
-            updateRooms={updateRooms} 
+            rooms={rooms} 
+            updateRooms={setRooms} 
           />
         </FormStep>
 
@@ -287,7 +277,7 @@ const EstimateCalculator = ({
         <FormStep title="Estimate Summary" isActive={step === 3}>
           <EstimateSummary 
             currentEstimate={currentEstimate}
-            rooms={roomDetails.rooms}
+            rooms={rooms}
             roomEstimates={roomEstimates}
             onSubmit={handleSubmit}
             submitButtonText={submitButtonText}

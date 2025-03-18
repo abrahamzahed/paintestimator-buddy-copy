@@ -46,19 +46,16 @@ export const useEstimateData = (estimateId: string | undefined) => {
 
         // Extract room details from the JSONB details field
         if (estimateData.details && typeof estimateData.details === 'object') {
-          
           const details = estimateData.details;
           
-          // Try new format first (FreeEstimator format)
+          // Get room details from FreeEstimator format
           if (details && 'rooms' in details && Array.isArray(details.rooms)) {
             const roomsArray = details.rooms;
             
             const typedRoomDetails = roomsArray.map((room: any) => ({
               id: room.id || '',
               roomTypeId: room.roomTypeId || '',
-              roomType: room.roomTypeId || '', // For backward compatibility
               size: room.size || 'average',
-              roomSize: room.size || 'average', // For backward compatibility
               addons: room.addons || [],
               hasHighCeiling: !!room.hasHighCeiling,
               paintType: room.paintType || 'standard',
@@ -77,42 +74,6 @@ export const useEstimateData = (estimateId: string | undefined) => {
               baseboardType: room.baseboardType || 'none',
               walkInClosetCount: room.walkInClosetCount || 0,
               regularClosetCount: room.regularClosetCount || 0
-            }));
-            
-            setRoomDetails(typedRoomDetails);
-          }
-          // Fallback to legacy format
-          else if (details && 'roomDetails' in details && Array.isArray(details.roomDetails)) {
-            // Legacy format
-            console.log("Using legacy room details format");
-            
-            const roomDetailsArray = details.roomDetails;
-            
-            // Convert old format to new format as best as possible
-            const typedRoomDetails = roomDetailsArray.map((room: any) => ({
-              id: room.id || '',
-              roomTypeId: room.roomType || '',
-              roomType: room.roomType || '',
-              size: room.roomSize || 'average',
-              roomSize: room.roomSize || 'average',
-              addons: [],
-              hasHighCeiling: !!room.hasHighCeiling,
-              paintType: room.paintType || 'standard',
-              isEmpty: !!room.isEmptyHouse,
-              noFloorCovering: !room.needFloorCovering,
-              doorPaintingMethod: room.doorsCount > 0 ? 'brush' : 'none',
-              numberOfDoors: room.doorsCount || 0,
-              windowPaintingMethod: room.windowsCount > 0 ? 'brush' : 'none',
-              numberOfWindows: room.windowsCount || 0,
-              fireplaceMethod: 'none',
-              hasStairRailing: false,
-              twoColors: false,
-              millworkPrimingNeeded: false,
-              repairs: 'none',
-              baseboardInstallationLf: 0,
-              baseboardType: room.includeBaseboards ? room.baseboardsMethod || 'brush' : 'none',
-              walkInClosetCount: room.includeCloset && room.roomType?.toLowerCase().includes('master') ? 1 : 0,
-              regularClosetCount: room.includeCloset && !room.roomType?.toLowerCase().includes('master') ? 1 : 0
             }));
             
             setRoomDetails(typedRoomDetails);

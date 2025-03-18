@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Trash2 } from "lucide-react";
@@ -26,38 +27,41 @@ const MultiRoomSelector = ({ rooms, updateRooms }: MultiRoomSelectorProps) => {
     "Hallway"
   ];
   
-  const conditionOptions = [
-    { value: "good", label: "Good Condition", description: "Walls are clean, smooth, and only need minimal preparation" },
-    { value: "average", label: "Average Condition", description: "Some cracks, nail holes, or minor repairs needed" },
-    { value: "poor", label: "Poor Condition", description: "Major repairs, patching or drywall work needed" }
-  ];
-  
   const paintTypeOptions = [
     { value: "standard", label: "Standard ($25/gallon)", description: "Good quality, basic paint suitable for most rooms" },
     { value: "premium", label: "Premium ($45/gallon)", description: "Superior coverage, more durable and washable" },
     { value: "luxury", label: "Luxury ($75/gallon)", description: "Top-tier, eco-friendly, lifetime warranty paint" }
   ];
 
+  const repairOptions = [
+    { value: "none", label: "No Repairs" },
+    { value: "minimal", label: "Minimal Repairs (+$50)" },
+    { value: "extensive", label: "Extensive Repairs (+$200)" }
+  ];
+
   const addNewRoom = () => {
     const newRoom: RoomDetail = {
       id: uuidv4(),
-      roomType: "bedroom",
-      roomSize: "average", // Keep default but hidden from UI
-      wallsCount: 4,
-      wallHeight: 8,
-      wallWidth: 10,
-      condition: "good",
-      paintType: "standard",
-      includeCeiling: false,
-      includeBaseboards: false,
-      baseboardsMethod: "brush",
-      includeCrownMolding: false,
+      roomTypeId: roomTypeOptions[0].toLowerCase(),
+      size: "average",
+      addons: [],
       hasHighCeiling: false,
-      includeCloset: false,
-      isEmptyHouse: false,
-      needFloorCovering: true,
-      doorsCount: 0,
-      windowsCount: 0
+      paintType: "standard",
+      isEmpty: false,
+      noFloorCovering: false,
+      doorPaintingMethod: "none",
+      numberOfDoors: 0,
+      windowPaintingMethod: "none",
+      numberOfWindows: 0,
+      fireplaceMethod: "none",
+      hasStairRailing: false,
+      twoColors: false,
+      millworkPrimingNeeded: false,
+      repairs: "none",
+      baseboardInstallationLf: 0,
+      baseboardType: "none",
+      walkInClosetCount: 0,
+      regularClosetCount: 0
     };
     
     updateRooms([...rooms, newRoom]);
@@ -106,12 +110,13 @@ const MultiRoomSelector = ({ rooms, updateRooms }: MultiRoomSelectorProps) => {
               <h4 className="text-md font-medium mb-4">Room {index + 1}</h4>
               
               <div className="space-y-4">
+                {/* Room Type Selection */}
                 <div className="space-y-2">
                   <Label>Room Type</Label>
                   <RadioGroup
-                    defaultValue={room.roomType}
-                    value={room.roomType}
-                    onValueChange={(value) => updateRoomDetail(room.id, "roomType", value)}
+                    defaultValue={room.roomTypeId}
+                    value={room.roomTypeId}
+                    onValueChange={(value) => updateRoomDetail(room.id, "roomTypeId", value)}
                     className="grid grid-cols-2 gap-2"
                   >
                     {roomTypeOptions.map((type) => (
@@ -125,67 +130,29 @@ const MultiRoomSelector = ({ rooms, updateRooms }: MultiRoomSelectorProps) => {
                   </RadioGroup>
                 </div>
 
+                {/* Room Size Selection */}
+                <div className="space-y-2">
+                  <Label>Room Size</Label>
+                  <Select 
+                    value={room.size}
+                    onValueChange={(value) => 
+                      updateRoomDetail(room.id, "size", value)
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select size" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="small">Small</SelectItem>
+                      <SelectItem value="average">Average</SelectItem>
+                      <SelectItem value="large">Large</SelectItem>
+                      <SelectItem value="xl">Extra Large</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Wall Count</Label>
-                    <Input
-                      type="number"
-                      value={room.wallsCount}
-                      onChange={(e) =>
-                        updateRoomDetail(room.id, "wallsCount", parseInt(e.target.value) || 1)
-                      }
-                      min={1}
-                      max={20}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label>Wall Height (feet)</Label>
-                    <Input
-                      type="number"
-                      value={room.wallHeight}
-                      onChange={(e) =>
-                        updateRoomDetail(room.id, "wallHeight", parseFloat(e.target.value) || 1)
-                      }
-                      min={1}
-                      step={0.1}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label>Wall Width (feet)</Label>
-                    <Input
-                      type="number"
-                      value={room.wallWidth}
-                      onChange={(e) =>
-                        updateRoomDetail(room.id, "wallWidth", parseFloat(e.target.value) || 1)
-                      }
-                      min={1}
-                      step={0.1}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Wall Condition</Label>
-                    <Select 
-                      value={room.condition}
-                      onValueChange={(value) => 
-                        updateRoomDetail(room.id, "condition", value)
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select condition" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {conditionOptions.map(option => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
+                  {/* Paint Type Selection */}
                   <div className="space-y-2">
                     <Label>Paint Quality</Label>
                     <Select 
@@ -207,90 +174,180 @@ const MultiRoomSelector = ({ rooms, updateRooms }: MultiRoomSelectorProps) => {
                     </Select>
                   </div>
                   
+                  {/* Repairs Selection */}
+                  <div className="space-y-2">
+                    <Label>Wall Repairs Needed</Label>
+                    <Select 
+                      value={room.repairs}
+                      onValueChange={(value) => 
+                        updateRoomDetail(room.id, "repairs", value)
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select repair level" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {repairOptions.map(option => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  {/* Door Configuration */}
                   <div className="space-y-2">
                     <Label>Doors to Paint</Label>
                     <Input
                       type="number"
-                      value={room.doorsCount}
+                      value={room.numberOfDoors}
                       onChange={(e) =>
-                        updateRoomDetail(room.id, "doorsCount", parseInt(e.target.value) || 0)
+                        updateRoomDetail(room.id, "numberOfDoors", parseInt(e.target.value) || 0)
+                      }
+                      min={0}
+                    />
+                  </div>
+                  
+                  {room.numberOfDoors > 0 && (
+                    <div className="space-y-2">
+                      <Label>Door Painting Method</Label>
+                      <Select 
+                        value={room.doorPaintingMethod}
+                        onValueChange={(value) => 
+                          updateRoomDetail(room.id, "doorPaintingMethod", value)
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select method" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="brush">Brush</SelectItem>
+                          <SelectItem value="spray">Spray</SelectItem>
+                          <SelectItem value="none">Don't Paint</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                  
+                  {/* Window Configuration */}
+                  <div className="space-y-2">
+                    <Label>Windows to Paint</Label>
+                    <Input
+                      type="number"
+                      value={room.numberOfWindows}
+                      onChange={(e) =>
+                        updateRoomDetail(room.id, "numberOfWindows", parseInt(e.target.value) || 0)
+                      }
+                      min={0}
+                    />
+                  </div>
+                  
+                  {room.numberOfWindows > 0 && (
+                    <div className="space-y-2">
+                      <Label>Window Painting Method</Label>
+                      <Select 
+                        value={room.windowPaintingMethod}
+                        onValueChange={(value) => 
+                          updateRoomDetail(room.id, "windowPaintingMethod", value)
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select method" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="brush">Brush</SelectItem>
+                          <SelectItem value="spray">Spray</SelectItem>
+                          <SelectItem value="none">Don't Paint</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                  
+                  {/* Baseboard Options */}
+                  <div className="space-y-2">
+                    <Label>Baseboard Type</Label>
+                    <Select 
+                      value={room.baseboardType}
+                      onValueChange={(value) => 
+                        updateRoomDetail(room.id, "baseboardType", value)
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">No Baseboards</SelectItem>
+                        <SelectItem value="brush">Brush Painted</SelectItem>
+                        <SelectItem value="spray">Spray Painted</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  {room.baseboardType !== 'none' && (
+                    <div className="space-y-2">
+                      <Label>Baseboard Installation (linear feet)</Label>
+                      <Input
+                        type="number"
+                        value={room.baseboardInstallationLf}
+                        onChange={(e) =>
+                          updateRoomDetail(room.id, "baseboardInstallationLf", parseInt(e.target.value) || 0)
+                        }
+                        min={0}
+                      />
+                    </div>
+                  )}
+                  
+                  {/* Closet Configuration */}
+                  <div className="space-y-2">
+                    <Label>Regular Closets</Label>
+                    <Input
+                      type="number"
+                      value={room.regularClosetCount}
+                      onChange={(e) =>
+                        updateRoomDetail(room.id, "regularClosetCount", parseInt(e.target.value) || 0)
                       }
                       min={0}
                     />
                   </div>
                   
                   <div className="space-y-2">
-                    <Label>Windows to Paint</Label>
+                    <Label>Walk-in Closets</Label>
                     <Input
                       type="number"
-                      value={room.windowsCount}
+                      value={room.walkInClosetCount}
                       onChange={(e) =>
-                        updateRoomDetail(room.id, "windowsCount", parseInt(e.target.value) || 0)
+                        updateRoomDetail(room.id, "walkInClosetCount", parseInt(e.target.value) || 0)
                       }
                       min={0}
                     />
                   </div>
                 </div>
 
+                {/* Fireplace Options */}
+                <div className="space-y-2">
+                  <Label>Fireplace Mantel</Label>
+                  <Select 
+                    value={room.fireplaceMethod}
+                    onValueChange={(value) => 
+                      updateRoomDetail(room.id, "fireplaceMethod", value)
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select fireplace option" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No Fireplace</SelectItem>
+                      <SelectItem value="brush">Brush Painted</SelectItem>
+                      <SelectItem value="spray">Spray Painted</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Additional Options Toggles */}
                 <div className="border-t pt-4 mt-4">
                   <h5 className="font-medium mb-3">Additional Options</h5>
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor={`${room.id}-ceiling`} className="cursor-pointer">
-                        Include Ceiling (+40%)
-                      </Label>
-                      <Switch 
-                        id={`${room.id}-ceiling`} 
-                        checked={room.includeCeiling}
-                        onCheckedChange={(checked) => updateRoomDetail(room.id, "includeCeiling", checked)}
-                      />
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor={`${room.id}-baseboards`} className="cursor-pointer">
-                        Include Baseboards
-                      </Label>
-                      <Switch 
-                        id={`${room.id}-baseboards`} 
-                        checked={room.includeBaseboards}
-                        onCheckedChange={(checked) => updateRoomDetail(room.id, "includeBaseboards", checked)}
-                      />
-                    </div>
-                    
-                    {room.includeBaseboards && (
-                      <div className="ml-6 mt-2">
-                        <RadioGroup
-                          value={room.baseboardsMethod}
-                          onValueChange={(value) => updateRoomDetail(room.id, "baseboardsMethod", value)}
-                          className="flex flex-col space-y-2"
-                        >
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="brush" id={`${room.id}-baseboards-brush`} />
-                            <Label htmlFor={`${room.id}-baseboards-brush`} className="cursor-pointer">
-                              Brush (+25%)
-                            </Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="spray" id={`${room.id}-baseboards-spray`} />
-                            <Label htmlFor={`${room.id}-baseboards-spray`} className="cursor-pointer">
-                              Spray (+50%)
-                            </Label>
-                          </div>
-                        </RadioGroup>
-                      </div>
-                    )}
-                    
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor={`${room.id}-crown-molding`} className="cursor-pointer">
-                        Include Crown Molding (+25%)
-                      </Label>
-                      <Switch 
-                        id={`${room.id}-crown-molding`} 
-                        checked={room.includeCrownMolding}
-                        onCheckedChange={(checked) => updateRoomDetail(room.id, "includeCrownMolding", checked)}
-                      />
-                    </div>
-                    
                     <div className="flex items-center justify-between">
                       <Label htmlFor={`${room.id}-high-ceiling`} className="cursor-pointer">
                         Has High Ceiling (+$300-600)
@@ -303,18 +360,41 @@ const MultiRoomSelector = ({ rooms, updateRooms }: MultiRoomSelectorProps) => {
                     </div>
                     
                     <div className="flex items-center justify-between">
-                      <Label htmlFor={`${room.id}-closet`} className="cursor-pointer">
-                        Include Closet (+$60-300)
+                      <Label htmlFor={`${room.id}-stair-railing`} className="cursor-pointer">
+                        Includes Stair Railing (+$250)
                       </Label>
                       <Switch 
-                        id={`${room.id}-closet`} 
-                        checked={room.includeCloset}
-                        onCheckedChange={(checked) => updateRoomDetail(room.id, "includeCloset", checked)}
+                        id={`${room.id}-stair-railing`} 
+                        checked={room.hasStairRailing}
+                        onCheckedChange={(checked) => updateRoomDetail(room.id, "hasStairRailing", checked)}
+                      />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor={`${room.id}-two-colors`} className="cursor-pointer">
+                        Two Colors (+10%)
+                      </Label>
+                      <Switch 
+                        id={`${room.id}-two-colors`} 
+                        checked={room.twoColors}
+                        onCheckedChange={(checked) => updateRoomDetail(room.id, "twoColors", checked)}
+                      />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor={`${room.id}-millwork-priming`} className="cursor-pointer">
+                        Millwork Priming Needed (+50%)
+                      </Label>
+                      <Switch 
+                        id={`${room.id}-millwork-priming`} 
+                        checked={room.millworkPrimingNeeded}
+                        onCheckedChange={(checked) => updateRoomDetail(room.id, "millworkPrimingNeeded", checked)}
                       />
                     </div>
                   </div>
                 </div>
 
+                {/* Discount Options */}
                 <div className="border-t pt-4 mt-4">
                   <h5 className="font-medium mb-3">Room-Specific Discounts</h5>
                   <div className="space-y-4">
@@ -324,19 +404,19 @@ const MultiRoomSelector = ({ rooms, updateRooms }: MultiRoomSelectorProps) => {
                       </Label>
                       <Switch 
                         id={`${room.id}-empty`} 
-                        checked={room.isEmptyHouse}
-                        onCheckedChange={(checked) => updateRoomDetail(room.id, "isEmptyHouse", checked)}
+                        checked={room.isEmpty}
+                        onCheckedChange={(checked) => updateRoomDetail(room.id, "isEmpty", checked)}
                       />
                     </div>
                     
                     <div className="flex items-center justify-between">
                       <Label htmlFor={`${room.id}-floor-covering`} className="cursor-pointer">
-                        Need Floor Covering? (5% discount if no)
+                        No Floor Covering Needed (5% discount)
                       </Label>
                       <Switch 
                         id={`${room.id}-floor-covering`} 
-                        checked={room.needFloorCovering}
-                        onCheckedChange={(checked) => updateRoomDetail(room.id, "needFloorCovering", checked)}
+                        checked={room.noFloorCovering}
+                        onCheckedChange={(checked) => updateRoomDetail(room.id, "noFloorCovering", checked)}
                       />
                     </div>
                   </div>
