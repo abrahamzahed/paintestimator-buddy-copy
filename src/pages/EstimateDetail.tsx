@@ -6,29 +6,15 @@ import EstimatePageLayout from "@/components/estimate/EstimatePageLayout";
 import LoadingState from "@/components/estimate/LoadingState";
 import EstimateNotFound from "@/components/estimate/EstimateNotFound";
 import { Button } from "@/components/ui/button";
-import { 
-  ArrowLeft, 
-  CheckCircle, 
-  Printer, 
-  Home, 
-  LayoutDashboard, 
-  Edit,
-  Trash2 
-} from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { formatCurrency } from "@/utils/estimateUtils";
+import { ArrowLeft, CheckCircle, Printer } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import DetailedSummaryDialog from "@/components/estimate-detail/DetailedSummaryDialog";
-import RoomDetailCard from "@/components/estimate-detail/RoomDetailCard";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import ProjectDetailsSection from "@/components/estimate-detail/ProjectDetailsSection";
+import EstimateCostSummary from "@/components/estimate-detail/EstimateCostSummary";
+import EditOptionsDialog from "@/components/estimate-detail/EditOptionsDialog";
+import DeleteConfirmationDialog from "@/components/estimate-detail/DeleteConfirmationDialog";
+import EstimateActionButtons from "@/components/estimate-detail/EstimateActionButtons";
 
 export default function EstimateDetail() {
   const { id } = useParams<{ id: string }>();
@@ -159,9 +145,6 @@ export default function EstimateDetail() {
     'estimateSummary' in estimate.details && 
     estimate.details.estimateSummary?.volumeDiscount || estimate.discount || 0;
 
-  // Calculate subtotal (total plus discount)
-  const subtotal = estimate.total_cost + volumeDiscount;
-
   return (
     <EstimatePageLayout>
       <div className="space-y-6 animate-fade-in">
@@ -198,211 +181,29 @@ export default function EstimateDetail() {
           </p>
         </div>
         
-        <div className="bg-secondary/30 p-6 rounded-lg">
-          <h4 className="font-medium mb-4">Project Details</h4>
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Project Name:</span>
-              <span className="font-medium">{projectName}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Contact:</span>
-              <span className="font-medium">{clientName}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Address:</span>
-              <span className="font-medium">{clientAddress}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Rooms:</span>
-              <span className="font-medium">{roomDetails.length}</span>
-            </div>
-          </div>
-        </div>
+        <ProjectDetailsSection 
+          projectName={projectName}
+          clientName={clientName}
+          clientAddress={clientAddress}
+          roomCount={roomDetails.length}
+        />
         
-        <Card className="border">
-          <CardContent className="p-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              <div>
-                <p className="text-muted-foreground text-sm">Labor</p>
-                <p className="font-semibold">{formatCurrency(estimate.labor_cost || 0)}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground text-sm">Materials</p>
-                <p className="font-semibold">{formatCurrency(estimate.material_cost || 0)}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground text-sm">Paint</p>
-                <p className="font-semibold">{estimate.estimated_paint_gallons || 0} gallons</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground text-sm">Time</p>
-                <p className="font-semibold">{(estimate.estimated_hours || 0).toFixed(1)} hours</p>
-              </div>
-            </div>
-            
-            <h5 className="text-sm font-medium mb-3">Rooms breakdown:</h5>
-            <div className="space-y-6">
-              {roomDetails.map((room, index) => (
-                <div key={room.id} className="border-t pt-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <h6 className="font-medium">
-                      {room.roomTypeId.charAt(0).toUpperCase() + room.roomTypeId.slice(1)} (Room {index + 1})
-                    </h6>
-                    <span className="font-semibold text-blue-600">
-                      {formatCurrency(roomEstimates[room.id]?.totalCost || 0)}
-                    </span>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-sm">
-                    <span className="text-muted-foreground">Size:</span>
-                    <span>{room.size.charAt(0).toUpperCase() + room.size.slice(1)}</span>
-                    
-                    <span className="text-muted-foreground">Paint Type:</span>
-                    <span>{room.paintType.charAt(0).toUpperCase() + room.paintType.slice(1)}</span>
-                    
-                    {room.hasHighCeiling && (
-                      <>
-                        <span className="text-muted-foreground">Ceiling:</span>
-                        <span>High ceiling</span>
-                      </>
-                    )}
-                    
-                    {room.twoColors && (
-                      <>
-                        <span className="text-muted-foreground">Wall Colors:</span>
-                        <span>Two colors</span>
-                      </>
-                    )}
-                    
-                    {(room.regularClosetCount > 0 || room.walkInClosetCount > 0) && (
-                      <>
-                        <span className="text-muted-foreground">Closets:</span>
-                        <span>
-                          {room.walkInClosetCount > 0 && `${room.walkInClosetCount} walk-in`}
-                          {room.walkInClosetCount > 0 && room.regularClosetCount > 0 && ', '}
-                          {room.regularClosetCount > 0 && `${room.regularClosetCount} regular`}
-                        </span>
-                      </>
-                    )}
-                    
-                    {room.doorPaintingMethod && room.doorPaintingMethod !== 'none' && room.numberOfDoors > 0 && (
-                      <>
-                        <span className="text-muted-foreground">Doors:</span>
-                        <span>{room.numberOfDoors} doors ({room.doorPaintingMethod})</span>
-                      </>
-                    )}
-                    
-                    {room.windowPaintingMethod && room.windowPaintingMethod !== 'none' && room.numberOfWindows > 0 && (
-                      <>
-                        <span className="text-muted-foreground">Windows:</span>
-                        <span>{room.numberOfWindows} windows ({room.windowPaintingMethod})</span>
-                      </>
-                    )}
-                    
-                    {room.fireplaceMethod && room.fireplaceMethod !== 'none' && (
-                      <>
-                        <span className="text-muted-foreground">Fireplace:</span>
-                        <span>{room.fireplaceMethod.charAt(0).toUpperCase() + room.fireplaceMethod.slice(1)} painting</span>
-                      </>
-                    )}
-                    
-                    {room.repairs && room.repairs !== 'none' && (
-                      <>
-                        <span className="text-muted-foreground">Repairs:</span>
-                        <span>{room.repairs.charAt(0).toUpperCase() + room.repairs.slice(1)}</span>
-                      </>
-                    )}
-                    
-                    {room.hasStairRailing && (
-                      <>
-                        <span className="text-muted-foreground">Stair Railing:</span>
-                        <span>Included</span>
-                      </>
-                    )}
-                    
-                    {room.baseboardType && room.baseboardType !== 'none' && (
-                      <>
-                        <span className="text-muted-foreground">Baseboards:</span>
-                        <span>{room.baseboardType.charAt(0).toUpperCase() + room.baseboardType.slice(1)} application</span>
-                      </>
-                    )}
-                    
-                    {room.baseboardInstallationLf > 0 && (
-                      <>
-                        <span className="text-muted-foreground">Baseboard Installation:</span>
-                        <span>{room.baseboardInstallationLf} linear feet</span>
-                      </>
-                    )}
-                    
-                    {room.millworkPrimingNeeded && (
-                      <>
-                        <span className="text-muted-foreground">Millwork Priming:</span>
-                        <span>Included</span>
-                      </>
-                    )}
-                    
-                    {room.isEmpty && (
-                      <>
-                        <span className="text-muted-foreground">Empty Room:</span>
-                        <span>Yes (Discounted)</span>
-                      </>
-                    )}
-                    
-                    {room.noFloorCovering && (
-                      <>
-                        <span className="text-muted-foreground">No Floor Covering:</span>
-                        <span>Yes (Discounted)</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-              ))}
-              
-              {volumeDiscount > 0 && (
-                <div className="flex justify-between text-green-600 border-t pt-3 mt-3">
-                  <span className="font-medium">Volume Discount:</span>
-                  <span className="font-medium">-{formatCurrency(volumeDiscount)}</span>
-                </div>
-              )}
-              
-              <div className="flex justify-between items-center border-t pt-4 mt-4">
-                <span className="font-bold">Total Cost</span>
-                <span className="font-bold text-xl text-blue-600">{formatCurrency(estimate.total_cost || 0)}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <EstimateCostSummary 
+          laborCost={estimate.labor_cost || 0}
+          materialCost={estimate.material_cost || 0}
+          paintGallons={estimate.estimated_paint_gallons || 0}
+          estimatedHours={estimate.estimated_hours || 0}
+          roomDetails={roomDetails}
+          roomEstimates={roomEstimates}
+          volumeDiscount={volumeDiscount}
+          totalCost={estimate.total_cost || 0}
+        />
         
-        <div className="border-t pt-4 mt-4">
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Button 
-              variant="outline"
-              onClick={handleHome}
-              className="flex items-center"
-            >
-              <Home className="mr-2 h-4 w-4" />
-              Return Home
-            </Button>
-            
-            <Button 
-              className="bg-paint hover:bg-paint-dark flex items-center"
-              onClick={handleDashboard}
-            >
-              <LayoutDashboard className="mr-2 h-4 w-4" />
-              Go to Dashboard
-            </Button>
-            
-            <Button 
-              variant="outline"
-              onClick={handleEditClick}
-              className="flex items-center"
-            >
-              <Edit className="mr-2 h-4 w-4" />
-              Edit
-            </Button>
-          </div>
-        </div>
+        <EstimateActionButtons 
+          onHome={handleHome}
+          onDashboard={handleDashboard}
+          onEdit={handleEditClick}
+        />
         
         <DetailedSummaryDialog
           open={showDetailedView}
@@ -412,64 +213,19 @@ export default function EstimateDetail() {
           roomEstimates={roomEstimates}
         />
         
-        {/* Edit options dialog */}
-        <Dialog open={showEditOptions} onOpenChange={setShowEditOptions}>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Edit Options</DialogTitle>
-              <DialogDescription>
-                Choose what you want to do with this estimate.
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="grid gap-4 py-4">
-              <Button 
-                onClick={handleEditEstimate}
-                className="flex items-center justify-center"
-              >
-                <Edit className="mr-2 h-4 w-4" />
-                Edit Estimate
-              </Button>
-              
-              <Button 
-                variant="destructive" 
-                onClick={handleDeleteClick}
-                className="flex items-center justify-center"
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete Estimate
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <EditOptionsDialog
+          open={showEditOptions}
+          onOpenChange={setShowEditOptions}
+          onEditEstimate={handleEditEstimate}
+          onDeleteClick={handleDeleteClick}
+        />
         
-        {/* Delete confirmation dialog */}
-        <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Delete Estimate</DialogTitle>
-              <DialogDescription>
-                Are you sure you want to delete this estimate? This action cannot be undone.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter className="flex gap-2 justify-end mt-4">
-              <Button 
-                variant="outline" 
-                onClick={() => setIsDeleteDialogOpen(false)}
-                disabled={isDeleting}
-              >
-                Cancel
-              </Button>
-              <Button 
-                variant="destructive" 
-                onClick={handleDeleteEstimate}
-                disabled={isDeleting}
-              >
-                {isDeleting ? "Deleting..." : "Delete"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <DeleteConfirmationDialog
+          open={isDeleteDialogOpen}
+          onOpenChange={setIsDeleteDialogOpen}
+          onDeleteEstimate={handleDeleteEstimate}
+          isDeleting={isDeleting}
+        />
       </div>
     </EstimatePageLayout>
   );
