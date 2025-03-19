@@ -25,8 +25,12 @@ export const formatDate = (dateString: string | null | undefined): string => {
   });
 };
 
-// Fixed function with explicit return type to prevent recursive type issue
-export const fetchProjectWithRelated = async (projectId: string) => {
+// Define the return type explicitly to avoid recursive type inference
+export const fetchProjectWithRelated = async (projectId: string): Promise<{
+  project: any; 
+  estimates: any[];
+  invoices: any[];
+}> => {
   const { supabase } = await import('@/integrations/supabase/client');
   
   try {
@@ -57,7 +61,6 @@ export const fetchProjectWithRelated = async (projectId: string) => {
 
     if (invoicesError) throw invoicesError;
 
-    // Use explicit type definition for the return value
     return {
       project: projectData,
       estimates: estimatesData || [],
