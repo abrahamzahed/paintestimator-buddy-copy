@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -11,13 +12,15 @@ interface CustomerDashboardViewProps {
   archivedProjects: Project[];
   estimates: Estimate[];
   invoices: Invoice[];
+  statusColorFn?: (status: string) => string;
 }
 
 const CustomerDashboardView = ({
   projects,
   archivedProjects,
   estimates,
-  invoices
+  invoices,
+  statusColorFn
 }: CustomerDashboardViewProps) => {
   const [projectsView, setProjectsView] = useState<"active" | "archived">("active");
   

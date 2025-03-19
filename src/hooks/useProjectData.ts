@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { fetchProjectWithRelated } from "@/utils/projectDataUtils";
 import { useStatusUpdate } from "@/hooks/useStatusUpdate";
 
-export const useProjectData = (projectId: string | undefined) => {
+export const useProjectData = (projectId?: string) => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [project, setProject] = useState<Project | null>(null);

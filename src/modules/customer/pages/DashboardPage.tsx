@@ -78,9 +78,10 @@ const DashboardPage = () => {
           />
         ) : (
           <CustomerDashboardView 
-            projects={projects}
-            estimates={estimates}
-            invoices={invoices}
+            projects={projects || []}
+            archivedProjects={archivedProjects}
+            estimates={estimates || []}
+            invoices={invoices || []}
             statusColorFn={getProjectStatusColor}
           />
         )}
