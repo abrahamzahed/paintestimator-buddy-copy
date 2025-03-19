@@ -24,20 +24,3 @@ export const formatDate = (dateString: string | null | undefined): string => {
     day: 'numeric'
   });
 };
-
-// Add missing function
-export const fetchProjectWithRelated = async (projectId: string) => {
-  // In a real implementation, this would fetch from Supabase
-  // For now, returning mock data structure
-  return {
-    project: {
-      id: projectId,
-      name: 'Mock Project',
-      status: 'active',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    },
-    estimates: [],
-    invoices: []
-  };
-};

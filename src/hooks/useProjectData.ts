@@ -6,38 +6,29 @@ import { useNavigate } from "react-router-dom";
 import { fetchProjectWithRelated } from "@/utils/projectDataUtils";
 import { useStatusUpdate } from "@/hooks/useStatusUpdate";
 
-export const useProjectData = (projectId?: string) => {
+export const useProjectData = (projectId: string | undefined) => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [projects, setProjects] = useState<Project[]>([]);
+  const [project, setProject] = useState<Project | null>(null);
   const [estimates, setEstimates] = useState<Estimate[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showArchiveDialog, setShowArchiveDialog] = useState(false);
   const [showRestoreDialog, setShowRestoreDialog] = useState(false);
   
   const refreshData = useCallback(async () => {
     try {
-      if (!projectId) {
-        // If no projectId, just return empty data
-        setProjects([]);
-        setEstimates([]);
-        setInvoices([]);
-        return;
-      }
+      if (!projectId) return;
       
-      const { project, estimates: estimatesData, invoices: invoicesData } = 
+      const { project: projectData, estimates: estimatesData, invoices: invoicesData } = 
         await fetchProjectWithRelated(projectId);
       
-      // For single project view, add project to array
-      setProjects(project ? [project as Project] : []);
+      setProject(projectData);
       setEstimates(estimatesData);
       setInvoices(invoicesData);
     } catch (error) {
       console.error("Error refreshing project data:", error);
-      setError(error instanceof Error ? error : new Error("Unknown error"));
     }
   }, [projectId]);
   
@@ -50,23 +41,16 @@ export const useProjectData = (projectId?: string) => {
   useEffect(() => {
     const loadProjectData = async () => {
       try {
-        if (projectId) {
-          // Single project view
-          const { project, estimates: estimatesData, invoices: invoicesData } = 
-            await fetchProjectWithRelated(projectId);
-          
-          setProjects(project ? [project as Project] : []);
-          setEstimates(estimatesData);
-          setInvoices(invoicesData);
-        } else {
-          // Dashboard view - would typically fetch multiple projects
-          setProjects([]);
-          setEstimates([]);
-          setInvoices([]);
-        }
+        if (!projectId) return;
+        
+        const { project: projectData, estimates: estimatesData, invoices: invoicesData } = 
+          await fetchProjectWithRelated(projectId);
+        
+        setProject(projectData);
+        setEstimates(estimatesData);
+        setInvoices(invoicesData);
       } catch (error) {
         console.error("Error fetching project data:", error);
-        setError(error instanceof Error ? error : new Error("Unknown error"));
         toast({
           title: "Error loading project",
           description: "Please try again later",
@@ -81,7 +65,7 @@ export const useProjectData = (projectId?: string) => {
   }, [projectId, toast]);
 
   const handleUpdateProjectStatus = useCallback(async (newStatus: string) => {
-    if (!projectId || projects.length === 0) return;
+    if (!projectId || !project) return;
     
     // Close all dialogs first to avoid UI locks
     setShowDeleteDialog(false);
@@ -90,19 +74,18 @@ export const useProjectData = (projectId?: string) => {
     
     if (!isUpdatingStatus) {
       // Optimistically update the UI
-      setProjects(prev => prev.map(p => p.id === projectId ? { ...p, status: newStatus } : p));
+      setProject(prev => prev ? { ...prev, status: newStatus } : null);
       
       // Trigger the actual API update
-      await updateStatus(projects[0], newStatus);
+      await updateStatus(project, newStatus);
     }
-  }, [projectId, projects, isUpdatingStatus, updateStatus]);
+  }, [projectId, project, isUpdatingStatus, updateStatus]);
 
   return {
-    projects,
+    project,
     estimates,
     invoices,
     loading,
-    error,
     showDeleteDialog,
     setShowDeleteDialog,
     showArchiveDialog,
@@ -111,7 +94,6 @@ export const useProjectData = (projectId?: string) => {
     setShowRestoreDialog,
     isUpdatingStatus,
     handleUpdateProjectStatus,
-    refreshData,
-    isLoading: loading // Add alias for isLoading
+    refreshData
   };
 };

@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { useSession } from "@/auth/use-session";
 import { useToast } from "@/common/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import { useProjectData } from "@/hooks/useProjectData";
 import { getProjectStatusColor } from "@/common/utils/projectDataUtils";
 import AdminDashboardView from "@/modules/admin/components/AdminDashboardView";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
@@ -11,17 +12,13 @@ import CustomerDashboardView from "@/components/dashboard/CustomerDashboardView"
 import DashboardMetrics from "@/components/dashboard/DashboardMetrics";
 
 const DashboardPage = () => {
-  const { isAdmin, profile, user, signOut, isLoading: sessionLoading } = useSession();
+  const { isAdmin, profile, isLoading } = useSession();
   const { toast } = useToast();
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
+  const { projects, estimates, invoices, isLoading: isDataLoading, error } = useProjectData();
   
-  // Mock data for now - in real app would fetch from server
-  const [projects, setProjects] = useState([]);
-  const [archivedProjects, setArchivedProjects] = useState([]);
-  const [estimates, setEstimates] = useState([]);
-  const [invoices, setInvoices] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const archivedProjects = projects.filter(p => p.status === "archived" || p.status === "cancelled");
+  const activeProjects = projects.filter(p => p.status !== "archived" && p.status !== "cancelled");
   
   useEffect(() => {
     if (error) {
@@ -33,9 +30,9 @@ const DashboardPage = () => {
     }
   }, [error, toast]);
 
-  if (sessionLoading || isLoading) {
+  if (isLoading || isDataLoading) {
     return (
-      <DashboardLayout user={user} profile={profile} signOut={signOut}>
+      <DashboardLayout>
         <div className="flex justify-center items-center min-h-[400px]">
           <div className="animate-spin h-12 w-12 border-4 border-paint rounded-full border-t-transparent"></div>
         </div>
@@ -49,7 +46,7 @@ const DashboardPage = () => {
   };
 
   return (
-    <DashboardLayout user={user} profile={profile} signOut={signOut}>
+    <DashboardLayout>
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
@@ -73,7 +70,7 @@ const DashboardPage = () => {
 
         {isAdmin ? (
           <AdminDashboardView 
-            projects={projects}
+            projects={activeProjects}
             archivedProjects={archivedProjects}
             estimates={estimates}
             invoices={invoices}
@@ -82,7 +79,6 @@ const DashboardPage = () => {
         ) : (
           <CustomerDashboardView 
             projects={projects}
-            archivedProjects={archivedProjects}
             estimates={estimates}
             invoices={invoices}
             selectedStatus={selectedStatus}
