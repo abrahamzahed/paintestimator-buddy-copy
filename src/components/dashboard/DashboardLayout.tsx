@@ -1,20 +1,20 @@
 
-import React, { ReactNode, useState } from "react";
+import React, { ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { User } from "@supabase/supabase-js";
-import { Profile } from "@/context/session-types";
+import { Profile } from "@/auth/types";
 
 interface DashboardLayoutProps {
   children: ReactNode;
   user: User | null;
   profile: Profile | null;
-  signOut: () => Promise<void>; // Updated to match the SessionContextType
+  signOut: () => Promise<void>;
 }
 
 const DashboardLayout = ({ children, user, profile, signOut }: DashboardLayoutProps) => {
   const navigate = useNavigate();
-  const [isSigningOut, setIsSigningOut] = useState(false);
+  const [isSigningOut, setIsSigningOut] = React.useState(false);
   
   const handleSignOut = async () => {
     if (isSigningOut) return; // Prevent multiple clicks

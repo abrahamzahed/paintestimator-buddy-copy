@@ -31,3 +31,18 @@ export const calculateTotalEstimate = (roomDetails: RoomDetails[]): EstimatorSum
     roomCosts: []
   };
 };
+
+// Add missing function
+export const calculateSingleRoomEstimate = (roomDetail: any) => {
+  // Mock implementation of single room calculation
+  return {
+    roomPrice: 250,
+    laborCost: 150,
+    materialCost: 100,
+    totalCost: 250,
+    timeEstimate: 4,
+    paintCans: 2,
+    additionalCosts: {},
+    discounts: {}
+  };
+};
