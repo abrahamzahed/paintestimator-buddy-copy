@@ -1,5 +1,5 @@
 
-import { FreeEstimator } from "@/packages/free-estimator";
+import { FreeEstimator } from "@/modules/public-estimator";
 
 const HomeEstimator = () => {
   return <FreeEstimator />;

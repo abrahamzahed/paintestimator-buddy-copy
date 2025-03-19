@@ -4,11 +4,11 @@ import { Link, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import ChatInterface from "@/components/ChatInterface";
-import HomeEstimator from "@/components/HomeEstimator";
 import { Button } from "@/components/ui/button";
-import { useSession } from "@/context/use-session";
+import { useSession } from "@/auth/use-session";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import ContactForm from "@/components/ContactForm";
+import { FreeEstimator } from "@/modules/public-estimator";
 
 const Index = () => {
   const { user, isLoading } = useSession();
@@ -125,7 +125,7 @@ const Index = () => {
             ) : (
               <div className="mt-6 animate-fade-in">
                 <h3 className="text-xl font-semibold mb-4">Get Your Free Estimate</h3>
-                <HomeEstimator />
+                <FreeEstimator />
               </div>
             )}
           </div>

@@ -1,3 +1,3 @@
 
-export { default as FreeEstimator } from './FreeEstimator';
-export { ProjectSelector } from '@/packages/auth-estimator';
+// Re-export the FreeEstimator component from the new location
+export { FreeEstimator } from '@/modules/public-estimator';

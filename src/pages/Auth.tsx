@@ -1,14 +1,13 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useSession } from "@/context/use-session";
+import { useSession } from "@/auth/use-session";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getTemporaryEstimate, clearTemporaryEstimate, hasSavedEstimate, getTemporaryProjectName } from "@/utils/estimateStorage";
-import { SignInForm } from "@/components/auth/SignInForm";
-import { SignUpForm } from "@/components/auth/SignUpForm";
-import { PasswordResetConfirmation } from "@/components/auth/PasswordResetConfirmation";
+import { SignInForm } from "@/common/components/auth/SignInForm";
+import { SignUpForm } from "@/common/components/auth/SignUpForm";
+import { PasswordResetConfirmation } from "@/common/components/auth/PasswordResetConfirmation";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -29,13 +28,11 @@ export default function Auth() {
   const saveEstimate = searchParams.get("saveEstimate") === "true";
   const type = searchParams.get("type");
   
-  // First check if this is a recovery mode
   useEffect(() => {
     const checkRecoveryMode = async () => {
       if (type === "recovery") {
         console.log("Recovery mode detected, signing out any existing user");
         try {
-          // Sign out the user immediately when in recovery mode to prevent profile loading
           await supabase.auth.signOut();
           setIsRecoveryMode(true);
         } catch (error) {
@@ -61,15 +58,12 @@ export default function Auth() {
     checkRecoveryMode();
   }, [type, saveEstimate, toast, tab]);
 
-  // Handle redirect after successful auth
   useEffect(() => {
     const handleSessionRedirect = async () => {
-      // Don't redirect if we're in recovery mode or still processing
       if (isRecoveryMode || processingRecovery || redirectTriggered || localLoading) {
         return;
       }
       
-      // Only redirect if we have a valid session and user, and we're not loading
       if (session && user && !isLoading) {
         try {
           console.log("Valid session detected, redirecting to:", saveEstimate ? "/estimate?saveEstimate=true" : returnUrl);
@@ -103,7 +97,6 @@ export default function Auth() {
     });
   };
 
-  // Show loading state during recovery processing or while the auth state is initializing
   if (processingRecovery || (isLoading && !redirectTriggered)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-secondary/30 px-4">
