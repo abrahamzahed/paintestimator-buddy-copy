@@ -1,5 +1,5 @@
 
-import { formatCurrency } from "@/utils/estimateUtils";
+import { formatCurrency } from "@/utils/formatUtils";
 import { EstimateResult, RoomDetail } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Send, Edit } from "lucide-react";

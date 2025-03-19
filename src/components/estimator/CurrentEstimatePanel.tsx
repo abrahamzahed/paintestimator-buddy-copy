@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { EstimateResult } from "@/types";
-import { formatCurrency } from "@/utils/estimateUtils";
+import { formatCurrency } from "@/utils/formatUtils";
 import { EstimatorSummary, RoomDetails as DynamicRoomDetails } from "@/types/estimator";
 import { fetchPricingData, RoomType, PaintType } from "@/lib/supabase";
 

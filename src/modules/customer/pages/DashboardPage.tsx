@@ -12,13 +12,13 @@ import CustomerDashboardView from "@/components/dashboard/CustomerDashboardView"
 import DashboardMetrics from "@/components/dashboard/DashboardMetrics";
 
 const DashboardPage = () => {
-  const { isAdmin, profile, isLoading } = useSession();
+  const { isAdmin, profile, user, signOut } = useSession();
   const { toast } = useToast();
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
-  const { projects, estimates, invoices, isLoading: isDataLoading, error } = useProjectData();
+  const { projects, estimates, invoices, isLoading, error } = useProjectData();
   
-  const archivedProjects = projects.filter(p => p.status === "archived" || p.status === "cancelled");
-  const activeProjects = projects.filter(p => p.status !== "archived" && p.status !== "cancelled");
+  const archivedProjects = projects?.filter(p => p.status === "archived" || p.status === "cancelled") || [];
+  const activeProjects = projects?.filter(p => p.status !== "archived" && p.status !== "cancelled") || [];
   
   useEffect(() => {
     if (error) {
@@ -30,9 +30,9 @@ const DashboardPage = () => {
     }
   }, [error, toast]);
 
-  if (isLoading || isDataLoading) {
+  if (isLoading) {
     return (
-      <DashboardLayout>
+      <DashboardLayout user={user} profile={profile} signOut={signOut}>
         <div className="flex justify-center items-center min-h-[400px]">
           <div className="animate-spin h-12 w-12 border-4 border-paint rounded-full border-t-transparent"></div>
         </div>
@@ -46,7 +46,7 @@ const DashboardPage = () => {
   };
 
   return (
-    <DashboardLayout>
+    <DashboardLayout user={user} profile={profile} signOut={signOut}>
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
@@ -63,9 +63,9 @@ const DashboardPage = () => {
         </div>
 
         <DashboardMetrics 
-          projectCount={projects.length}
-          estimateCount={estimates.length}
-          invoiceCount={invoices.length}
+          leads={[]}
+          estimates={estimates}
+          invoices={invoices}
         />
 
         {isAdmin ? (
@@ -81,8 +81,6 @@ const DashboardPage = () => {
             projects={projects}
             estimates={estimates}
             invoices={invoices}
-            selectedStatus={selectedStatus}
-            setSelectedStatus={setSelectedStatus}
             statusColorFn={getProjectStatusColor}
           />
         )}

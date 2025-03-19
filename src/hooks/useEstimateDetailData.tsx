@@ -3,8 +3,9 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Estimate, LineItem, RoomDetail } from "@/types";
-import { calculateSingleRoomEstimate } from "@/utils/estimateUtils";
 import { RoomDetails } from "@/types/estimator";
+
+// Removed calculateSingleRoomEstimate import since it's not being used
 
 export const useEstimateDetailData = (estimateId: string | undefined) => {
   const { toast } = useToast();

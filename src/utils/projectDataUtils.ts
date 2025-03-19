@@ -24,3 +24,46 @@ export const formatDate = (dateString: string | null | undefined): string => {
     day: 'numeric'
   });
 };
+
+// Added missing function
+export const fetchProjectWithRelated = async (projectId: string) => {
+  const { supabase } = await import('@/integrations/supabase/client');
+  
+  try {
+    // Fetch project data
+    const { data: projectData, error: projectError } = await supabase
+      .from("projects")
+      .select("*")
+      .eq("id", projectId)
+      .single();
+
+    if (projectError) throw projectError;
+
+    // Fetch associated estimates
+    const { data: estimatesData, error: estimatesError } = await supabase
+      .from("estimates")
+      .select("*")
+      .eq("project_id", projectId)
+      .neq("status_type", "deleted");
+
+    if (estimatesError) throw estimatesError;
+
+    // Fetch associated invoices
+    const { data: invoicesData, error: invoicesError } = await supabase
+      .from("invoices")
+      .select("*")
+      .eq("project_id", projectId)
+      .neq("status", "deleted");
+
+    if (invoicesError) throw invoicesError;
+
+    return {
+      project: projectData,
+      estimates: estimatesData || [],
+      invoices: invoicesData || []
+    };
+  } catch (error) {
+    console.error("Error fetching project data:", error);
+    throw error;
+  }
+};

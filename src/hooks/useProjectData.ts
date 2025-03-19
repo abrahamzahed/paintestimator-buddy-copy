@@ -13,6 +13,9 @@ export const useProjectData = (projectId: string | undefined) => {
   const [estimates, setEstimates] = useState<Estimate[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showArchiveDialog, setShowArchiveDialog] = useState(false);
   const [showRestoreDialog, setShowRestoreDialog] = useState(false);
@@ -83,9 +86,12 @@ export const useProjectData = (projectId: string | undefined) => {
 
   return {
     project,
+    projects, // Added
     estimates,
     invoices,
     loading,
+    isLoading, // Added
+    error, // Added
     showDeleteDialog,
     setShowDeleteDialog,
     showArchiveDialog,
