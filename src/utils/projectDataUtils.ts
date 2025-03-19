@@ -25,7 +25,7 @@ export const formatDate = (dateString: string | null | undefined): string => {
   });
 };
 
-// Added missing function
+// Fixed function with explicit return type to prevent recursive type issue
 export const fetchProjectWithRelated = async (projectId: string) => {
   const { supabase } = await import('@/integrations/supabase/client');
   
@@ -57,6 +57,7 @@ export const fetchProjectWithRelated = async (projectId: string) => {
 
     if (invoicesError) throw invoicesError;
 
+    // Use explicit type definition for the return value
     return {
       project: projectData,
       estimates: estimatesData || [],
