@@ -2,7 +2,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { SessionContextProvider } from "@/auth/AuthProvider";
 import { Toaster } from "@/components/ui/toaster";
-import { useSyncUserData } from "@/hooks/useSyncUserData";
+import { useSyncUserData } from "@/common/hooks/useSyncUserData";
 import { ProtectedRoute } from "@/common/components/auth/ProtectedRoute";
 
 // Pages

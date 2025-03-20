@@ -1,54 +1,27 @@
 
-export type RoomSize = 'small' | 'average' | 'large';
-export type DoorPaintingMethod = 'none' | 'brush' | 'spray';
-export type WindowPaintingMethod = 'none' | 'brush' | 'spray';
-export type FireplaceMethod = 'none' | 'brush' | 'spray';
-export type RepairType = 'none' | 'minimal' | 'extensive';
-export type BaseboardType = 'none' | 'brush' | 'spray';
-
+// Specific types for the estimator features
 export interface RoomDetails {
   id: string;
   roomTypeId: string;
-  size: RoomSize;
+  size: string;
   addons: string[];
   hasHighCeiling: boolean;
   paintType: string | null;
   isEmpty: boolean;
   noFloorCovering: boolean;
-  
-  // Added fields
-  doorPaintingMethod: DoorPaintingMethod;
+  doorPaintingMethod: string;
   numberOfDoors: number;
-  windowPaintingMethod: WindowPaintingMethod;
+  windowPaintingMethod: string;
   numberOfWindows: number;
-  fireplaceMethod: FireplaceMethod;
+  fireplaceMethod: string;
   hasStairRailing: boolean;
   twoColors: boolean;
   millworkPrimingNeeded: boolean;
-  repairs: RepairType;
+  repairs: string;
   baseboardInstallationLf: number;
-  baseboardType: BaseboardType;
-  
-  // New closet fields
+  baseboardType: string;
   walkInClosetCount: number;
   regularClosetCount: number;
-  
-  // Backward compatibility fields for HomeEstimator.tsx
-  roomType?: string;
-  roomSize?: string;
-  wallsCount?: number;
-  wallHeight?: number;
-  wallWidth?: number;
-  condition?: string;
-  includeCeiling?: boolean;
-  includeBaseboards?: boolean;
-  baseboardsMethod?: string;
-  includeCrownMolding?: boolean;
-  includeCloset?: boolean;
-  isEmptyHouse?: boolean;
-  needFloorCovering?: boolean;
-  doorsCount?: number;
-  windowsCount?: number;
 }
 
 export interface RoomCost {
@@ -57,23 +30,19 @@ export interface RoomCost {
   addonCost: number;
   baseboardCost: number;
   highCeilingCost: number;
-  doorCost: number;
-  windowCost: number;
-  fireplaceCost: number;
-  railingCost: number;
   discountEmptyHouse: number;
   discountNoFloor: number;
   twoColorCost: number;
   millworkPrimingCost: number;
+  doorCost: number;
+  windowCost: number;
+  fireplaceCost: number;
+  railingCost: number;
   repairsCost: number;
   baseboardInstallCost: number;
-  closetCost: number; // New closet cost field
+  closetCost: number;
   onlyExtraSurcharge: number;
   totalBeforeVolume: number;
-}
-
-export interface EstimatorFormState {
-  rooms: RoomDetails[];
 }
 
 export interface EstimatorSummary {
@@ -81,5 +50,8 @@ export interface EstimatorSummary {
   subtotal: number;
   volumeDiscount: number;
   finalTotal: number;
-  paintCans?: number; // Add this field for backward compatibility
+}
+
+export interface EstimatorFormState {
+  rooms: RoomDetails[];
 }

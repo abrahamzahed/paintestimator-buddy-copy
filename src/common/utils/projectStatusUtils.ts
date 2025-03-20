@@ -24,3 +24,30 @@ export const getStatusLabel = (status: string, type: 'project' | 'estimate' = 'p
 export const getStatusOptions = (type: 'project' | 'estimate' = 'project') => {
   return type === 'project' ? PROJECT_STATUSES : ESTIMATE_STATUSES;
 };
+
+export const updateProjectStatus = async (projectId: string, newStatus: string) => {
+  const { supabase } = await import('@/integrations/supabase/client');
+  
+  const { error } = await supabase
+    .from("projects")
+    .update({ status: newStatus })
+    .eq("id", projectId);
+    
+  if (error) throw error;
+  return true;
+};
+
+export const getStatusUpdateMessage = (project: any, newStatus: string): string => {
+  switch(newStatus) {
+    case 'completed':
+      return `Project "${project.name}" marked as completed`;
+    case 'in_progress':
+      return `Project "${project.name}" is now in progress`;
+    case 'cancelled':
+      return `Project "${project.name}" has been cancelled`;
+    case 'archived':
+      return `Project "${project.name}" has been archived`;
+    default:
+      return `Project "${project.name}" status updated to ${newStatus}`;
+  }
+};

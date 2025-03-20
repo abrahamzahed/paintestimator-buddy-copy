@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import RoomDetailForm from '@/components/estimator/RoomDetailForm';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/common/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
@@ -553,130 +553,32 @@ export default function DynamicEstimatorForm({ onEstimateComplete }: DynamicEsti
         ))}
       </div>
 
-      {formState.rooms.length > 0 && (
-        <div className="mt-8 p-6 bg-blue-50 rounded-lg border border-blue-200">
-          <h3 className="text-xl font-semibold mb-4">Cost Summary</h3>
-
-          <div className="space-y-6 mb-6">
-            {formState.rooms.map((room, idx) => {
-              const rc = roomCosts[idx];
-              const rt = roomTypes.find(rt => rt.id === room.roomTypeId);
-              const pt = paintTypes.find(p => p.id === room.paintType);
-              return (
-                <div key={room.id} className="border-b border-blue-200 pb-3">
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="font-medium">
-                      {rt?.name} ({room.size})
-                    </span>
-                    <span className="font-medium">
-                      ${rc.totalBeforeVolume.toFixed(2)}
-                    </span>
-                  </div>
-                  <div className="pl-4 text-sm text-gray-600 space-y-1">
-                    <div>Base Price: ${rc.basePrice.toFixed(2)}</div>
-                    {rc.paintUpcharge > 0 && (
-                      <div>Paint Upcharge ({pt?.name}): +${rc.paintUpcharge.toFixed(2)}</div>
-                    )}
-                    {rc.addonCost > 0 && (
-                      <div>Add-Ons: +${rc.addonCost.toFixed(2)}</div>
-                    )}
-                    {rc.baseboardCost > 0 && (
-                      <div>Baseboards ({room.baseboardType}): +${rc.baseboardCost.toFixed(2)}</div>
-                    )}
-                    {rc.highCeilingCost > 0 && (
-                      <div>High Ceiling: +${rc.highCeilingCost.toFixed(2)}</div>
-                    )}
-                    {rc.twoColorCost > 0 && (
-                      <div>Two-Color: +${rc.twoColorCost.toFixed(2)}</div>
-                    )}
-                    {rc.millworkPrimingCost > 0 && (
-                      <div>Millwork Priming: +${rc.millworkPrimingCost.toFixed(2)}</div>
-                    )}
-                    {rc.doorCost > 0 && (
-                      <div>Doors: +${rc.doorCost.toFixed(2)}</div>
-                    )}
-                    {rc.closetCost > 0 && (
-                      <div>Closets: +${rc.closetCost.toFixed(2)}</div>
-                    )}
-                    {rc.windowCost > 0 && (
-                      <div>Windows: +${rc.windowCost.toFixed(2)}</div>
-                    )}
-                    {rc.fireplaceCost > 0 && (
-                      <div>Fireplace: +${rc.fireplaceCost.toFixed(2)}</div>
-                    )}
-                    {rc.railingCost > 0 && (
-                      <div>Stair Railing: +${rc.railingCost.toFixed(2)}</div>
-                    )}
-                    {rc.repairsCost > 0 && (
-                      <div>Repairs: +${rc.repairsCost.toFixed(2)}</div>
-                    )}
-                    {rc.baseboardInstallCost > 0 && (
-                      <div>Baseboard Install: +${rc.baseboardInstallCost.toFixed(2)}</div>
-                    )}
-                    {rc.onlyExtraSurcharge > 0 && (
-                      <div className="text-red-600">
-                        Only Doors/Windows Surcharge: +${rc.onlyExtraSurcharge.toFixed(2)}
-                      </div>
-                    )}
-                    {rc.discountEmptyHouse > 0 && (
-                      <div className="text-green-600">
-                        Empty House Discount: -${rc.discountEmptyHouse.toFixed(2)}
-                      </div>
-                    )}
-                    {rc.discountNoFloor > 0 && (
-                      <div className="text-green-600">
-                        No Floor Covering Discount: -${rc.discountNoFloor.toFixed(2)}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="border-t border-blue-200 pt-4 mb-4">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-700">Subtotal (before volume discount)</span>
-              <span className="font-medium">
-                ${subtotal.toFixed(2)}
-              </span>
-            </div>
-          </div>
-
-          {/* Volume discount lines */}
-          {volumeDiscount > 0 && (
-            <div className="flex justify-between items-center text-green-600 mb-4">
-              <span>Volume Discount</span>
-              <span>-${volumeDiscount.toFixed(2)}</span>
-            </div>
-          )}
-
-          <div className="border-t border-blue-200 pt-4">
-            <div className="flex justify-between items-center">
-              <span className="text-lg font-semibold">Total Estimate</span>
-              <span className="text-2xl font-bold text-blue-700">
-                ${finalTotal.toFixed(2)}
-              </span>
-            </div>
-            {finalTotal === 400 && subtotal < 400 && (
-              <p className="text-sm text-gray-600 mt-2">
-                * Minimum service charge of $400 applied.
-              </p>
-            )}
-          </div>
-
-          {onEstimateComplete && (
-            <div className="mt-6 text-center">
-              <Button 
-                className="bg-paint hover:bg-paint-dark"
-                onClick={handleSubmitEstimate}
-              >
-                Save Estimate
-              </Button>
-            </div>
-          )}
+      <div className="mt-8 border-t pt-4">
+        <div className="flex justify-between text-lg font-semibold mb-2">
+          <span>Subtotal:</span>
+          <span>${subtotal.toFixed(2)}</span>
         </div>
-      )}
+        {volumeDiscount > 0 && (
+          <div className="flex justify-between text-green-600 mb-2">
+            <span>Volume Discount:</span>
+            <span>-${volumeDiscount.toFixed(2)}</span>
+          </div>
+        )}
+        <div className="flex justify-between text-xl font-bold mt-4">
+          <span>Total Estimate:</span>
+          <span>${finalTotal.toFixed(2)}</span>
+        </div>
+      </div>
+
+      <div className="mt-8">
+        <Button 
+          onClick={handleSubmitEstimate}
+          className="w-full bg-paint hover:bg-paint-dark"
+          disabled={formState.rooms.length === 0}
+        >
+          Complete Estimate
+        </Button>
+      </div>
     </div>
   );
 }

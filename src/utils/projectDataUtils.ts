@@ -1,4 +1,7 @@
 
+// Define simple types to avoid recursive type inference
+import { Project, Estimate, Invoice } from "@/types";
+
 export const getProjectStatusColor = (status: string): string => {
   switch (status.toLowerCase()) {
     case 'completed':
@@ -25,41 +28,10 @@ export const formatDate = (dateString: string | null | undefined): string => {
   });
 };
 
-// Define simple types to avoid recursive type inference
-interface ProjectData {
-  id: string;
-  name: string;
-  description?: string;
-  status?: string;
-  user_id?: string;
-  created_at?: string;
-  updated_at?: string;
-  [key: string]: any;
-}
-
-interface EstimateData {
-  id: string;
-  lead_id: string;
-  project_id?: string;
-  labor_cost: number;
-  material_cost: number;
-  total_cost: number;
-  status?: string;
-  [key: string]: any;
-}
-
-interface InvoiceData {
-  id: string;
-  estimate_id: string;
-  amount: number;
-  status?: string;
-  [key: string]: any;
-}
-
 export const fetchProjectWithRelated = async (projectId: string): Promise<{
-  project: ProjectData;
-  estimates: EstimateData[];
-  invoices: InvoiceData[];
+  project: Project;
+  estimates: Estimate[];
+  invoices: Invoice[];
 }> => {
   const { supabase } = await import('@/integrations/supabase/client');
   
@@ -92,9 +64,9 @@ export const fetchProjectWithRelated = async (projectId: string): Promise<{
     if (invoicesError) throw invoicesError;
 
     return {
-      project: projectData as ProjectData,
-      estimates: estimatesData as EstimateData[] || [],
-      invoices: invoicesData as InvoiceData[] || []
+      project: projectData as Project,
+      estimates: estimatesData as Estimate[] || [],
+      invoices: invoicesData as Invoice[] || []
     };
   } catch (error) {
     console.error("Error fetching project data:", error);

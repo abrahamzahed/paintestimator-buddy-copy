@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { useSession } from "@/auth/use-session";
 import { useToast } from "@/common/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { useProjectData } from "@/hooks/useProjectData";
+import { useProjectData } from "@/common/hooks/useProjectData";
 import { getProjectStatusColor } from "@/common/utils/projectDataUtils";
 import AdminDashboardView from "@/modules/admin/components/AdminDashboardView";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
