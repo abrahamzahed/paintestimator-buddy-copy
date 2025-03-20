@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "@/auth/use-session";
@@ -7,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CheckCircle, Home, LayoutDashboard } from "lucide-react";
-import DynamicEstimatorForm from "@/components/DynamicEstimatorForm";
+import { DynamicEstimatorForm } from "@/modules/authenticated-estimator";
 import { RoomDetails, EstimatorSummary } from "@/types/estimator";
 import { supabase } from "@/integrations/supabase/client";
 import CurrentEstimatePanel from "@/components/estimator/CurrentEstimatePanel";
