@@ -25,11 +25,41 @@ export const formatDate = (dateString: string | null | undefined): string => {
   });
 };
 
-// Define a fixed return type to avoid recursive type inference
+// Define simple types to avoid recursive type inference
+interface ProjectData {
+  id: string;
+  name: string;
+  description?: string;
+  status?: string;
+  user_id?: string;
+  created_at?: string;
+  updated_at?: string;
+  [key: string]: any;
+}
+
+interface EstimateData {
+  id: string;
+  lead_id: string;
+  project_id?: string;
+  labor_cost: number;
+  material_cost: number;
+  total_cost: number;
+  status?: string;
+  [key: string]: any;
+}
+
+interface InvoiceData {
+  id: string;
+  estimate_id: string;
+  amount: number;
+  status?: string;
+  [key: string]: any;
+}
+
 export const fetchProjectWithRelated = async (projectId: string): Promise<{
-  project: any;
-  estimates: any[];
-  invoices: any[];
+  project: ProjectData;
+  estimates: EstimateData[];
+  invoices: InvoiceData[];
 }> => {
   const { supabase } = await import('@/integrations/supabase/client');
   
@@ -62,9 +92,9 @@ export const fetchProjectWithRelated = async (projectId: string): Promise<{
     if (invoicesError) throw invoicesError;
 
     return {
-      project: projectData,
-      estimates: estimatesData || [],
-      invoices: invoicesData || []
+      project: projectData as ProjectData,
+      estimates: estimatesData as EstimateData[] || [],
+      invoices: invoicesData as InvoiceData[] || []
     };
   } catch (error) {
     console.error("Error fetching project data:", error);
