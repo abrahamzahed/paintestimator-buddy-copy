@@ -7,6 +7,7 @@ import { importUserDataByEmail } from "@/integrations/supabase/user-data-import"
 export function useSyncUserData() {
   const { user, refreshProfile } = useSession();
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
   const [syncComplete, setSyncComplete] = useState(false);
   const { toast } = useToast();
 

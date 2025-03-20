@@ -1,4 +1,3 @@
-
 // Define generic types used across the application
 export interface Project {
   id: string;
@@ -56,6 +55,32 @@ export interface RoomDetail {
   walkInClosetCount: number;
   regularClosetCount: number;
   [key: string]: any;
+}
+
+export interface Lead {
+  id: string;
+  user_id?: string;
+  project_id?: string;
+  project_name?: string;
+  name: string;
+  email: string;
+  phone?: string;
+  address?: string;
+  service_type: string;
+  description?: string;
+  status?: string;
+  created_at?: string;
+  [key: string]: any;
+}
+
+export interface LineItem {
+  id: string;
+  estimate_id: string;
+  description: string;
+  quantity: number;
+  unit_price: number;
+  total: number;
+  created_at?: string;
 }
 
 export interface EstimateResult {

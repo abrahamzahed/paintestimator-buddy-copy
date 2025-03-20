@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "@/context/SessionContext";
@@ -50,7 +49,6 @@ const FreeEstimator = ({ isAuthenticated = false }: FreeEstimatorProps) => {
   const [projectId, setProjectId] = useState<string | null>(null);
   const [estimateId, setEstimateId] = useState<string | null>(null);
 
-  // Populate form with user profile data if authenticated
   useEffect(() => {
     if (isAuthenticated && profile) {
       setName(profile.name || "");
@@ -62,11 +60,8 @@ const FreeEstimator = ({ isAuthenticated = false }: FreeEstimatorProps) => {
     }
   }, [isAuthenticated, profile]);
 
-  // Skip personal info step if authenticated
   useEffect(() => {
     if (isAuthenticated && step === 1) {
-      // We don't skip step 1 anymore, since we need to select a project
-      // But we pre-fill the form fields from the user profile
     }
   }, [isAuthenticated, step]);
 
@@ -82,7 +77,6 @@ const FreeEstimator = ({ isAuthenticated = false }: FreeEstimatorProps) => {
     let isValid = true;
     
     if (isAuthenticated) {
-      // For authenticated users, only validate project selection
       if (!selectedProjectId) {
         setProjectError("Please select a project or create a new one");
         isValid = false;
@@ -97,7 +91,6 @@ const FreeEstimator = ({ isAuthenticated = false }: FreeEstimatorProps) => {
         setAddressError(null);
       }
     } else {
-      // For non-authenticated users, validate all fields as before
       if (!projectName.trim()) {
         setProjectNameError("Please enter a project name");
         isValid = false;
@@ -183,13 +176,10 @@ const FreeEstimator = ({ isAuthenticated = false }: FreeEstimatorProps) => {
         };
       });
 
-      // For authenticated users, save directly to their account
       if (isAuthenticated && user) {
-        // Use selected project or create one if needed
         let projectId = selectedProjectId;
         
         if (!projectId) {
-          // Create a new project if somehow we don't have one selected
           const { data: projectData, error: projectError } = await supabase
             .from('projects')
             .insert({
@@ -222,7 +212,6 @@ const FreeEstimator = ({ isAuthenticated = false }: FreeEstimatorProps) => {
           }
         });
         
-        // Create lead
         const { data: leadData, error: leadError } = await supabase
           .from('leads')
           .insert([
@@ -278,7 +267,6 @@ const FreeEstimator = ({ isAuthenticated = false }: FreeEstimatorProps) => {
             noFloorCovering: rooms.some(room => room.noFloorCovering)
           };
           
-          // Insert estimate
           const { data: estimateData, error: estimateError } = await supabase
             .from('estimates')
             .insert({
@@ -308,7 +296,6 @@ const FreeEstimator = ({ isAuthenticated = false }: FreeEstimatorProps) => {
           });
         }
       } else {
-        // For guest users - keep existing code
         const { data: projectData, error: projectError } = await supabase
           .from('projects')
           .insert({
@@ -445,7 +432,7 @@ const FreeEstimator = ({ isAuthenticated = false }: FreeEstimatorProps) => {
         title: "Estimate saved!",
         description: "Your estimate has been saved successfully."
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error saving lead:", error);
       toast({
         title: "Error saving estimate",
@@ -511,7 +498,6 @@ const FreeEstimator = ({ isAuthenticated = false }: FreeEstimatorProps) => {
         </p>
       </div>
 
-      {/* Navigation buttons for authenticated users on Step 1 */}
       {isAuthenticated && step === 1 && (
         <div className="flex space-x-2 mb-6">
           <Button 
@@ -536,7 +522,6 @@ const FreeEstimator = ({ isAuthenticated = false }: FreeEstimatorProps) => {
 
       {step === 1 && (
         <div className="space-y-4">
-          {/* For authenticated users, show project selector instead of project name input */}
           {isAuthenticated ? (
             <ProjectSelector
               selectedProjectId={selectedProjectId}
@@ -561,7 +546,6 @@ const FreeEstimator = ({ isAuthenticated = false }: FreeEstimatorProps) => {
             </div>
           )}
           
-          {/* For authenticated users, use read-only fields for personal info */}
           {isAuthenticated ? (
             <>
               <div className="space-y-2">

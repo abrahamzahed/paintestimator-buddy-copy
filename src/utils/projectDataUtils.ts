@@ -1,6 +1,10 @@
-
-// Define simple types to avoid recursive type inference
 import { Project, Estimate, Invoice } from "@/types";
+
+export interface ProjectData {
+  project: Project;
+  estimates: Estimate[];
+  invoices: Invoice[];
+}
 
 export const getProjectStatusColor = (status: string): string => {
   switch (status.toLowerCase()) {
@@ -28,45 +32,24 @@ export const formatDate = (dateString: string | null | undefined): string => {
   });
 };
 
-export const fetchProjectWithRelated = async (projectId: string): Promise<{
-  project: Project;
-  estimates: Estimate[];
-  invoices: Invoice[];
-}> => {
+export const fetchProjectWithRelated = async (projectId: string): Promise<ProjectData> => {
   const { supabase } = await import('@/integrations/supabase/client');
   
   try {
-    // Fetch project data
-    const { data: projectData, error: projectError } = await supabase
-      .from("projects")
-      .select("*")
-      .eq("id", projectId)
-      .single();
+    const [projectRes, estimatesRes, invoicesRes] = await Promise.all([
+      supabase.from("projects").select("*").eq("id", projectId).single(),
+      supabase.from("estimates").select("*").eq("project_id", projectId).neq("status_type", "deleted"),
+      supabase.from("invoices").select("*").eq("project_id", projectId).neq("status", "deleted")
+    ]);
 
-    if (projectError) throw projectError;
-
-    // Fetch associated estimates
-    const { data: estimatesData, error: estimatesError } = await supabase
-      .from("estimates")
-      .select("*")
-      .eq("project_id", projectId)
-      .neq("status_type", "deleted");
-
-    if (estimatesError) throw estimatesError;
-
-    // Fetch associated invoices
-    const { data: invoicesData, error: invoicesError } = await supabase
-      .from("invoices")
-      .select("*")
-      .eq("project_id", projectId)
-      .neq("status", "deleted");
-
-    if (invoicesError) throw invoicesError;
+    if (projectRes.error) throw projectRes.error;
+    if (estimatesRes.error) throw estimatesRes.error;
+    if (invoicesRes.error) throw invoicesRes.error;
 
     return {
-      project: projectData as Project,
-      estimates: estimatesData as Estimate[] || [],
-      invoices: invoicesData as Invoice[] || []
+      project: projectRes.data as Project,
+      estimates: estimatesRes.data as Estimate[] || [],
+      invoices: invoicesRes.data as Invoice[] || []
     };
   } catch (error) {
     console.error("Error fetching project data:", error);
