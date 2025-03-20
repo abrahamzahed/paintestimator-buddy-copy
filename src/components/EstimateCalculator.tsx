@@ -12,7 +12,7 @@ import EstimateSummary from "./estimator/EstimateSummary";
 import { useLocation } from "react-router-dom";
 import { saveTemporaryEstimate, getTemporaryEstimate } from "@/utils/estimateStorage";
 import { useSession } from "@/context/SessionContext";
-import DynamicEstimatorForm from "./DynamicEstimatorForm";
+import { DynamicEstimatorForm } from "@/modules/authenticated-estimator";
 import { RoomDetails, EstimatorSummary } from "@/types/estimator";
 
 interface EstimateCalculatorProps {

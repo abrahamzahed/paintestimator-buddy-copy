@@ -25,12 +25,8 @@ export const formatDate = (dateString: string | null | undefined): string => {
   });
 };
 
-// Define the return type explicitly to avoid recursive type inference
-export const fetchProjectWithRelated = async (projectId: string): Promise<{
-  project: any; 
-  estimates: any[];
-  invoices: any[];
-}> => {
+// Using a simpler type definition to avoid recursive type inference issues
+export const fetchProjectWithRelated = async (projectId: string): Promise<any> => {
   const { supabase } = await import('@/integrations/supabase/client');
   
   try {
